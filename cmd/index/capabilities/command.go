@@ -18,6 +18,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -65,7 +66,7 @@ func NewCmd() *cobra.Command {
 		"inform the path of the directory to output the report. (Default: current directory)")
 	cmd.Flags().Int32Var(&flags.Limit, "limit", 0,
 		"limit the num of operator bundles to be audit")
-	cmd.Flags().StringVar(&flags.S3Bucket, "s3-bucket", "audit-tool-s3-bucket", "")
+	cmd.Flags().StringVar(&flags.S3Bucket, "s3-bucket", "", "")
 	cmd.Flags().BoolVar(&flags.HeadOnly, "head-only", false,
 		"if set, will just check the operator bundle which are head of the channels")
 	cmd.Flags().StringVar(&flags.ContainerEngine, "container-engine", pkg.Docker,
@@ -128,33 +129,33 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Errorf("Unable to get data from index db: %v\n", err)
 	}
 
-	//log.Info("Deploying operator with operator-sdk...")
-	//for idx, bundle := range report.AuditCapabilities {
-	//	operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
-	//	runCommand, err := pkg.RunCommand(operatorsdk)
-	//
-	//	if err != nil {
-	//		log.Errorf("Unable to run operator-sdk run bundle: %v\n", err)
-	//	}
-	//
-	//	RBLogs := string(runCommand[:])
-	//	report.AuditCapabilities[idx].InstallLogs = append(report.AuditCapabilities[idx].InstallLogs, RBLogs)
-	//	report.AuditCapabilities[idx].Capabilities = false
-	//
-	//	if strings.Contains(RBLogs, "OLM has successfully installed") {
-	//		log.Info("Operator Installed Successfully")
-	//		report.AuditCapabilities[idx].Capabilities = true
-	//	}
-	//
-	//	log.Info("Cleaning up installed Operator:", bundle.PackageName)
-	//	cleanup := exec.Command("operator-sdk", "cleanup", bundle.PackageName)
-	//	runCleanup, err := pkg.RunCommand(cleanup)
-	//	if err != nil {
-	//		log.Errorf("Unable to run operator-sdk cleanup: %v\n", err)
-	//	}
-	//	CLogs := string(runCleanup)
-	//	report.AuditCapabilities[idx].CleanUpLogs = append(report.AuditCapabilities[idx].CleanUpLogs, CLogs)
-	//}
+	log.Info("Deploying operator with operator-sdk...")
+	for idx, bundle := range report.AuditCapabilities {
+		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
+		runCommand, err := pkg.RunCommand(operatorsdk)
+
+		if err != nil {
+			log.Errorf("Unable to run operator-sdk run bundle: %v\n", err)
+		}
+
+		RBLogs := string(runCommand[:])
+		report.AuditCapabilities[idx].InstallLogs = append(report.AuditCapabilities[idx].InstallLogs, RBLogs)
+		report.AuditCapabilities[idx].Capabilities = false
+
+		if strings.Contains(RBLogs, "OLM has successfully installed") {
+			log.Info("Operator Installed Successfully")
+			report.AuditCapabilities[idx].Capabilities = true
+		}
+
+		log.Info("Cleaning up installed Operator:", bundle.PackageName)
+		cleanup := exec.Command("operator-sdk", "cleanup", bundle.PackageName)
+		runCleanup, err := pkg.RunCommand(cleanup)
+		if err != nil {
+			log.Errorf("Unable to run operator-sdk cleanup: %v\n", err)
+		}
+		CLogs := string(runCleanup)
+		report.AuditCapabilities[idx].CleanUpLogs = append(report.AuditCapabilities[idx].CleanUpLogs, CLogs)
+	}
 
 	log.Info("Generating output...")
 	if err := report.OutputReport(); err != nil {
