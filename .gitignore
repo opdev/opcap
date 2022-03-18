@@ -21,4 +21,5 @@
 /bin
 /output
 /.idea
-!/openshift/
+openshift/*
+openshift
