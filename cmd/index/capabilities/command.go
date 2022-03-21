@@ -22,10 +22,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"awesomeProject/pkg"
-	"awesomeProject/pkg/actions"
-	"awesomeProject/pkg/models"
-	index "awesomeProject/pkg/reports/capabilities"
+	"capabilities-tool/pkg"
+	"capabilities-tool/pkg/actions"
+	"capabilities-tool/pkg/models"
+	index "capabilities-tool/pkg/reports/capabilities"
 
 	_ "github.com/mattn/go-sqlite3"
 

@@ -15,7 +15,7 @@
 package main
 
 import (
-	"awesomeProject/cmd/index"
+	"capabilities-tool/cmd/index"
 	"log"
 
 	"github.com/spf13/cobra"

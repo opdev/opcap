@@ -15,7 +15,7 @@
 package index
 
 import (
-	"awesomeProject/cmd/index/capabilities"
+	"capabilities-tool/cmd/index/capabilities"
 	"github.com/spf13/cobra"
 )
 

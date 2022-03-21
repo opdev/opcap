@@ -15,7 +15,7 @@
 package models
 
 import (
-	"awesomeProject/pkg"
+	"capabilities-tool/pkg"
 	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
 	apimanifests "github.com/operator-framework/api/pkg/manifests"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"awesomeProject/pkg"
-	"awesomeProject/pkg/models"
+	"capabilities-tool/pkg"
+	"capabilities-tool/pkg/models"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/mattn/go-sqlite3"

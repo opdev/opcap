@@ -1,7 +1,7 @@
 package capabilities
 
 import (
-	"awesomeProject/pkg/models"
+	"capabilities-tool/pkg/models"
 )
 
 type Bundle struct {

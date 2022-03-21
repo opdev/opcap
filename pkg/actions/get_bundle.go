@@ -21,7 +21,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"awesomeProject/pkg"
+	"capabilities-tool/pkg"
 )
 
 // Manifest define the manifest.json which is  required to read the bundle

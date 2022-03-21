@@ -20,7 +20,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"awesomeProject/pkg"
+	"capabilities-tool/pkg"
 )
 
 const catalogIndex = "audit-catalog-index"

@@ -3,7 +3,7 @@ package capabilities
 import (
 	"encoding/json"
 
-	"awesomeProject/pkg"
+	"capabilities-tool/pkg"
 )
 
 type Report struct {
