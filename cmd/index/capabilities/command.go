@@ -67,6 +67,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().Int32Var(&flags.Limit, "limit", 0,
 		"limit the num of operator bundles to be audit")
 	cmd.Flags().StringVar(&flags.S3Bucket, "s3-bucket", "", "")
+	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", "http://operator-audit-minio.apps.eng.opdev.io", "")
 	cmd.Flags().BoolVar(&flags.HeadOnly, "head-only", false,
 		"if set, will just check the operator bundle which are head of the channels")
 	cmd.Flags().StringVar(&flags.ContainerEngine, "container-engine", pkg.Docker,
@@ -169,7 +170,7 @@ func run(cmd *cobra.Command, args []string) error {
 	path := filepath.Join(outputPath, filename)
 	log.Info(path)
 	log.Info("Uploading result to S3")
-	pkg.WriteDataToS3(path, filename, flags.S3Bucket)
+	pkg.WriteDataToS3(path, filename, flags.S3Bucket, flags.Endpoint)
 
 	log.Info("Task Completed!!!!!")
 

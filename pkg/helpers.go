@@ -135,7 +135,7 @@ type DockerConfig struct {
 	Labels map[string]string `json:"Labels"`
 }
 
-func WriteDataToS3(filepath string, filename string, bucketname string) error {
+func WriteDataToS3(filepath string, filename string, bucketname string, endpoint string) error {
 	// bucket := "audit-tool-s3-bucket"
 	jsonFile, err := os.Open(filepath)
 	if err != nil {
@@ -143,7 +143,7 @@ func WriteDataToS3(filepath string, filename string, bucketname string) error {
 	}
 	defer jsonFile.Close()
 	sess, err := session.NewSession(&aws.Config{
-		Endpoint:         aws.String(envy.Get("Endpoint", "")),
+		Endpoint:         aws.String(endpoint),
 		Region:           aws.String("us-east-1"),
 		Credentials:      credentials.NewStaticCredentials(envy.Get("AccessKeyID", ""), envy.Get("SecretAccessKey", ""), ""),
 		DisableSSL:       aws.Bool(true),

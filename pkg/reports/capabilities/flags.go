@@ -5,6 +5,7 @@ type BindFlags struct {
 	IndexImage      string `json:"image"`
 	Limit           int32  `json:"limit"`
 	HeadOnly        bool   `json:"headOnly"`
+	Endpoint        string `json:"endpoint"`
 	S3Bucket        string `json:"s3Bucket"`
 	Filter          string `json:"filter"`
 	FilterBundle    string `json:"filterBundle"`
