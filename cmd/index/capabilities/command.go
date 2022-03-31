@@ -55,7 +55,6 @@ func NewCmd() *cobra.Command {
 	if err := cmd.MarkFlagRequired("index-image"); err != nil {
 		log.Fatalf("Failed to mark `index-image` flag for `index` sub-command as required")
 	}
-
 	cmd.Flags().StringVar(&flags.Filter, "filter", "",
 		"filter by the packages names which are like *filter*")
 	cmd.Flags().StringVar(&flags.FilterBundle, "filter-bundle", "",
@@ -66,7 +65,7 @@ func NewCmd() *cobra.Command {
 		"inform the path of the directory to output the report. (Default: current directory)")
 	cmd.Flags().Int32Var(&flags.Limit, "limit", 0,
 		"limit the num of operator bundles to be audit")
-	cmd.Flags().StringVar(&flags.S3Bucket, "s3-bucket", "", "")
+	cmd.Flags().StringVar(&flags.S3Bucket, "bucket-name", "", "")
 	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", "http://operator-audit-minio.apps.eng.opdev.io", "")
 	cmd.Flags().BoolVar(&flags.HeadOnly, "head-only", false,
 		"if set, will just check the operator bundle which are head of the channels")
@@ -100,6 +99,7 @@ func validation(cmd *cobra.Command, args []string) error {
 	if len(flags.ContainerEngine) == 0 {
 		flags.ContainerEngine = pkg.GetContainerToolFromEnvVar()
 	}
+
 	if flags.ContainerEngine != pkg.Docker && flags.ContainerEngine != pkg.Podman {
 		return fmt.Errorf("invalid value for the flag --container-engine (%s)."+
 			" The valid options are %s and %s", flags.ContainerEngine, pkg.Docker, pkg.Podman)
@@ -149,11 +149,13 @@ func run(cmd *cobra.Command, args []string) error {
 		}
 
 		log.Info("Cleaning up installed Operator:", bundle.PackageName)
+
 		cleanup := exec.Command("operator-sdk", "cleanup", bundle.PackageName)
 		runCleanup, err := pkg.RunCommand(cleanup)
 		if err != nil {
 			log.Errorf("Unable to run operator-sdk cleanup: %v\n", err)
 		}
+
 		CLogs := string(runCleanup)
 		report.AuditCapabilities[idx].CleanUpLogs = append(report.AuditCapabilities[idx].CleanUpLogs, CLogs)
 	}
