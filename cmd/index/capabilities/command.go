@@ -16,6 +16,7 @@ package capabilities
 
 import (
 	"fmt"
+	"github.com/gobuffalo/envy"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -59,7 +60,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&flags.OutputPath, "output-path", currentPath,
 		"inform the path of the directory to output the report. (Default: current directory)")
 	cmd.Flags().StringVar(&flags.S3Bucket, "bucket-name", "", "")
-	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", "http://operator-audit-minio.apps.eng.opdev.io", "")
+	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("Endpoint", ""), "")
 	cmd.Flags().StringVar(&flags.ContainerEngine, "container-engine", pkg.Docker,
 		fmt.Sprintf("specifies the container tool to use. If not set, the default value is docker. "+
 			"Note that you can use the environment variable CONTAINER_ENGINE to inform this option. "+
@@ -132,7 +133,6 @@ func run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			log.Errorf("Unable to run operator-sdk cleanup: %v\n", err)
 		}
-
 		CLogs := string(runCleanup)
 		reportData.AuditCapabilities[0].CleanUpLogs = append(reportData.AuditCapabilities[0].CleanUpLogs, CLogs)
 	}
