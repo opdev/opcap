@@ -14,40 +14,32 @@
 
 package models
 
-import (
-	"capabilities-tool/pkg"
-	"github.com/operator-framework/api/pkg/apis/scorecard/v1alpha3"
-	apimanifests "github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/api/pkg/validation/errors"
-)
-
 // AuditBundle defines the data per bundle which is gathering to generate the reports
 type AuditCapabilities struct {
-	Bundle                  *apimanifests.Bundle
-	FoundLabel              bool
+	//Bundle                  *apimanifests.Bundle
+	//FoundLabel              bool
 	OperatorBundleName      string
 	OperatorBundleImagePath string
 	PackageName             string
-	DefaultChannel          string
-	ScorecardResults        v1alpha3.TestList
-	ValidatorsResults       []errors.ManifestResult
-	CSVFromIndexDB          *v1alpha1.ClusterServiceVersion
-	PropertiesDB            []pkg.PropertiesAnnotation
-	Channels                []string
-	HasCustomScorecardTests bool
-	IsHeadOfChannel         bool
-	BundleImageLabels       map[string]string `json:"bundleImageLabels,omitempty"`
-	BundleAnnotations       map[string]string `json:"bundleAnnotations,omitempty"`
-	Errors                  []string
-	Capabilities            bool
-	InstallLogs             []string
-	CleanUpLogs             []string
+	//DefaultChannel          string
+	//ScorecardResults        v1alpha3.TestList
+	//ValidatorsResults       []errors.ManifestResult
+	//CSVFromIndexDB          *v1alpha1.ClusterServiceVersion
+	//PropertiesDB            []pkg.PropertiesAnnotation
+	//Channels                []string
+	//HasCustomScorecardTests bool
+	//IsHeadOfChannel         bool
+	//BundleImageLabels       map[string]string `json:"bundleImageLabels,omitempty"`
+	//BundleAnnotations       map[string]string `json:"bundleAnnotations,omitempty"`
+	//Errors                  []string
+	Capabilities bool
+	InstallLogs  []string
+	CleanUpLogs  []string
 }
 
 func NewAuditCapabilities(operatorBundleName, operatorBundleImagePath string) *AuditCapabilities {
 	auditCapabilities := AuditCapabilities{}
-	auditCapabilities.OperatorBundleName = operatorBundleName
+	//auditCapabilities.OperatorBundleName = operatorBundleName
 	auditCapabilities.OperatorBundleImagePath = operatorBundleImagePath
 	return &auditCapabilities
 }

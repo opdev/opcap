@@ -18,6 +18,6 @@ func (r *Report) writeJSON() error {
 		return err
 	}
 
-	const reportType = "capabilities"
-	return pkg.WriteJSON(data, r.Flags.FilterBundle, r.Flags.OutputPath, reportType)
+	const reportType = "Cap_Level_1"
+	return pkg.WriteJSON(data, r.Flags.BundleName, r.Flags.OutputPath, reportType)
 }
