@@ -3,7 +3,7 @@ package capabilities
 // BindFlags define the flags used to generate the bundle report
 type BindFlags struct {
 	//IndexImage      string `json:"image"`
-	BundleName string `json:"bundleName"`
+	BundleName string `json:"bundleName,omitempty"`
 	//Limit           int32  `json:"limit"`
 	//HeadOnly        bool   `json:"headOnly"`
 	Endpoint string `json:"endpoint"`

@@ -5,7 +5,7 @@ import (
 )
 
 type Bundle struct {
-	BundleName      string   `json:"bundleName"`
+	BundleName      string   `json:"bundleName,omitempty"`
 	PackageName     string   `json:"packageName,omitempty"`
 	BundleImagePath string   `json:"bundleImagePath,omitempty"`
 	DefaultChannel  string   `json:"defaultChannel,omitempty"`

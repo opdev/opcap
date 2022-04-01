@@ -50,7 +50,7 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flags.PackageName, "package-name", "",
-		"filter by the Bundle names which are like *filter-bundle*")
+		"filter by the Package names which are like *filter-bundle*. Required for Operator Clean-up")
 	cmd.Flags().StringVar(&flags.BundleName, "bundle-name", "",
 		"filter by the Bundle names which are like *filter-bundle*")
 	cmd.Flags().StringVar(&flags.FilterBundle, "filter-bundle", "",
