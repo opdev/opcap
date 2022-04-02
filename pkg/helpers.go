@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -81,7 +82,8 @@ func WriteJSON(data []byte, imageName, outputPath, typeName string) error {
 }
 
 func GetReportName(imageName, typeName, typeFile string) string {
-	dt := time.Now().Format("2006-01-02")
+	dt := strconv.FormatInt(time.Now().Unix(), 10)
+	//dt := time.Now().Format("")
 
 	//prepare image name to use as name of the file
 	name := strings.ReplaceAll(imageName, "/", "_")
@@ -145,7 +147,7 @@ func WriteDataToS3(filepath string, filename string, bucketname string, endpoint
 	sess, err := session.NewSession(&aws.Config{
 		Endpoint:         aws.String(endpoint),
 		Region:           aws.String("us-east-1"),
-		Credentials:      credentials.NewStaticCredentials(envy.Get("AccessKeyID", ""), envy.Get("SecretAccessKey", ""), ""),
+		Credentials:      credentials.NewStaticCredentials(envy.Get("ACCESS_KEY_ID", ""), envy.Get("SECRET_ACCESS_KEY", ""), ""),
 		DisableSSL:       aws.Bool(true),
 		S3ForcePathStyle: aws.Bool(true),
 	})

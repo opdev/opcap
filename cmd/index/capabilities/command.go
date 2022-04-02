@@ -53,14 +53,14 @@ func NewCmd() *cobra.Command {
 		"filter by the Package names which are like *filter-bundle*. Required for Operator Clean-up")
 	cmd.Flags().StringVar(&flags.BundleName, "bundle-name", "",
 		"filter by the Bundle names which are like *filter-bundle*")
-	cmd.Flags().StringVar(&flags.FilterBundle, "filter-bundle", "",
+	cmd.Flags().StringVar(&flags.FilterBundle, "bundle-image", "",
 		"filter by the Bundle names which are like *filter-bundle*")
 	cmd.Flags().StringVar(&flags.OutputFormat, "output", pkg.JSON,
 		fmt.Sprintf("inform the output format. [Options: %s]", pkg.JSON))
 	cmd.Flags().StringVar(&flags.OutputPath, "output-path", currentPath,
 		"inform the path of the directory to output the report. (Default: current directory)")
 	cmd.Flags().StringVar(&flags.S3Bucket, "bucket-name", "", "")
-	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("Endpoint", ""), "")
+	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("ENDPOINT", ""), "")
 	cmd.Flags().StringVar(&flags.ContainerEngine, "container-engine", pkg.Docker,
 		fmt.Sprintf("specifies the container tool to use. If not set, the default value is docker. "+
 			"Note that you can use the environment variable CONTAINER_ENGINE to inform this option. "+
@@ -143,7 +143,7 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Info("Uploading result to S3")
-	filename := pkg.GetReportName(reportData.Flags.BundleName, "Cap_Level_1", "json")
+	filename := pkg.GetReportName(reportData.Flags.BundleName, "cap_level_1", "json")
 	path := filepath.Join(reportData.Flags.OutputPath, filename)
 	if err := pkg.WriteDataToS3(path, filename, flags.S3Bucket, flags.Endpoint); err != nil {
 		return err
@@ -153,3 +153,6 @@ func run(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
+
+// TODO: add exit code for run bundle failure ---- DONE
+// TODO: change report name timestamp format to unix ---- DONE
