@@ -10,11 +10,11 @@ This project is in active and rapid development! The current implementation chec
 
 The capabilities-tool binary currently requires that you have the following variables set in the environment
 
-| Name              |            Value            | 
-|-------------------|:---------------------------:| 
-| ENDPOINT          |     Endpoint for Minio      |
-| SECRET_ACCESS_KEY | Secret Access key for Minio |
-| ACCESS_KEY_ID     |        Access Key ID        |
+| Name                    |            Value            | 
+|-------------------------|:---------------------------:| 
+| MINIO_ENDPOINT          |     Endpoint for Minio      |
+| MINIO_SECRET_ACCESS_KEY | Secret Access key for Minio |
+| MINIO_ACCESS_KEY        |    Access Key for Minio     |
 
 ## Usage
 

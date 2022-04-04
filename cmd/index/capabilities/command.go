@@ -60,7 +60,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&flags.OutputPath, "output-path", currentPath,
 		"inform the path of the directory to output the report. (Default: current directory)")
 	cmd.Flags().StringVar(&flags.S3Bucket, "bucket-name", "", "")
-	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("ENDPOINT", ""), "")
+	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("MINIO_ENDPOINT", ""), "")
 	cmd.Flags().StringVar(&flags.ContainerEngine, "container-engine", pkg.Docker,
 		fmt.Sprintf("specifies the container tool to use. If not set, the default value is docker. "+
 			"Note that you can use the environment variable CONTAINER_ENGINE to inform this option. "+
