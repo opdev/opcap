@@ -21,7 +21,7 @@ jobs:
         uses: reloc8/action-latest-release-version@1.0.0
         id: fetch-latest-release
       - name: Set Env Tags
-        run: echo RELEASE_TAG=${{ steps.fetch-latest-release.outputs.latest-release }} >> $GITHUB_ENV
+        run: echo RELEASE_TAG=v0.0.0-test >> $GITHUB_ENV
       - name: set short sha
         run: echo SHA_SHORT=$(git rev-parse --short HEAD) >> $GITHUB_ENV
       - name: Build Image
