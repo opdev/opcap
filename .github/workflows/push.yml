@@ -27,6 +27,13 @@ jobs:
         run: echo RELEASE_TAG=v0.0.0-test >> $GITHUB_ENV
       - name: set short sha
         run: echo SHA_SHORT=$(git rev-parse --short HEAD) >> $GITHUB_ENV
+      - name: Login to registry
+        id: registry-login
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+          registry: quay.io
       - name: Build Image
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -40,13 +47,6 @@ jobs:
             ARCH=${{ matrix.architecture }}
           dockerfiles: |
             ./Dockerfile
-      - name: Login to registry
-        id: registry-login
-        uses: redhat-actions/podman-login@v1
-        with:
-          username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
-          registry: quay.io
       - name: Push Image
         id: push-image
         uses: redhat-actions/push-to-registry@v2
