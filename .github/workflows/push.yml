@@ -43,7 +43,7 @@ jobs:
         with:
           username: ${{ env.REGISTRY_USER }}
           password: ${{ env.REGISTRY_PASSWORD }}
-          registry: quay.io/opdev
+          registry: quay.io
       - name: Push Image
         id: push-image
         uses: redhat-actions/push-to-registry@v2
