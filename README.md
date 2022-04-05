@@ -51,3 +51,5 @@ To check an Operator bundle, utilize the `index capabilities` sub-command:
 Example:
 capabilities-tool index capabilities --bucket-name=audit-tool-s3-bucket --bundle-image=registry.connect.redhat.com/minio/minio-operator1@sha256:357a5089b211e9653efff6cacc433633993cf3317dcca29eb54f924374b47b88 --bundle-name=minio-operator.v4.0.2
 ```
+
+//Test
