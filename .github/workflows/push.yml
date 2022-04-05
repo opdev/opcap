@@ -2,7 +2,7 @@ name: Build Main
 
 on:
   push:
-    branches: [ main, ghactions ]
+    branches: [ master ]
 
 env:
   IMAGE_NAME: capabilities-tool
