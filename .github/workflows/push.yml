@@ -28,7 +28,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: ${{ secrets.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+          image: quay.io/opdev/capabilities-tool
           tags: ${{ env.RELEASE_TAG }}
           archs: ${{ matrix.architecture }}
           build-args: |
@@ -37,13 +37,20 @@ jobs:
             ARCH=${{ matrix.architecture }}
           dockerfiles: |
             ./Dockerfile
+      - name: Login to registry
+        id: registry-login
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+          registry: quay.io/opdev
       - name: Push Image
         id: push-image
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.RELEASE_TAG }}
-          registry: ${{ secrets.IMAGE_REGISTRY }}
+          registry: quay.io/opdev
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
