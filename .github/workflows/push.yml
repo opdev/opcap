@@ -38,7 +38,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: quay.io/opdev/capabilities-tool
+          image: capabilities-tool
           tags: ${{ env.RELEASE_TAG }}
           archs: ${{ matrix.architecture }}
           build-args: |
@@ -51,7 +51,7 @@ jobs:
         id: push-image
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: quay.io/opdev/capabilities-tool
+          image:  ${{ steps.build-image.outputs.image }}
           tags: ${{ env.RELEASE_TAG }}
           registry: ${{ env.IMAGE_REGISTRY }}
           username: ${{ env.REGISTRY_USER }}
