@@ -33,11 +33,13 @@ Available Commands:
   index capabilities          Run checks for an operator bundle capability levels
 
 Flags:
-  --container-engine    podman/docker
+  --container-engine    specifies the container tool to use
   --output-path         path where results will be stored
   --bundle-image        image path of the bundle to be tested
+  --pull-secret-name    name of Kubernetes Secret to use for pulling registry images
   --bucket-name         minio bucket name where result will be stored
   --bundle-name         name of the bundle to be tested
+  --service-account     name of Kubernetes Service Account to use
   -h,--help             help for capabilities-tool
   -v,--version          version for capabilities-tool
 Use "capabilities-tool [command] --help" for more information about a command.

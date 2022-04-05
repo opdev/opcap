@@ -37,7 +37,7 @@ var flags = index.BindFlags{}
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "capabilities",
-		Short:   "",
+		Short:   "A utility that allows you to pre-test your operator bundles before submitting for Red Hat Certification.",
 		Long:    "",
 		PreRunE: validation,
 		RunE:    run,
@@ -50,23 +50,27 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flags.PackageName, "package-name", "",
-		"filter by the Package names which are like *filter-bundle*. Required for Operator Clean-up")
+		"filter by the Package names which are like *package-name*. Required for Operator Clean-up")
 	cmd.Flags().StringVar(&flags.BundleName, "bundle-name", "",
-		"filter by the Bundle names which are like *filter-bundle*")
+		"filter by the Bundle names which are like *bundle-name*")
 	cmd.Flags().StringVar(&flags.FilterBundle, "bundle-image", "",
-		"filter by the Bundle names which are like *filter-bundle*")
+		"filter by the Bundle names which are like *bundle-image*")
 	cmd.Flags().StringVar(&flags.OutputFormat, "output", pkg.JSON,
 		fmt.Sprintf("inform the output format. [Options: %s]", pkg.JSON))
 	cmd.Flags().StringVar(&flags.OutputPath, "output-path", currentPath,
 		"inform the path of the directory to output the report. (Default: current directory)")
-	cmd.Flags().StringVar(&flags.S3Bucket, "bucket-name", "", "")
-	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("MINIO_ENDPOINT", ""), "")
+	cmd.Flags().StringVar(&flags.S3Bucket, "bucket-name", "",
+		"minio bucket name where result will be stored")
+	cmd.Flags().StringVar(&flags.Endpoint, "endpoint", envy.Get("MINIO_ENDPOINT", ""), ""+
+		"minio endpoint where bucket will be created")
 	cmd.Flags().StringVar(&flags.ContainerEngine, "container-engine", pkg.Docker,
 		fmt.Sprintf("specifies the container tool to use. If not set, the default value is docker. "+
 			"Note that you can use the environment variable CONTAINER_ENGINE to inform this option. "+
 			"[Options: %s and %s]", pkg.Docker, pkg.Podman))
-	cmd.Flags().StringVar(&flags.PullSecretName, "pull-secret-name", "registry-pull-secret", "")
-	cmd.Flags().StringVar(&flags.ServiceAccount, "service-account", "default", "")
+	cmd.Flags().StringVar(&flags.PullSecretName, "pull-secret-name", "registry-pull-secret",
+		"Name of Kubernetes Secret to use for pulling registry images")
+	cmd.Flags().StringVar(&flags.ServiceAccount, "service-account", "default",
+		"Name of Kubernetes Service Account to use")
 
 	return cmd
 }
@@ -102,6 +106,7 @@ func run(cmd *cobra.Command, args []string) error {
 	reportData := index.Data{}
 	reportData.Flags = flags
 	pkg.GenerateTemporaryDirs()
+
 	var Bundle models.AuditCapabilities
 
 	log.Info("Deploying operator with operator-sdk...")
@@ -153,6 +158,3 @@ func run(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
-// TODO: add exit code for run bundle failure ---- DONE
-// TODO: change report name timestamp format to unix ---- DONE
