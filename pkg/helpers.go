@@ -147,7 +147,7 @@ func WriteDataToS3(filepath string, filename string, bucketname string, endpoint
 	sess, err := session.NewSession(&aws.Config{
 		Endpoint:         aws.String(endpoint),
 		Region:           aws.String("us-east-1"),
-		Credentials:      credentials.NewStaticCredentials(envy.Get("MINIO_ACCESS_KEY", ""), envy.Get("MINIO_SECRET_ACCESS_KEY", ""), ""),
+		Credentials:      credentials.NewStaticCredentials(envy.Get("MINIO_ACCESS_KEY_ID", ""), envy.Get("MINIO_SECRET_ACCESS_KEY", ""), ""),
 		DisableSSL:       aws.Bool(true),
 		S3ForcePathStyle: aws.Bool(true),
 	})

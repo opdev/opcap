@@ -6,15 +6,24 @@ requirements for [Operator Capabilities Level](https://sdk.operatorframework.io/
 
 This project is in active and rapid development! The current implementation check for level 1 capabilities only.
 
-## Requirements
+## Prerequisites
+
+- Create a secret with json credentials file to authenticate against registry.redhat.io and registry.connect.redhat.com
+- Create a secret with kubeconfig for the cluster
+
+## Deployment
+
+To deploy this project use the provided capabilities-tool-job.yaml manifest. Also create a config map `audit-env-var` with below mention environment variables.
+
+## Environment Variables
 
 The capabilities-tool binary currently requires that you have the following variables set in the environment
 
-| Name                    |            Value            | 
-|-------------------------|:---------------------------:| 
-| MINIO_ENDPOINT          |     Endpoint for Minio      |
-| MINIO_SECRET_ACCESS_KEY | Secret Access key for Minio |
-| MINIO_ACCESS_KEY        |    Access Key for Minio     |
+| Name                    |                    Value                     | 
+|-------------------------|:--------------------------------------------:|
+| MINIO_ENDPOINT          |      any non-SSL S3 compatible endpoint      |
+| MINIO_ACCESS_KEY        | the user/username to login to the S3 backend |
+| MINIO_SECRET_ACCESS_KEY |   the password to login to the S3 backend    |
 
 ## Usage
 
@@ -52,4 +61,4 @@ Example:
 capabilities-tool index capabilities --bucket-name=audit-tool-s3-bucket --bundle-image=registry.connect.redhat.com/minio/minio-operator1@sha256:357a5089b211e9653efff6cacc433633993cf3317dcca29eb54f924374b47b88 --bundle-name=minio-operator.v4.0.2
 ```
 
-//Test
+Note: this project is not intended to run by itself. To run the capabilities-tool CLI, use [Audit-tool-orchestrator](https://github.com/mrhillsman/audit-tool-orchestrator)
