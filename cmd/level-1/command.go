@@ -53,7 +53,7 @@ func NewCmd() *cobra.Command {
 		"filter by the Package names which are like *package-name*. Required for Operator Clean-up")
 	cmd.Flags().StringVar(&flags.BundleName, "bundle-name", "",
 		"filter by the Bundle names which are like *bundle-name*")
-	cmd.Flags().StringVar(&flags.BundleImage, "bundle-image", "",
+	cmd.Flags().StringVar(&flags.FilterBundle, "bundle-image", "",
 		"filter by the Bundle names which are like *bundle-image*")
 	cmd.Flags().StringVar(&flags.OutputFormat, "output", pkg.JSON,
 		fmt.Sprintf("inform the output format. [Options: %s]", pkg.JSON))
@@ -110,7 +110,7 @@ func run(cmd *cobra.Command, args []string) error {
 	var Bundle models.AuditCapabilities
 
 	log.Info("Deploying operator with operator-sdk...")
-	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.BundleImage, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
+	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.FilterBundle, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
 	runCommand, err := pkg.RunCommand(operatorsdk)
 
 	if err != nil {
@@ -119,7 +119,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	RBLogs := string(runCommand[:])
 	Bundle.InstallLogs = append(Bundle.InstallLogs, RBLogs)
-	Bundle.OperatorBundleImagePath = flags.BundleImage
+	Bundle.OperatorBundleImagePath = flags.FilterBundle
 	Bundle.OperatorBundleName = flags.BundleName
 
 	reportData.AuditCapabilities = append(reportData.AuditCapabilities, Bundle)
