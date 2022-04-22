@@ -1,7 +1,7 @@
 package capabilities
 
 import (
-	"capabilities-tool/pkg/models"
+	"opcap/pkg/models"
 )
 
 type Bundle struct {

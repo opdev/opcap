@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package capabilities
+package level_1
 
 import (
 	"fmt"
@@ -22,9 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"capabilities-tool/pkg"
-	"capabilities-tool/pkg/models"
-	index "capabilities-tool/pkg/reports/capabilities"
+	"opcap/pkg"
+	"opcap/pkg/models"
+	index "opcap/pkg/reports/capabilities"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -36,8 +36,8 @@ var flags = index.BindFlags{}
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "capabilities",
-		Short:   "A utility that allows you to pre-test your operator bundles before submitting for Red Hat Certification.",
+		Use:     "level-1",
+		Short:   "Checks for Operator Capability level 1, i.e Basic Install",
 		Long:    "",
 		PreRunE: validation,
 		RunE:    run,
@@ -53,7 +53,7 @@ func NewCmd() *cobra.Command {
 		"filter by the Package names which are like *package-name*. Required for Operator Clean-up")
 	cmd.Flags().StringVar(&flags.BundleName, "bundle-name", "",
 		"filter by the Bundle names which are like *bundle-name*")
-	cmd.Flags().StringVar(&flags.FilterBundle, "bundle-image", "",
+	cmd.Flags().StringVar(&flags.BundleImage, "bundle-image", "",
 		"filter by the Bundle names which are like *bundle-image*")
 	cmd.Flags().StringVar(&flags.OutputFormat, "output", pkg.JSON,
 		fmt.Sprintf("inform the output format. [Options: %s]", pkg.JSON))
@@ -101,7 +101,7 @@ func validation(cmd *cobra.Command, args []string) error {
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	log.Info("Running capabilities run function")
+	log.Info("Running operator capabilities level 1 checks")
 
 	reportData := index.Data{}
 	reportData.Flags = flags
@@ -110,7 +110,7 @@ func run(cmd *cobra.Command, args []string) error {
 	var Bundle models.AuditCapabilities
 
 	log.Info("Deploying operator with operator-sdk...")
-	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.FilterBundle, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
+	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.BundleImage, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
 	runCommand, err := pkg.RunCommand(operatorsdk)
 
 	if err != nil {
@@ -119,7 +119,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	RBLogs := string(runCommand[:])
 	Bundle.InstallLogs = append(Bundle.InstallLogs, RBLogs)
-	Bundle.OperatorBundleImagePath = flags.FilterBundle
+	Bundle.OperatorBundleImagePath = flags.BundleImage
 	Bundle.OperatorBundleName = flags.BundleName
 
 	reportData.AuditCapabilities = append(reportData.AuditCapabilities, Bundle)

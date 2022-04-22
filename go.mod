@@ -1,4 +1,4 @@
-module capabilities-tool
+module opcap
 
 go 1.17
 

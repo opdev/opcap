@@ -20,10 +20,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"capabilities-tool/pkg"
+	"opcap/pkg"
 )
 
-const catalogIndex = "audit-catalog-index"
+const catalogIndex = "audit-catalog-level-1"
 
 func ExtractIndexDB(image string, containerEngine string) error {
 	log.Info("Extracting database...")
@@ -39,10 +39,10 @@ func ExtractIndexDB(image string, containerEngine string) error {
 	}
 
 	// Extract
-	command = exec.Command(containerEngine, "cp", fmt.Sprintf("%s:/database/index.db", catalogIndex), "./output/")
+	command = exec.Command(containerEngine, "cp", fmt.Sprintf("%s:/database/level-1.db", catalogIndex), "./output/")
 	_, err = pkg.RunCommand(command)
 	if err != nil {
-		return fmt.Errorf("unable to extract the image for index.db %s : %s", image, err)
+		return fmt.Errorf("unable to extract the image for level-1.db %s : %s", image, err)
 	}
 	return nil
 }

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"capabilities-tool/pkg"
-	"capabilities-tool/pkg/models"
+	"opcap/pkg"
+	"opcap/pkg/models"
 
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"

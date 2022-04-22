@@ -3,7 +3,7 @@ package capabilities
 import (
 	"encoding/json"
 
-	"capabilities-tool/pkg"
+	"opcap/pkg"
 )
 
 type Report struct {
