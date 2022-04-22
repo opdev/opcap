@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package level_1
+package one
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ var flags = index.BindFlags{}
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "level-1",
+		Use:     "one",
 		Short:   "Checks for Operator Capability level 1, i.e Basic Install",
 		Long:    "",
 		PreRunE: validation,

@@ -16,7 +16,7 @@ package main
 
 import (
 	"log"
-	"opcap/cmd/level-1"
+	"opcap/cmd/one"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ func main() {
 		Long:  "",
 	}
 
-	rootCmd.AddCommand(level_1.NewCmd())
+	rootCmd.AddCommand(one.NewCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
