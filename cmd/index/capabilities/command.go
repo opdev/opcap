@@ -71,6 +71,8 @@ func NewCmd() *cobra.Command {
 		"Name of Kubernetes Secret to use for pulling registry images")
 	cmd.Flags().StringVar(&flags.ServiceAccount, "service-account", "default",
 		"Name of Kubernetes Service Account to use")
+	cmd.Flags().StringVar(&flags.NameSpace, "namespace", "default",
+		"Name of Kubernetes Namespace to use")
 
 	return cmd
 }
@@ -110,7 +112,7 @@ func run(cmd *cobra.Command, args []string) error {
 	var Bundle models.AuditCapabilities
 
 	log.Info("Deploying operator with operator-sdk...")
-	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.FilterBundle, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
+	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.FilterBundle, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m", "--namespace", flags.NameSpace)
 	runCommand, err := pkg.RunCommand(operatorsdk)
 
 	if err != nil {

@@ -17,4 +17,5 @@ type BindFlags struct {
 	PullSecretName string `json:"pullSecretName"`
 	ServiceAccount string `json:"serviceAccount"`
 	PackageName    string `json:"packageName,omitempty"`
+	NameSpace      string `json:"nameSpace,omitempty"`
 }

@@ -7,8 +7,8 @@ spec:
     spec:
       containers:
       - name: capabilities-tool
-        image: quay.io/opdev/capabilities-tool:v0.2.7
-        args: ["index","capabilities","--container-engine","podman","--output-path","/opt/capabilities-tool","--bundle-image","$(bundle_image)","--bucket-name","$(bucket_name)","--bundle-name","$(bundle_name)"]
+        image: quay.io/opdev/capabilities-tool:v1.0.1-test
+        args: ["index","capabilities","--container-engine","podman","--output-path","/opt/capabilities-tool","--bundle-image","$(bundle_image)","--bucket-name","$(bucket_name)","--bundle-name","$(bundle_name)","--namespace","$(namespace)"]
         env:
           - name: bucket_name
             valueFrom:
@@ -40,6 +40,11 @@ spec:
               configMapKeyRef:
                 name: audit-env-var
                 key: bundle_name
+          - name: namespace
+            valueFrom:
+              configMapKeyRef:
+                name: audit-env-var
+                key: namespace
         securityContext:
           privileged: true
         volumeMounts:
