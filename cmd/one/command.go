@@ -16,11 +16,12 @@ package one
 
 import (
 	"fmt"
-	"github.com/gobuffalo/envy"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/gobuffalo/envy"
 
 	"opcap/pkg"
 	"opcap/pkg/models"
@@ -71,6 +72,8 @@ func NewCmd() *cobra.Command {
 		"Name of Kubernetes Secret to use for pulling registry images")
 	cmd.Flags().StringVar(&flags.ServiceAccount, "service-account", "default",
 		"Name of Kubernetes Service Account to use")
+	cmd.Flags().StringVar(&flags.InstallMode, "install-mode", "AllNamespaces",
+		"Install mode for installing the operator. Accepts following strings as input `MultiNamespace=ns1,ns2 | AllNamespace | OwnNamespace | SingleNamespace=ns1`")
 
 	return cmd
 }
@@ -110,7 +113,7 @@ func run(cmd *cobra.Command, args []string) error {
 	var Bundle models.AuditCapabilities
 
 	log.Info("Deploying operator with operator-sdk...")
-	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.FilterBundle, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m")
+	operatorsdk := exec.Command("operator-sdk", "run", "bundle", flags.FilterBundle, "--pull-secret-name", flags.PullSecretName, "--timeout", "5m", "--install-mode", flags.InstallMode)
 	runCommand, err := pkg.RunCommand(operatorsdk)
 
 	if err != nil {

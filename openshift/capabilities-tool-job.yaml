@@ -8,7 +8,7 @@ spec:
       containers:
       - name: opcap
         image: quay.io/opdev/opcap:v0.0.1
-        args: ["one","--container-engine","podman","--output-path","/opt/capabilities-tool","--bundle-image","$(bundle_image)","--bucket-name","$(bucket_name)","--bundle-name","$(bundle_name)"]
+        args: ["one","--container-engine","podman","--output-path","/opt/capabilities-tool","--bundle-image","$(bundle_image)","--bucket-name","$(bucket_name)","--bundle-name","$(bundle_name)","--install-mode","$(installMode)"]
         env:
           - name: bucket_name
             valueFrom:
@@ -40,6 +40,11 @@ spec:
               configMapKeyRef:
                 name: audit-env-var
                 key: bundle_name
+          - name: installMode
+            valueFrom:
+              configMapKeyRef:
+                name: audit-env-var
+                key: installMode
         securityContext:
           privileged: true
         volumeMounts:
