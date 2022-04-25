@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package capabilities
+package one
 
 import (
 	"fmt"
@@ -22,9 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"capabilities-tool/pkg"
-	"capabilities-tool/pkg/models"
-	index "capabilities-tool/pkg/reports/capabilities"
+	"opcap/pkg"
+	"opcap/pkg/models"
+	index "opcap/pkg/reports/capabilities"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -36,8 +36,8 @@ var flags = index.BindFlags{}
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "capabilities",
-		Short:   "A utility that allows you to pre-test your operator bundles before submitting for Red Hat Certification.",
+		Use:     "one",
+		Short:   "Checks for Operator Capability level 1, i.e Basic Install",
 		Long:    "",
 		PreRunE: validation,
 		RunE:    run,
@@ -101,7 +101,7 @@ func validation(cmd *cobra.Command, args []string) error {
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	log.Info("Running capabilities run function")
+	log.Info("Running operator capabilities level 1 checks")
 
 	reportData := index.Data{}
 	reportData.Flags = flags

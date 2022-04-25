@@ -9,7 +9,7 @@ type BindFlags struct {
 	Endpoint string `json:"endpoint"`
 	S3Bucket string `json:"s3Bucket"`
 	//Filter          string `json:"filter"`
-	FilterBundle    string `json:"filterBundle"`
+	FilterBundle    string `json:"FilterBundle"`
 	OutputPath      string `json:"outputPath"`
 	OutputFormat    string `json:"outputFormat"`
 	ContainerEngine string `json:"containerEngine"`
