@@ -10,6 +10,7 @@ require (
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/operator-framework/operator-registry v1.22.0 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2 // indirect
 	google.golang.org/grpc v1.46.0 // indirect
 )

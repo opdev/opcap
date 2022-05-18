@@ -1,5 +1,25 @@
 package operator
 
+import (
+	"fmt"
+	"os"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+// NewClient
+func GetK8sClient() *kubernetes.Clientset {
+	// create k8s client
+	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		_ = fmt.Errorf("unable to build config from flags: %v", err)
+	}
+	clientset, _ := kubernetes.NewForConfig(cfg)
+
+	return clientset
+}
+
 // GetPackageManifests
 
 // CreateNamespace
