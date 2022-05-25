@@ -9,9 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"context"
-
-	"github.com/operator-framework/operator-registry/pkg/client"
+	"opcap/internal/operator"
 )
 
 // checkCmd represents the check command
@@ -26,21 +24,21 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
-		c, err := client.NewClient("localhost:50051")
-		if err != nil {
-			fmt.Println(err)
-		}
-		bundles, err := c.ListBundles(context.Background())
-		if err != nil {
-			fmt.Println(err)
-		}
-		for {
-			b := bundles.Next()
-			if b == nil {
-				break
-			}
-			fmt.Println(b.CsvName)
-		}
+		// subClient, err := opcap.SubscriptionClient("test")
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// subList := operator.NewSubscriptionList()
+		// for _, subscription := range *subList {
+		// 	_, err = subClient.Create(context.Background(), subscription)
+		// 	if err != nil {
+		// 		log.Fatal(err)
+		// 	}
+		// 	fmt.Println("Test subscription created successfully")
+		// }
+
+		operator.BundleList()
+
 	},
 }
 

@@ -29,6 +29,18 @@ type SubscriptionData struct {
 	Package                string
 }
 
+func NewSubscriptionList() *[]SubscriptionData {
+
+	s := &[]SubscriptionData{{
+		Name:                   "subscription-test",
+		Channel:                "stable",
+		CatalogSource:          "certified-operators",
+		CatalogSourceNamespace: "openshift-marketplace",
+		Package:                "gpu-operator-certified",
+	}}
+	return s
+}
+
 func (c subscriptionClient) Create(ctx context.Context, data SubscriptionData) (*operatorv1alpha1.Subscription, error) {
 	subscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
