@@ -7,9 +7,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"opcap/internal/operator"
+
+	"github.com/spf13/cobra"
 )
 
 // checkCmd represents the check command
@@ -24,21 +24,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
-		// subClient, err := opcap.SubscriptionClient("test")
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// subList := operator.NewSubscriptionList()
-		// for _, subscription := range *subList {
-		// 	_, err = subClient.Create(context.Background(), subscription)
-		// 	if err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// 	fmt.Println("Test subscription created successfully")
-		// }
-
-		operator.BundleList()
-
+		operator.InstallOperatorsTest("certified-operators", "openshift-marketplace")
 	},
 }
 

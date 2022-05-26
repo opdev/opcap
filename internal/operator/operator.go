@@ -55,21 +55,57 @@ func DeleteNamespace(ctx context.Context, name string) error {
 	return nil
 }
 
-// CreateOperatorGroup
+// TODO: InstallOperatorsTest creates all subscriptions for a catalogSource sequencially
+// We will need other arguments that can tweak how many to test at a time
+// And possibly indicate a specific condition
 
-// CreateSubscription
+func InstallOperatorsTest(catalogSource string, catalogSourceNamespace string) error {
 
-// ApproveInstallPlan
+	s := subscriptions(catalogSource, catalogSourceNamespace)
 
-// GetCSVStatus
+	c, err := SubscriptionClient("test")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// OperatorCleanUp
+	for _, subscription := range s {
 
-// // DeleteSubscription
+		// TODO: implement this with goroutines for concurrent testing
+		// TODO: transform subscriptions list in a queuing mechanism
+		// for the test work. Run all individual tests under the umbrella
+		// of it's operator dedicated goroutine
+		installOperator(subscription, c)
 
-// // DeleteOperatorGroup
+	}
 
-// // DeleteNamespace
+	return nil
+}
+
+func installOperator(s SubscriptionData, c *subscriptionClient) error {
+
+	// create operatorGroup per operator package/channel
+
+	// create subscription per operator package/channel
+	_, err := c.CreateSubscription(context.Background(), s)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Test subscription for %s created successfully\n", s.Name)
+
+	// check/approve install plan
+
+	// check CSV/operator status
+
+	// generate and send report
+
+	// delete subscription
+
+	// delete operator group
+
+	// delete namespace ?
+
+	return nil
+}
 
 // Installer:
 // 1. openshift-install create cluster --install-config myfile.yaml

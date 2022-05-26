@@ -3,14 +3,15 @@ package operator
 import (
 	"context"
 
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+
+	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // operator client
@@ -29,19 +30,39 @@ type SubscriptionData struct {
 	Package                string
 }
 
-func NewSubscriptionList() *[]SubscriptionData {
+// SubscriptionList represent the set of operators
+// to be installed and tested
+// It's a unique list of package/channels for operator install
+func subscriptions(catalogSource string, catalogSourceNamespace string) []SubscriptionData {
 
-	s := &[]SubscriptionData{{
-		Name:                   "subscription-test",
-		Channel:                "stable",
-		CatalogSource:          "certified-operators",
-		CatalogSourceNamespace: "openshift-marketplace",
-		Package:                "gpu-operator-certified",
-	}}
-	return s
+	SubscriptionList := []SubscriptionData{}
+
+	for _, b := range bundleList() {
+		s := SubscriptionData{
+			Name:                   strings.Join([]string{b.PackageName, b.ChannelName, "subscription"}, "-"),
+			Channel:                b.ChannelName,
+			CatalogSource:          catalogSource,
+			CatalogSourceNamespace: catalogSourceNamespace,
+			Package:                b.PackageName,
+		}
+		SubscriptionList = append(SubscriptionList, s)
+	}
+	return uniqueElementsOf(SubscriptionList)
 }
 
-func (c subscriptionClient) Create(ctx context.Context, data SubscriptionData) (*operatorv1alpha1.Subscription, error) {
+func uniqueElementsOf(s []SubscriptionData) []SubscriptionData {
+	unique := make(map[SubscriptionData]bool, len(s))
+	uniqueSubscriptionData := make([]SubscriptionData, len(unique))
+	for _, elem := range s {
+		if !unique[elem] {
+			uniqueSubscriptionData = append(uniqueSubscriptionData, elem)
+			unique[elem] = true
+		}
+	}
+	return uniqueSubscriptionData
+}
+
+func (c subscriptionClient) CreateSubscription(ctx context.Context, data SubscriptionData) (*operatorv1alpha1.Subscription, error) {
 	subscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: data.Name,
@@ -57,7 +78,7 @@ func (c subscriptionClient) Create(ctx context.Context, data SubscriptionData) (
 	return subscription, err
 }
 
-func (c subscriptionClient) Delete(ctx context.Context, name string) error {
+func (c subscriptionClient) DeleteSubscription(ctx context.Context, name string) error {
 	subscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -66,7 +87,7 @@ func (c subscriptionClient) Delete(ctx context.Context, name string) error {
 	return c.client.Delete(ctx, subscription)
 }
 
-func (c subscriptionClient) Get(ctx context.Context, name string) (*operatorv1alpha1.Subscription, error) {
+func (c subscriptionClient) GetSubscription(ctx context.Context, name string) (*operatorv1alpha1.Subscription, error) {
 	subscription := &operatorv1alpha1.Subscription{}
 	err := c.client.Get(ctx, runtimeclient.ObjectKey{
 		Name: name,
@@ -83,7 +104,7 @@ func SubscriptionClient(namespace string) (*subscriptionClient, error) {
 		log.Error("could not get kubeconfig")
 		return nil, err
 	}
-	client, err := client.New(kubeconfig, runtimeclient.Options{Scheme: scheme})
+	client, err := runtimeclient.New(kubeconfig, runtimeclient.Options{Scheme: scheme})
 	if err != nil {
 		log.Error("could not get subscription client")
 		return nil, err

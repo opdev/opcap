@@ -12,7 +12,7 @@ require (
 )
 
 require (
-	github.com/operator-framework/api v0.14.0
+	github.com/operator-framework/api v0.15.0
 	k8s.io/api v0.24.0
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
