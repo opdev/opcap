@@ -2,9 +2,7 @@ package operator
 
 import (
 	"context"
-	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,11 +24,11 @@ func (oe operatorClient) CreateSecret(ctx context.Context, name string, content 
 	}
 	err := oe.Client.Create(ctx, &secret, &runtimeClient.CreateOptions{})
 	if err != nil {
-		log.Error(fmt.Errorf("%w: error while creating secret: %s in namespace: %s", err, name, namespace))
+		logger.Errorf("%w: error while creating secret: %s in namespace: %s", err, name, namespace)
 		return nil, err
 	}
 
-	log.Debugf("Secret %s created successfully in namespace %s", name, namespace)
+	logger.Infof("Secret %s created successfully in namespace %s", name, namespace)
 	return &secret, nil
 }
 
@@ -41,6 +39,6 @@ func (oe operatorClient) DeleteSecret(ctx context.Context, name string, namespac
 			Namespace: namespace,
 		},
 	}
-	log.Debugf("Deleting secret %s from namespace %s", name, namespace)
+	logger.Infof("Deleting secret %s from namespace %s", name, namespace)
 	return oe.Client.Delete(ctx, &secret, &runtimeClient.DeleteOptions{})
 }

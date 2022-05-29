@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	log "opcap/internal/logger"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+var logger = log.Sugar
 
 // NewClient
 func GetK8sClient() *kubernetes.Clientset {
@@ -36,22 +39,22 @@ func CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error
 	}
 	_, err := operatorClient.CoreV1().Namespaces().Create(ctx, &nsSpec, metav1.CreateOptions{})
 	if err != nil {
-		log.Error(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
+		logger.Error(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
 		return nil, err
 	}
-	log.Info("Namespace Created: ", name)
+	logger.Info("Namespace Created: ", name)
 	return &nsSpec, nil
 }
 
 func DeleteNamespace(ctx context.Context, name string) error {
 	operatorClient := GetK8sClient()
-	log.Debugf("Deleting namespace: %s", name)
+	logger.Debugf("Deleting namespace: %s", name)
 	err := operatorClient.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
-		log.Error(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
+		logger.Error(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
 		return err
 	}
-	log.Info("Namespace Deleted: ", name)
+	logger.Info("Namespace Deleted: ", name)
 	return nil
 }
 
@@ -65,7 +68,7 @@ func InstallOperatorsTest(catalogSource string, catalogSourceNamespace string) e
 
 	c, err := SubscriptionClient("test")
 	if err != nil {
-		log.Fatal(err)
+		log.Sugar.Fatal(err)
 	}
 
 	for _, subscription := range s {
@@ -88,7 +91,7 @@ func installOperator(s SubscriptionData, c *subscriptionClient) error {
 	// create subscription per operator package/channel
 	_, err := c.CreateSubscription(context.Background(), s)
 	if err != nil {
-		log.Fatal(err)
+		log.Sugar.Fatal(err)
 	}
 	fmt.Printf("Test subscription for %s created successfully\n", s.Name)
 

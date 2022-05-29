@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -101,12 +100,12 @@ func SubscriptionClient(namespace string) (*subscriptionClient, error) {
 	operatorv1alpha1.AddToScheme(scheme)
 	kubeconfig, err := ctrl.GetConfig()
 	if err != nil {
-		log.Error("could not get kubeconfig")
+		logger.Error("could not get kubeconfig")
 		return nil, err
 	}
 	client, err := runtimeclient.New(kubeconfig, runtimeclient.Options{Scheme: scheme})
 	if err != nil {
-		log.Error("could not get subscription client")
+		logger.Error("could not get subscription client")
 		return nil, err
 	}
 
