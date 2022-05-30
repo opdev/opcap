@@ -15,7 +15,7 @@ func InstallOperatorsTest(catalogSource string, catalogSourceNamespace string) e
 
 	s := subscriptions(catalogSource, catalogSourceNamespace)
 
-	c, err := SubscriptionClient("test")
+	c, err := NewClient()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,12 +33,12 @@ func InstallOperatorsTest(catalogSource string, catalogSourceNamespace string) e
 	return nil
 }
 
-func installOperator(s SubscriptionData, c *subscriptionClient) error {
+func installOperator(s SubscriptionData, c Client) error {
 
 	// create operatorGroup per operator package/channel
 
 	// create subscription per operator package/channel
-	_, err := c.CreateSubscription(context.Background(), s)
+	_, err := c.CreateSubscription(context.Background(), s, "test")
 	if err != nil {
 		log.Fatal(err)
 	}

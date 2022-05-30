@@ -5,33 +5,14 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	apiruntime "k8s.io/apimachinery/pkg/runtime"
 
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type operatorClient struct {
-	Client runtimeClient.Client
-}
-
-func NewClient(client runtimeClient.Client) Client {
-	var osclient Client = &operatorClient{
-		Client: client,
-	}
-	return osclient
-}
-
-func AddSchemes(scheme *apiruntime.Scheme) error {
-	if err := operatorv1.AddToScheme(scheme); err != nil {
-		return err
-	}
-	if err := operatorv1alpha1.AddToScheme(scheme); err != nil {
-		return err
-	}
-	return nil
+type OperatorGroupData struct {
+	Name             string
+	TargetNamespaces []string
 }
 
 func (oe *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error) {
