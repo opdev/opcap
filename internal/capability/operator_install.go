@@ -1,8 +1,9 @@
-package operator
+package capability
 
 import (
 	"context"
 	"fmt"
+	"opcap/internal/operator"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -11,11 +12,11 @@ import (
 // We will need other arguments that can tweak how many to test at a time
 // And possibly indicate a specific condition
 
-func InstallOperatorsTest(catalogSource string, catalogSourceNamespace string) error {
+func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
 
-	s := subscriptions(catalogSource, catalogSourceNamespace)
+	s := operator.Subscriptions(catalogSource, catalogSourceNamespace)
 
-	c, err := NewClient()
+	c, err := operator.NewClient()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,14 +27,14 @@ func InstallOperatorsTest(catalogSource string, catalogSourceNamespace string) e
 		// TODO: transform subscriptions list in a queuing mechanism
 		// for the test work. Run all individual tests under the umbrella
 		// of it's operator dedicated goroutine
-		installOperator(subscription, c)
+		OperatorInstall(subscription, c)
 
 	}
 
 	return nil
 }
 
-func installOperator(s SubscriptionData, c Client) error {
+func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
 	// create operatorGroup per operator package/channel
 

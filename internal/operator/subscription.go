@@ -22,7 +22,7 @@ type SubscriptionData struct {
 // SubscriptionList represent the set of operators
 // to be installed and tested
 // It's a unique list of package/channels for operator install
-func subscriptions(catalogSource string, catalogSourceNamespace string) []SubscriptionData {
+func Subscriptions(catalogSource string, catalogSourceNamespace string) []SubscriptionData {
 
 	SubscriptionList := []SubscriptionData{}
 
