@@ -53,8 +53,8 @@ func NewClient() (Client, error) {
 		return nil, err
 	}
 
-	var osclient Client = &operatorClient{
+	var operatorClient Client = &operatorClient{
 		Client: client,
 	}
-	return osclient, nil
+	return operatorClient, nil
 }
