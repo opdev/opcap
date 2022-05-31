@@ -5,36 +5,17 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	apiruntime "k8s.io/apimachinery/pkg/runtime"
 
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type operatorClient struct {
-	Client runtimeClient.Client
+type OperatorGroupData struct {
+	Name             string
+	TargetNamespaces []string
 }
 
-func NewClient(client runtimeClient.Client) Client {
-	var osclient Client = &operatorClient{
-		Client: client,
-	}
-	return osclient
-}
-
-func AddSchemes(scheme *apiruntime.Scheme) error {
-	if err := operatorv1.AddToScheme(scheme); err != nil {
-		return err
-	}
-	if err := operatorv1alpha1.AddToScheme(scheme); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (oe *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error) {
+func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error) {
 	log.Infof("Creating OperatorGroup %s in namespace %s", data.Name, namespace)
 	operatorGroup := &operatorv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
@@ -45,7 +26,7 @@ func (oe *operatorClient) CreateOperatorGroup(ctx context.Context, data Operator
 			TargetNamespaces: data.TargetNamespaces,
 		},
 	}
-	err := oe.Client.Create(ctx, operatorGroup)
+	err := o.Client.Create(ctx, operatorGroup)
 	if err != nil {
 		log.Error(fmt.Errorf("%w: error while creating OperatorGroup: %s", err, data.Name))
 		return nil, err
@@ -55,7 +36,7 @@ func (oe *operatorClient) CreateOperatorGroup(ctx context.Context, data Operator
 	return operatorGroup, nil
 }
 
-func (oe *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, namespace string) error {
+func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, namespace string) error {
 	log.Infof("Deleting OperatorGroup %s in namespace %s", name, namespace)
 	operatorGroup := operatorv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
@@ -63,7 +44,7 @@ func (oe *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, 
 			Namespace: namespace,
 		},
 	}
-	err := oe.Client.Delete(ctx, &operatorGroup)
+	err := o.Client.Delete(ctx, &operatorGroup)
 	if err != nil {
 		log.Error(fmt.Errorf("%w: error while deleting OperatorGroup: %s in namespace: %s", err, name, namespace))
 		return err

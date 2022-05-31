@@ -2,25 +2,19 @@ package operator
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 
 	"strings"
 
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"fmt"
 
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	registryApi "github.com/operator-framework/operator-registry/pkg/api"
+	registryClient "github.com/operator-framework/operator-registry/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-// operator client
-// NewSubscrition
-// client.create(NewSubscription)
-
-type subscriptionClient struct {
-	client runtimeclient.Client
-}
 
 type SubscriptionData struct {
 	Name                   string
@@ -33,11 +27,12 @@ type SubscriptionData struct {
 // SubscriptionList represent the set of operators
 // to be installed and tested
 // It's a unique list of package/channels for operator install
-func subscriptions(catalogSource string, catalogSourceNamespace string) []SubscriptionData {
+func Subscriptions(catalogSource string, catalogSourceNamespace string) []SubscriptionData {
 
 	SubscriptionList := []SubscriptionData{}
 
 	for _, b := range bundleList() {
+
 		s := SubscriptionData{
 			Name:                   strings.Join([]string{b.PackageName, b.ChannelName, "subscription"}, "-"),
 			Channel:                b.ChannelName,
@@ -62,10 +57,37 @@ func uniqueElementsOf(s []SubscriptionData) []SubscriptionData {
 	return uniqueSubscriptionData
 }
 
-func (c subscriptionClient) CreateSubscription(ctx context.Context, data SubscriptionData) (*operatorv1alpha1.Subscription, error) {
+func InstallModesForSubscription(s SubscriptionData) []operatorv1alpha1.InstallMode {
+
+	c, err := registryClient.NewClient("localhost:50051")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	bundleInChannelRequest := registryApi.GetBundleInChannelRequest{
+		PkgName:     s.Package,
+		ChannelName: s.Channel,
+	}
+
+	bundleInChannel, err := c.Registry.GetBundleForChannel(context.Background(), &bundleInChannelRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	csv := operatorv1alpha1.ClusterServiceVersion{}
+	err = json.Unmarshal([]byte(bundleInChannel.CsvJson), &csv)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return csv.Spec.InstallModes
+}
+
+func (c operatorClient) CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error) {
 	subscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: data.Name,
+			Name:      data.Name,
+			Namespace: namespace,
 		},
 		Spec: &operatorv1alpha1.SubscriptionSpec{
 			CatalogSource:          data.CatalogSource,
@@ -74,43 +96,26 @@ func (c subscriptionClient) CreateSubscription(ctx context.Context, data Subscri
 			Package:                data.Package,
 		},
 	}
-	err := c.client.Create(ctx, subscription)
+	err := c.Client.Create(ctx, subscription)
 	return subscription, err
 }
 
-func (c subscriptionClient) DeleteSubscription(ctx context.Context, name string) error {
+func (c operatorClient) DeleteSubscription(ctx context.Context, name string, namespace string) error {
 	subscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: namespace,
 		},
 	}
-	return c.client.Delete(ctx, subscription)
+	return c.Client.Delete(ctx, subscription)
 }
 
-func (c subscriptionClient) GetSubscription(ctx context.Context, name string) (*operatorv1alpha1.Subscription, error) {
+func (c operatorClient) GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error) {
 	subscription := &operatorv1alpha1.Subscription{}
-	err := c.client.Get(ctx, runtimeclient.ObjectKey{
-		Name: name,
+	err := c.Client.Get(ctx, runtimeclient.ObjectKey{
+		Name:      name,
+		Namespace: namespace,
 	}, subscription)
 
 	return subscription, err
-}
-
-func SubscriptionClient(namespace string) (*subscriptionClient, error) {
-	scheme := runtime.NewScheme()
-	operatorv1alpha1.AddToScheme(scheme)
-	kubeconfig, err := ctrl.GetConfig()
-	if err != nil {
-		log.Error("could not get kubeconfig")
-		return nil, err
-	}
-	client, err := runtimeclient.New(kubeconfig, runtimeclient.Options{Scheme: scheme})
-	if err != nil {
-		log.Error("could not get subscription client")
-		return nil, err
-	}
-
-	return &subscriptionClient{
-		client: runtimeclient.NewNamespacedClient(client, namespace),
-	}, nil
 }
