@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"opcap/internal/operator"
+	"strings"
 
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,23 +25,71 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 
 	for _, subscription := range s {
 
-		// TODO: implement this with goroutines for concurrent testing
-		// TODO: transform subscriptions list in a queuing mechanism
-		// for the test work. Run all individual tests under the umbrella
-		// of it's operator dedicated goroutine
-		OperatorInstall(subscription, c)
+		for _, installMode := range operator.InstallModesForSubscription(subscription) {
+			if installMode.Supported {
 
+				// TODO: implement this with goroutines for concurrent testing
+				// TODO: transform subscriptions list in a queuing mechanism
+				// for the test work. Run all individual tests under the umbrella
+				// of it's operator dedicated goroutine
+				OperatorInstall(subscription, c, installMode)
+			}
+		}
 	}
 
 	return nil
 }
 
-func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
+func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode operatorv1alpha1.InstallMode) error {
 
-	// create operatorGroup per operator package/channel
+	// create operator namespace
+	namespace := strings.Join([]string{"opcap", s.Package, s.Channel, strings.ToLower(string(installMode.Type))}, "-")
+	targetNs1 := strings.Join([]string{namespace, "targetNs1"}, "-")
+	targetNs2 := strings.Join([]string{namespace, "targetNs2"}, "-")
+
+	operator.CreateNamespace(context.Background(), namespace)
+
+	// Checking install modes and
+	// creating operatorGroup per operator package/channel
+	switch installMode.Type {
+
+	case operatorv1alpha1.InstallModeTypeAllNamespaces:
+		opGroupData := operator.OperatorGroupData{
+			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			TargetNamespaces: []string{},
+		}
+		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
+
+	case operatorv1alpha1.InstallModeTypeSingleNamespace:
+
+		operator.CreateNamespace(context.Background(), targetNs1)
+		opGroupData := operator.OperatorGroupData{
+			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			TargetNamespaces: []string{targetNs1},
+		}
+		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
+
+	case operatorv1alpha1.InstallModeTypeOwnNamespace:
+		opGroupData := operator.OperatorGroupData{
+			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			TargetNamespaces: []string{namespace},
+		}
+		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
+
+	case operatorv1alpha1.InstallModeTypeMultiNamespace:
+
+		operator.CreateNamespace(context.Background(), targetNs1)
+		operator.CreateNamespace(context.Background(), targetNs2)
+		opGroupData := operator.OperatorGroupData{
+			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			TargetNamespaces: []string{targetNs1, targetNs2},
+		}
+		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
+
+	}
 
 	// create subscription per operator package/channel
-	_, err := c.CreateSubscription(context.Background(), s, "test")
+	_, err := c.CreateSubscription(context.Background(), s, namespace)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +105,10 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
 	// delete operator group
 
-	// delete namespace ?
+	// delete namespaces
+	// operator.DeleteNamespace(context.Background(), namespace)
+	// operator.DeleteNamespace(context.Background(), targetNs1)
+	// operator.DeleteNamespace(context.Background(), targetNs2)
 
 	return nil
 }

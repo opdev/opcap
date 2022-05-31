@@ -2,12 +2,17 @@ package operator
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 
 	"strings"
 
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"fmt"
 
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	registryApi "github.com/operator-framework/operator-registry/pkg/api"
+	registryClient "github.com/operator-framework/operator-registry/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -27,6 +32,7 @@ func Subscriptions(catalogSource string, catalogSourceNamespace string) []Subscr
 	SubscriptionList := []SubscriptionData{}
 
 	for _, b := range bundleList() {
+
 		s := SubscriptionData{
 			Name:                   strings.Join([]string{b.PackageName, b.ChannelName, "subscription"}, "-"),
 			Channel:                b.ChannelName,
@@ -49,6 +55,32 @@ func uniqueElementsOf(s []SubscriptionData) []SubscriptionData {
 		}
 	}
 	return uniqueSubscriptionData
+}
+
+func InstallModesForSubscription(s SubscriptionData) []operatorv1alpha1.InstallMode {
+
+	c, err := registryClient.NewClient("localhost:50051")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	bundleInChannelRequest := registryApi.GetBundleInChannelRequest{
+		PkgName:     s.Package,
+		ChannelName: s.Channel,
+	}
+
+	bundleInChannel, err := c.Registry.GetBundleForChannel(context.Background(), &bundleInChannelRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	csv := operatorv1alpha1.ClusterServiceVersion{}
+	err = json.Unmarshal([]byte(bundleInChannel.CsvJson), &csv)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return csv.Spec.InstallModes
 }
 
 func (c operatorClient) CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error) {

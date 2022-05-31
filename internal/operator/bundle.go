@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"log"
 
 	registryApi "github.com/operator-framework/operator-registry/pkg/api"
 	registryClient "github.com/operator-framework/operator-registry/pkg/client"
@@ -24,6 +25,7 @@ func bundleList() []registryApi.Bundle {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	bundleIterator, err := c.ListBundles(context.Background())
 	if err != nil {
 		fmt.Println(err)
@@ -40,4 +42,27 @@ func bundleList() []registryApi.Bundle {
 		bundles = append(bundles, *b)
 	}
 	return bundles
+}
+
+func packageList(bundles []registryApi.Bundle) {
+
+	c, err := registryClient.NewClient("localhost:50051")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, b := range bundles {
+		bicr := registryApi.GetBundleInChannelRequest{
+			PkgName:     b.PackageName,
+			ChannelName: b.ChannelName,
+		}
+
+		b2, err := c.Registry.GetBundleForChannel(context.Background(), &bicr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(b2)
+
+	}
+
 }
