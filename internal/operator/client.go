@@ -22,6 +22,7 @@ type Client interface {
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
+	InstallPlanApprove(namespace string) error
 }
 
 type operatorClient struct {
