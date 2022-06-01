@@ -42,11 +42,12 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 
 func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode operatorv1alpha1.InstallMode) error {
 
-	// create operator namespace
 	namespace := strings.Join([]string{"opcap", s.Package, s.Channel, strings.ToLower(string(installMode.Type))}, "-")
 	targetNs1 := strings.Join([]string{namespace, "targetNs1"}, "-")
 	targetNs2 := strings.Join([]string{namespace, "targetNs2"}, "-")
+	operatorGroup := strings.Join([]string{s.Name, s.Channel, "group"}, "-")
 
+	// create operator namespace
 	operator.CreateNamespace(context.Background(), namespace)
 
 	// Checking install modes and
@@ -55,7 +56,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 
 	case operatorv1alpha1.InstallModeTypeAllNamespaces:
 		opGroupData := operator.OperatorGroupData{
-			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			Name:             operatorGroup,
 			TargetNamespaces: []string{},
 		}
 		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
@@ -64,14 +65,14 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 
 		operator.CreateNamespace(context.Background(), targetNs1)
 		opGroupData := operator.OperatorGroupData{
-			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			Name:             operatorGroup,
 			TargetNamespaces: []string{targetNs1},
 		}
 		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
 
 	case operatorv1alpha1.InstallModeTypeOwnNamespace:
 		opGroupData := operator.OperatorGroupData{
-			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			Name:             operatorGroup,
 			TargetNamespaces: []string{namespace},
 		}
 		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
@@ -81,7 +82,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 		operator.CreateNamespace(context.Background(), targetNs1)
 		operator.CreateNamespace(context.Background(), targetNs2)
 		opGroupData := operator.OperatorGroupData{
-			Name:             strings.Join([]string{s.Name, s.Channel, "group"}, "-"),
+			Name:             operatorGroup,
 			TargetNamespaces: []string{targetNs1, targetNs2},
 		}
 		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
@@ -96,49 +97,32 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 	fmt.Printf("Test subscription for %s created successfully\n", s.Name)
 
 	// check/approve install plan
+	// TODO: check the name standard for installPlan
+	err = c.InstallPlanApprove(namespace)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// check CSV/operator status
 
 	// generate and send report
 
 	// delete subscription
+	err = c.DeleteSubscription(context.Background(), s.Name, namespace)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// delete operator group
+	err = c.DeleteOperatorGroup(context.Background(), operatorGroup, namespace)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// delete namespaces
-	// operator.DeleteNamespace(context.Background(), namespace)
-	// operator.DeleteNamespace(context.Background(), targetNs1)
-	// operator.DeleteNamespace(context.Background(), targetNs2)
+	operator.DeleteNamespace(context.Background(), namespace)
+	operator.DeleteNamespace(context.Background(), targetNs1)
+	operator.DeleteNamespace(context.Background(), targetNs2)
 
 	return nil
 }
-
-// Installer:
-// 1. openshift-install create cluster --install-config myfile.yaml
-// 2. wait for install to complete
-//
-// ---- for each operator on queue ----
-//
-// Bundle:
-// 3. run bundle (create operator group, subscription, approve install plan)
-// 4. wait for operator to be ready - check CSV to be ready
-//
-// CR:
-// 5. create CR
-// 6. wait for CR to be ready
-//
-// CAPABILITY:
-// 7. run tests (split multiple times in each of the 5 levels)
-// 8. retrieve data
-// 9. repeat until finish
-//
-// REPORT:
-// 10. generate and publish report
-//
-// CLEAN UP OPERATOR:
-// 11. clean up operator and operand
-//
-// ---- go next until queue is complete ---
-//
-// DELETE CLUSTER:
-// 12. clean up cluster and exit
