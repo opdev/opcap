@@ -26,7 +26,11 @@ func (c operatorClient) InstallPlanApprove(namespace string) error {
 
 	// TODO: create a custom error for this
 	if len(installPlanList.Items) > 1 {
-		log.Fatal("More than one installPlan found in dedicated namespace.")
+		return fmt.Errorf("more than one installPlan found in dedicated namespace. %s", fmt.Sprint(len(installPlanList.Items)))
+	}
+
+	if len(installPlanList.Items) == 0 {
+		return fmt.Errorf("no installPlan found in namespace %s", fmt.Sprint(len(installPlanList.Items)))
 	}
 
 	installPlan := operatorv1alpha1.InstallPlan{}
