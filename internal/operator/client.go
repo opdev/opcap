@@ -3,7 +3,6 @@ package operator
 import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -24,10 +23,8 @@ type Client interface {
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
 	InstallPlanApprove(namespace string) error
-	GetCSVPhase(namespace string) (operatorv1alpha1.ClusterServiceVersionPhase, error)
 	WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
-	GetInstalledCSV(ctx context.Context, namespace string) (*operatorv1alpha1.ClusterServiceVersion, error)
-	DoCSVWait(ctx context.Context, key types.NamespacedName) error
+	CSVSuceededOnNamespace(namespace string) (*operatorv1alpha1.ClusterServiceVersion, error)
 }
 
 type operatorClient struct {
