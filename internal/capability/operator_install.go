@@ -98,13 +98,6 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 	if err = c.WaitForInstallPlan(context.Background(), sub); err != nil {
 		log.Error(err)
 	}
-
-	_, err = c.GetInstalledCSV(context.Background(), namespace)
-	if err != nil {
-		log.Error(err)
-	}
-	// log.Infof("Successfully upgraded to %q", csv.Name)
-
 	// check/approve install plan
 	// TODO: check the name standard for installPlan
 	err = c.InstallPlanApprove(namespace)
@@ -112,43 +105,13 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 		log.Fatal(err)
 	}
 
-	// check CSV/operator status
-	// 	ticker := time.NewTicker(2 * time.Second)
-	// 	timeout := time.After(1 * time.Minute)
+	csv, err := c.CSVSuceededOnNamespace(namespace)
 
-	// 	time.Sleep(5 * time.Second)
-
-	// loop:
-	// 	for {
-
-	// 		select {
-
-	// 		case <-timeout:
-	// 			fmt.Printf("Operator couldn't be installed in time in namesapce %s", namespace)
-	// 			break loop
-
-	// 		case <-ticker.C:
-	// 			csvPhase, err := c.GetCSVPhase(namespace)
-	// 			if err != nil {
-	// 				if k8serrors.IsNotFound(err) {
-	// 					fmt.Println(err)
-	// 					continue
-	// 				} else {
-	// 					fmt.Println(err)
-	// 					continue
-	// 				}
-	// 			}
-	// 			if csvPhase == operatorv1alpha1.CSVPhaseFailed {
-	// 				fmt.Printf("CSV is failed to install in namespace %s", namespace)
-	// 				break loop
-	// 			}
-	// 			if csvPhase == operatorv1alpha1.CSVPhaseSucceeded {
-	// 				fmt.Printf("CSV is created successfully in namespace %s", namespace)
-	// 				break loop
-	// 			}
-
-	// 		}
-	// 	}
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("CSV %s Succeeded", csv.ObjectMeta.Name)
+	}
 
 	// generate and send report
 
