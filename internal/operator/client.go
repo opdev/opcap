@@ -23,6 +23,7 @@ type Client interface {
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
 	InstallPlanApprove(namespace string) error
+	GetCSVPhase(namespace string) (operatorv1alpha1.ClusterServiceVersionPhase, error)
 }
 
 type operatorClient struct {

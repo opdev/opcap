@@ -104,6 +104,23 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 	}
 
 	// check CSV/operator status
+loop:
+	for {
+		csvPhase, err := c.GetCSVPhase(namespace)
+		if err != nil {
+			log.Fatal(err)
+		}
+		switch csvPhase {
+		case operatorv1alpha1.CSVPhaseFailed:
+			fmt.Printf("CSV is failed to install in namespace %s", namespace)
+			break loop
+		case operatorv1alpha1.CSVPhaseSucceeded:
+			fmt.Printf("CSV is created successfully in namespace %s", namespace)
+			break loop
+		default:
+			fmt.Printf("%s", csvPhase)
+		}
+	}
 
 	// generate and send report
 
