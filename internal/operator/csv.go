@@ -3,7 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"log"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,7 +25,11 @@ func (c operatorClient) GetCSVPhase(namespace string) (operatorv1alpha1.ClusterS
 
 	// TODO: create a custom error for this
 	if len(clusterServiceVersionList.Items) > 1 {
-		log.Fatal("More than one CSV found in dedicated namespace.")
+		return "", fmt.Errorf("more than one CSV found in dedicated namespace %s", fmt.Sprint(len(clusterServiceVersionList.Items)))
+	}
+
+	if len(clusterServiceVersionList.Items) == 0 {
+		return "", fmt.Errorf("no CSV found in namespace %s", fmt.Sprint(len(clusterServiceVersionList.Items)))
 	}
 
 	clusterServiceVersion := operatorv1alpha1.ClusterServiceVersion{}
