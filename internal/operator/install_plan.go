@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -51,6 +53,28 @@ func (c operatorClient) InstallPlanApprove(namespace string) error {
 			log.Fatal(err)
 			return err
 		}
+	}
+	return nil
+}
+
+func (c operatorClient) WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error {
+	subKey := types.NamespacedName{
+		Namespace: sub.GetNamespace(),
+		Name:      sub.GetName(),
+	}
+
+	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
+		if err := c.Client.Get(ctx, subKey, sub); err != nil {
+			return false, err
+		}
+		if sub.Status.InstallPlanRef != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
+		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 	return nil
 }
