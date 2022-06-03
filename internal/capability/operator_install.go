@@ -16,33 +16,37 @@ import (
 
 func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
 
-	s := operator.Subscriptions(catalogSource, catalogSourceNamespace)
+	s, err := operator.Subscriptions(catalogSource, catalogSourceNamespace)
+	if err != nil {
+		return err
+	}
 
 	c, err := operator.NewClient()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, subscription := range s {
 
-		for _, installMode := range operator.InstallModesForSubscription(subscription) {
-			if installMode.Supported {
-
-				// TODO: implement this with goroutines for concurrent testing
-				// TODO: transform subscriptions list in a queuing mechanism
-				// for the test work. Run all individual tests under the umbrella
-				// of it's operator dedicated goroutine
-				OperatorInstall(subscription, c, installMode)
-			}
+		// TODO: implement this with goroutines for concurrent testing
+		// TODO: transform subscriptions list in a queuing mechanism
+		// for the test work. Run all individual tests under the umbrella
+		// of it's operator dedicated goroutine
+		err := OperatorInstall(subscription, c)
+		if err != nil {
+			fmt.Printf("Package %s, channel %s, install mode %s - FAILED to complete test\n", subscription.Package, subscription.Channel, subscription.InstallModeType)
 		}
+
 	}
 
 	return nil
 }
 
-func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode operatorv1alpha1.InstallMode) error {
+func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
-	namespace := strings.Join([]string{"opcap", s.Package, s.Channel, strings.ToLower(string(installMode.Type))}, "-")
+	log.Infof("Installing %s from channel %s install mode %s ", s.Package, s.Channel, s.InstallModeType)
+
+	namespace := strings.Join([]string{"opcap", s.Package, s.Channel, strings.ToLower(string(s.InstallModeType))}, "-")
 	targetNs1 := strings.Join([]string{namespace, "targetNs1"}, "-")
 	targetNs2 := strings.Join([]string{namespace, "targetNs2"}, "-")
 	operatorGroup := strings.Join([]string{s.Name, s.Channel, "group"}, "-")
@@ -52,7 +56,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 
 	// Checking install modes and
 	// creating operatorGroup per operator package/channel
-	switch installMode.Type {
+	switch s.InstallModeType {
 
 	case operatorv1alpha1.InstallModeTypeAllNamespaces:
 		opGroupData := operator.OperatorGroupData{
@@ -92,25 +96,25 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 	// create subscription per operator package/channel
 	sub, err := c.CreateSubscription(context.Background(), s, namespace)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	fmt.Printf("Test subscription for %s created successfully\n", s.Name)
+
 	if err = c.WaitForInstallPlan(context.Background(), sub); err != nil {
-		log.Error(err)
+		return err
 	}
 	// check/approve install plan
 	// TODO: check the name standard for installPlan
 	err = c.InstallPlanApprove(namespace)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	csv, err := c.CSVSuceededOnNamespace(namespace)
+	_, err = c.CSVSuceededOnNamespace(namespace)
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Package %s, channel %s, install mode %s - FAILED\n", s.Package, s.Channel, s.InstallModeType)
 	} else {
-		fmt.Printf("CSV %s Succeeded", csv.ObjectMeta.Name)
+		fmt.Printf("Package %s, channel %s, install mode %s - SUCEEDED\n", s.Package, s.Channel, s.InstallModeType)
 	}
 
 	// generate and send report
@@ -118,13 +122,13 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client, installMode
 	// delete subscription
 	err = c.DeleteSubscription(context.Background(), s.Name, namespace)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// delete operator group
 	err = c.DeleteOperatorGroup(context.Background(), operatorGroup, namespace)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// delete namespaces
