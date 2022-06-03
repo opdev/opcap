@@ -12,6 +12,12 @@ import (
 	"context"
 
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	"os"
+
+	pkgsclientv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
+
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Client interface {
@@ -60,4 +66,18 @@ func NewClient() (Client, error) {
 		Client: client,
 	}
 	return operatorClient, nil
+}
+
+func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
+
+	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		log.Printf("Unable to build config from flags: %v\n", err)
+	}
+	pkgsclient, err := pkgsclientv1.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return pkgsclient, nil
 }

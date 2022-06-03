@@ -34,10 +34,10 @@ func CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error
 	}
 	_, err := operatorClient.CoreV1().Namespaces().Create(ctx, &nsSpec, metav1.CreateOptions{})
 	if err != nil {
-		log.Error(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
+		log.Debug(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
 		return nil, err
 	}
-	log.Info("Namespace Created: ", name)
+	log.Debugf("Namespace Created: ", name)
 	return &nsSpec, nil
 }
 
@@ -46,9 +46,9 @@ func DeleteNamespace(ctx context.Context, name string) error {
 	log.Debugf("Deleting namespace: %s", name)
 	err := operatorClient.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
-		log.Error(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
+		log.Debug(fmt.Errorf("%w: error while deleting Namespace: %s", err, name))
 		return err
 	}
-	log.Info("Namespace Deleted: ", name)
+	log.Debugf("Namespace Deleted: ", name)
 	return nil
 }
