@@ -4,9 +4,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	log "opcap/internal/logger"
+
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"context"
@@ -19,6 +20,8 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+var logger = log.Sugar
 
 type Client interface {
 	CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error)
@@ -52,13 +55,13 @@ func NewClient() (Client, error) {
 	kubeconfig, err := ctrl.GetConfig()
 
 	if err != nil {
-		log.Error("could not get kubeconfig")
+		logger.Errorf("could not get kubeconfig")
 		return nil, err
 	}
 
 	client, err := runtimeClient.New(kubeconfig, runtimeClient.Options{Scheme: scheme})
 	if err != nil {
-		log.Error("could not get subscription client")
+		logger.Errorf("could not get subscription client")
 		return nil, err
 	}
 
@@ -72,7 +75,7 @@ func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
-		log.Printf("Unable to build config from flags: %v\n", err)
+		logger.Errorf("Unable to build config from flags: %v", err)
 	}
 	pkgsclient, err := pkgsclientv1.NewForConfig(cfg)
 	if err != nil {

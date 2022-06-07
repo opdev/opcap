@@ -3,7 +3,6 @@ package operator
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -34,7 +33,7 @@ loop:
 			// list CSVs on namespace
 			err := c.Client.List(context.Background(), &clusterServiceVersionList, &listOpts)
 			if err != nil {
-				fmt.Println(err)
+				logger.Errorf("Unable to list CSVs in namespace %s: %s", namespace, err)
 				return nil, err
 			}
 
