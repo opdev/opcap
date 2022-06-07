@@ -25,3 +25,4 @@ openshift/*
 openshift
 /build
 /.vscode
+/logs

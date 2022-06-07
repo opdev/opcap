@@ -2,11 +2,9 @@ package operator
 
 import (
 	"context"
-	"fmt"
-
-	log "github.com/sirupsen/logrus"
 
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,7 +14,7 @@ type OperatorGroupData struct {
 }
 
 func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error) {
-	log.Debugf("Creating OperatorGroup %s in namespace %s", data.Name, namespace)
+	logger.Debugf("Creating OperatorGroup %s in namespace %s", data.Name, namespace)
 	operatorGroup := &operatorv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      data.Name,
@@ -28,16 +26,16 @@ func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorG
 	}
 	err := o.Client.Create(ctx, operatorGroup)
 	if err != nil {
-		log.Debug(fmt.Errorf("%w: error while creating OperatorGroup: %s", err, data.Name))
+		logger.Errorf("%w: error while creating OperatorGroup: %s", err, data.Name)
 		return nil, err
 	}
 
-	log.Debugf("OperatorGroup %s is created successfully in namespace %s", data.Name, namespace)
+	logger.Debugf("OperatorGroup %s is created successfully in namespace %s", data.Name, namespace)
 	return operatorGroup, nil
 }
 
 func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, namespace string) error {
-	log.Debugf("Deleting OperatorGroup %s in namespace %s", name, namespace)
+	logger.Debugf("Deleting OperatorGroup %s in namespace %s", name, namespace)
 	operatorGroup := operatorv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -46,10 +44,10 @@ func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, n
 	}
 	err := o.Client.Delete(ctx, &operatorGroup)
 	if err != nil {
-		log.Debug(fmt.Errorf("%w: error while deleting OperatorGroup: %s in namespace: %s", err, name, namespace))
+		logger.Errorf("%w: error while deleting OperatorGroup: %s in namespace: %s", err, name, namespace)
 		return err
 	}
 
-	log.Debugf("OperatorGroup %s is deleted successfully from namespace %s", name, namespace)
+	logger.Debugf("OperatorGroup %s is deleted successfully from namespace %s", name, namespace)
 	return nil
 }

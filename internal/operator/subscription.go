@@ -25,11 +25,13 @@ func Subscriptions(catalogSource string, catalogSourceNamespace string) ([]Subsc
 
 	c, err := NewPackageServerClient()
 	if err != nil {
+		logger.Errorf("Error while creating new PackageServerClient: %s", err)
 		return nil, err
 	}
 
 	packageManifests, err := c.OperatorsV1().PackageManifests("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
+		logger.Errorf("Error while listing new PackageManifest Objects : %s", err)
 		return nil, err
 	}
 

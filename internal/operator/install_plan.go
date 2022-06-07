@@ -3,7 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -22,11 +21,12 @@ func (c operatorClient) InstallPlanApprove(namespace string) error {
 
 	err := c.Client.List(context.Background(), &installPlanList, &listOpts)
 	if err != nil {
-		fmt.Println(err)
+		logger.Errorf("Unable to list InstallPlans in Namespace %s: %s", namespace, err)
 		return err
 	}
 
 	if len(installPlanList.Items) == 0 {
+		logger.Errorf("no installPlan found in namespace %s: %s", namespace, err)
 		return fmt.Errorf("no installPlan found in namespace %s", fmt.Sprint(len(installPlanList.Items)))
 	}
 
@@ -35,17 +35,17 @@ func (c operatorClient) InstallPlanApprove(namespace string) error {
 	err = c.Client.Get(context.Background(), types.NamespacedName{Name: installPlanList.Items[0].ObjectMeta.Name, Namespace: namespace}, &installPlan)
 
 	if err != nil {
-		fmt.Println(err)
+		logger.Errorf("no installPlan found in namespace %s: %s", namespace, err)
 		return err
 	}
 
 	if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual {
 
 		installPlan.Spec.Approved = true
-		fmt.Printf("InstallPlan %s approved by opcap on namespace %s", installPlan.ObjectMeta.Name, namespace)
+		logger.Debugf("InstallPlan %s approved by opcap on namespace %s", installPlan.ObjectMeta.Name, namespace)
 		err := c.Client.Update(context.Background(), &installPlan)
 		if err != nil {
-			log.Fatal(err)
+			logger.Errorf("Error while updating InstallPlan Spec :%s", err)
 			return err
 		}
 	}
@@ -69,6 +69,7 @@ func (c operatorClient) WaitForInstallPlan(ctx context.Context, sub *operatorv1a
 	})
 
 	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
+		logger.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 	return nil

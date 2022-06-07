@@ -2,10 +2,8 @@ package operator
 
 import (
 	"context"
-	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -17,7 +15,7 @@ func GetK8sClient() *kubernetes.Clientset {
 	// create k8s client
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
-		_ = fmt.Errorf("unable to build config from flags: %v", err)
+		logger.Errorf("unable to build config from flags: %s", err)
 	}
 	clientset, _ := kubernetes.NewForConfig(cfg)
 
@@ -34,21 +32,21 @@ func CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error
 	}
 	_, err := operatorClient.CoreV1().Namespaces().Create(ctx, &nsSpec, metav1.CreateOptions{})
 	if err != nil {
-		log.Debug(fmt.Errorf("%w: error while creating Namespace: %s", err, name))
+		logger.Errorf("error while creating Namespace %s: %s", name, err)
 		return nil, err
 	}
-	log.Debugf("Namespace Created: ", name)
+	logger.Debugf("Namespace Created: %s", name)
 	return &nsSpec, nil
 }
 
 func DeleteNamespace(ctx context.Context, name string) error {
 	operatorClient := GetK8sClient()
-	log.Debugf("Deleting namespace: %s", name)
+	logger.Debugf("Deleting namespace: %s", name)
 	err := operatorClient.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
-		log.Debug(fmt.Errorf("%w: error while deleting Namespace: %s", err, name))
+		logger.Errorf("error while deleting Namespace %s: %s", name, err)
 		return err
 	}
-	log.Debugf("Namespace Deleted: ", name)
+	logger.Debugf("Namespace Deleted: %s", name)
 	return nil
 }
