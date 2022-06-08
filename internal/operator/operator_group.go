@@ -26,7 +26,7 @@ func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorG
 	}
 	err := o.Client.Create(ctx, operatorGroup)
 	if err != nil {
-		logger.Errorf("%w: error while creating OperatorGroup: %s", err, data.Name)
+		logger.Errorf("error while creating OperatorGroup %s: %s", data.Name, err)
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, n
 	}
 	err := o.Client.Delete(ctx, &operatorGroup)
 	if err != nil {
-		logger.Errorf("%w: error while deleting OperatorGroup: %s in namespace: %s", err, name, namespace)
+		logger.Errorf("error while deleting OperatorGroup: %s in namespace: %s", name, namespace, err)
 		return err
 	}
 

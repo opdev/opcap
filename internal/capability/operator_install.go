@@ -37,7 +37,7 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 		// of it's operator dedicated goroutine
 		err := OperatorInstall(subscription, c)
 		if err != nil {
-			logger.Debugf("Package %s, channel %s, install mode %s - FAILED to complete test", subscription.Package, subscription.Channel, subscription.InstallModeType)
+			logger.Errorf("Package %s, channel %s, install mode %s - FAILED to complete test", subscription.Package, subscription.Channel, subscription.InstallModeType)
 		}
 
 	}
@@ -136,7 +136,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	// delete operator group
 	err = c.DeleteOperatorGroup(context.Background(), operatorGroup, namespace)
 	if err != nil {
-		logger.Errorf("Error while deleting OperatorGroup: %s", err)
+		logger.Debugf("Error while deleting OperatorGroup: %s", err)
 		return err
 	}
 
