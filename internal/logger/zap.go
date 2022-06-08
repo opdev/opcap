@@ -14,7 +14,8 @@ func init() {
 	rawJSON := []byte(`{
 		"level": "info",
 		"encoding": "json",
-		"outputPaths": ["stdout", "logs/stdout.json"],
+		"outputPaths": ["logs/stdout.json"],
+		"errorOutputPaths": ["logs/stderr.json"],
 		"encoderConfig": {
 		  "messageKey": "message",
 		  "levelKey": "level",

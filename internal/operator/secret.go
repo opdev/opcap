@@ -24,7 +24,7 @@ func (o operatorClient) CreateSecret(ctx context.Context, name string, content m
 	}
 	err := o.Client.Create(ctx, &secret, &runtimeClient.CreateOptions{})
 	if err != nil {
-		logger.Errorf("%w: error while creating secret: %s in namespace: %s", err, name, namespace)
+		logger.Errorf("error while creating secret: %s in namespace: %s", name, namespace, err)
 		return nil, err
 	}
 
