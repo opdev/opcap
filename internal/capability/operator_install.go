@@ -118,10 +118,9 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	_, err = c.CSVSuceededOnNamespace(namespace)
 
 	if err != nil {
-		logger.Infof("Package %s, channel %s, install mode %s - FAILED", s.Package, s.Channel, s.InstallModeType)
-
+		logger.Infow("failed", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 	} else {
-		logger.Infof("Package %s, channel %s, install mode %s - SUCCEEDED", s.Package, s.Channel, s.InstallModeType)
+		logger.Infow("succeeded", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 	}
 
 	// generate and send report
