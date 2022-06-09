@@ -34,6 +34,7 @@ type Client interface {
 	InstallPlanApprove(namespace string) error
 	WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
 	CSVSuceededOnNamespace(namespace string) (*operatorv1alpha1.ClusterServiceVersion, error)
+	GetOpenShiftVersion() (string, error)
 }
 
 type operatorClient struct {
