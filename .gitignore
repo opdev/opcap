@@ -28,3 +28,4 @@ openshift
 /logs
 
 /std*.json
+report.json
