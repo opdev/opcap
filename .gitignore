@@ -26,3 +26,5 @@ openshift
 /build
 /.vscode
 /logs
+
+/std*.json

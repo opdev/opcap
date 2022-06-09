@@ -33,7 +33,7 @@ loop:
 			// list CSVs on namespace
 			err := c.Client.List(context.Background(), &clusterServiceVersionList, &listOpts)
 			if err != nil {
-				logger.Errorf("Unable to list CSVs in namespace %s: %s", namespace, err)
+				logger.Errorf("Unable to list CSVs in namespace %s: %w", namespace, err)
 				return nil, err
 			}
 

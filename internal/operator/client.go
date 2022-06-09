@@ -75,7 +75,7 @@ func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
-		logger.Errorf("Unable to build config from flags: %v", err)
+		logger.Errorf("Unable to build config from flags: %w", err)
 	}
 	pkgsclient, err := pkgsclientv1.NewForConfig(cfg)
 	if err != nil {
