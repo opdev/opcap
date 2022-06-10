@@ -24,11 +24,11 @@ func (o operatorClient) CreateSecret(ctx context.Context, name string, content m
 	}
 	err := o.Client.Create(ctx, &secret, &runtimeClient.CreateOptions{})
 	if err != nil {
-		logger.Errorf("error while creating secret: %s in namespace: %s", name, namespace, err)
+		logger.Errorf("error while creating secret %s in namespace %s: %w", name, namespace, err)
 		return nil, err
 	}
 
-	logger.Debugf("Secret %s created successfully in namespace %s", name, namespace)
+	logger.Debugw("secret created", "secret", name, "namespace", namespace)
 	return &secret, nil
 }
 
@@ -39,6 +39,6 @@ func (o operatorClient) DeleteSecret(ctx context.Context, name string, namespace
 			Namespace: namespace,
 		},
 	}
-	logger.Debugf("Deleting secret %s from namespace %s", name, namespace)
+	logger.Debugw("deleting secret", "secret", name, "namespace", namespace)
 	return o.Client.Delete(ctx, &secret, &runtimeClient.DeleteOptions{})
 }

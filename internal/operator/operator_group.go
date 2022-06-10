@@ -14,7 +14,7 @@ type OperatorGroupData struct {
 }
 
 func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error) {
-	logger.Debugf("Creating OperatorGroup %s in namespace %s", data.Name, namespace)
+	logger.Debugw("creating OperatorGroup", "operatorgroup", data.Name, "namespace", namespace)
 	operatorGroup := &operatorv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      data.Name,
@@ -26,16 +26,16 @@ func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorG
 	}
 	err := o.Client.Create(ctx, operatorGroup)
 	if err != nil {
-		logger.Errorf("error while creating OperatorGroup %s: %s", data.Name, err)
+		logger.Errorf("error while creating operatorgroup %s: %w", data.Name, err)
 		return nil, err
 	}
 
-	logger.Debugf("OperatorGroup %s is created successfully in namespace %s", data.Name, namespace)
+	logger.Debugw("operatorgroup created", "operatorgroup", data.Name, "namespace", namespace)
 	return operatorGroup, nil
 }
 
 func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, namespace string) error {
-	logger.Debugf("Deleting OperatorGroup %s in namespace %s", name, namespace)
+	logger.Debugw("deleting operatorgroup", "operatorgroup", name, "namespace", namespace)
 	operatorGroup := operatorv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -44,10 +44,10 @@ func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, n
 	}
 	err := o.Client.Delete(ctx, &operatorGroup)
 	if err != nil {
-		logger.Errorf("error while deleting OperatorGroup: %s in namespace: %s", name, namespace, err)
+		logger.Errorf("error while deleting OperatorGroup %s in namespace %s: %w", name, namespace, err)
 		return err
 	}
 
-	logger.Debugf("OperatorGroup %s is deleted successfully from namespace %s", name, namespace)
+	logger.Debugw("operatorgroup deleted", "operatorgroup", name, "namespace", namespace)
 	return nil
 }

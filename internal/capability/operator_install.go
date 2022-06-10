@@ -19,13 +19,13 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 
 	s, err := operator.Subscriptions(catalogSource, catalogSourceNamespace)
 	if err != nil {
-		logger.Errorf("Error while getting all operator Bundles from CatalogSource %s: ", catalogSource, err)
+		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
 		return err
 	}
 
 	c, err := operator.NewClient()
 	if err != nil {
-		logger.Errorf("Error while creating PackageServerClient: %s", err)
+		logger.Errorf("Error while creating PackageServerClient: %w", err)
 		return err
 	}
 
@@ -37,7 +37,7 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 		// of it's operator dedicated goroutine
 		err := OperatorInstall(subscription, c)
 		if err != nil {
-			logger.Errorf("Package %s, channel %s, install mode %s - FAILED to complete test", subscription.Package, subscription.Channel, subscription.InstallModeType)
+			logger.Errorw("installing operator", "package", subscription.Package, "channel", subscription.Channel, "installmode", subscription.InstallModeType)
 		}
 
 	}
@@ -47,7 +47,7 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 
 func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
-	logger.Debugf("Installing %s from channel %s install mode %s ", s.Package, s.Channel, s.InstallModeType)
+	logger.Debugw("installing package", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 
 	namespace := strings.Join([]string{"opcap", s.Package, s.Channel, strings.ToLower(string(s.InstallModeType))}, "-")
 	targetNs1 := strings.Join([]string{namespace, "targetNs1"}, "-")
@@ -99,19 +99,19 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	// create subscription per operator package/channel
 	sub, err := c.CreateSubscription(context.Background(), s, namespace)
 	if err != nil {
-		logger.Debugf("Error creating subscriptions: %s", err)
+		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
 	}
 
 	if err = c.WaitForInstallPlan(context.Background(), sub); err != nil {
-		logger.Debugf("Waiting for InstallPlan: %s", err)
+		logger.Debugf("Waiting for InstallPlan: %w", err)
 		return err
 	}
 	// check/approve install plan
 	// TODO: check the name standard for installPlan
 	err = c.InstallPlanApprove(namespace)
 	if err != nil {
-		logger.Debugf("Error creating subscriptions: %s", err)
+		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
 	}
 
@@ -128,14 +128,14 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	// delete subscription
 	err = c.DeleteSubscription(context.Background(), s.Name, namespace)
 	if err != nil {
-		logger.Debugf("Error while deleting Subscription: %s", err)
+		logger.Debugf("Error while deleting Subscription: %w", err)
 		return err
 	}
 
 	// delete operator group
 	err = c.DeleteOperatorGroup(context.Background(), operatorGroup, namespace)
 	if err != nil {
-		logger.Debugf("Error while deleting OperatorGroup: %s", err)
+		logger.Debugf("Error while deleting OperatorGroup: %w", err)
 		return err
 	}
 

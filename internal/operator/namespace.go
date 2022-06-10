@@ -15,7 +15,7 @@ func GetK8sClient() *kubernetes.Clientset {
 	// create k8s client
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
-		logger.Errorf("unable to build config from flags: %s", err)
+		logger.Errorf("unable to build config from flags: %w", err)
 	}
 	clientset, _ := kubernetes.NewForConfig(cfg)
 
@@ -32,7 +32,7 @@ func CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error
 	}
 	_, err := operatorClient.CoreV1().Namespaces().Create(ctx, &nsSpec, metav1.CreateOptions{})
 	if err != nil {
-		logger.Errorf("error while creating Namespace %s: %s", name, err)
+		logger.Errorf("error while creating Namespace %s: %w", name, err)
 		return nil, err
 	}
 	logger.Debugf("Namespace Created: %s", name)
@@ -41,10 +41,10 @@ func CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error
 
 func DeleteNamespace(ctx context.Context, name string) error {
 	operatorClient := GetK8sClient()
-	logger.Debugf("Deleting namespace: %s", name)
+	logger.Debugf("Delete namespace: %s", name)
 	err := operatorClient.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Errorf("error while deleting Namespace %s: %s", name, err)
+		logger.Errorf("error while deleting Namespace %s: %w", name, err)
 		return err
 	}
 	logger.Debugf("Namespace Deleted: %s", name)
