@@ -6,12 +6,13 @@ require github.com/spf13/cobra v1.4.0
 
 require (
 	github.com/operator-framework/operator-registry v1.22.0 // indirect
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	google.golang.org/grpc v1.46.0 // indirect
 	sigs.k8s.io/controller-runtime v0.12.1
 )
 
 require (
+	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/operator-framework/api v0.15.0
 	github.com/operator-framework/operator-lifecycle-manager v0.21.2
 	k8s.io/api v0.24.0
@@ -20,6 +21,7 @@ require (
 )
 
 require (
+	github.com/openshift/api v0.0.0-20200331152225-585af27e34fd // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 )
