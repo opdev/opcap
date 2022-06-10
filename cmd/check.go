@@ -37,7 +37,7 @@ func init() {
 	flags := checkCmd.Flags()
 
 	flags.StringVar(&checkflags.CatalogSource, "catalogsource", "certified-operators",
-		"the catalog source to use for audit")
+		"")
 	flags.StringVar(&checkflags.CatalogSourceNamespace, "catalogsourcenamespace", "openshift-marketplace",
-		"the namespace/project the catalog source can be found in")
+		"")
 }

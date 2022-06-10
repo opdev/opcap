@@ -12,6 +12,8 @@ require (
 )
 
 require (
+	github.com/gobuffalo/envy v1.10.1
+	github.com/minio/minio-go/v7 v7.0.27
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/operator-framework/api v0.15.0
 	github.com/operator-framework/operator-lifecycle-manager v0.21.2
@@ -21,9 +23,20 @@ require (
 )
 
 require (
+	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/joho/godotenv v1.4.0 // indirect
+	github.com/klauspost/compress v1.13.5 // indirect
+	github.com/klauspost/cpuid v1.3.1 // indirect
+	github.com/minio/md5-simd v1.1.0 // indirect
+	github.com/minio/sha256-simd v0.1.1 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/openshift/api v0.0.0-20200331152225-585af27e34fd // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
+	github.com/rs/xid v1.2.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	gopkg.in/ini.v1 v1.57.0 // indirect
 )
 
 require (
