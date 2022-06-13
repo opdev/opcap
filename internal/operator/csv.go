@@ -2,55 +2,59 @@ package operator
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
-func (c operatorClient) CSVSuceededOnNamespace(namespace string) (*operatorv1alpha1.ClusterServiceVersion, error) {
+func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) {
+	ctx := context.Background()
+	var watcher watch.Interface
 
-	clusterServiceVersionList := operatorv1alpha1.ClusterServiceVersionList{}
+	err := wait.ExponentialBackoff(wait.Backoff{Steps: 3, Duration: 2 * time.Second, Factor: 5, Cap: 90 * time.Second},
+		func() (bool, error) {
 
-	listOpts := runtimeClient.ListOptions{
-		Namespace: namespace,
+			var err error
+
+			olmClientset, err := NewOlmClientset()
+			if err != nil {
+				return false, err
+			}
+
+			opts := v1.ListOptions{}
+
+			watcher, err = olmClientset.OperatorsV1alpha1().ClusterServiceVersions(namespace).Watch(ctx, opts)
+			if err != nil {
+				return false, err
+			}
+
+			return true, nil
+
+		})
+	if err != nil {
+		logger.Error("Failed to create csv.")
+		return "", err
 	}
 
-	deadline := 1 * time.Minute
-	ticker := time.NewTicker(2 * time.Second)
-	timeout := time.After(deadline)
+	var csv *operatorv1alpha1.ClusterServiceVersion
+	var ok bool
 
-loop:
-	for {
+	for event := range watcher.ResultChan() {
+		csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
+		if !ok {
+			return "", fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
+		}
+		if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
+			csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
 
-		select {
-
-		case <-timeout:
-			break loop
-
-		case <-ticker.C:
-			// list CSVs on namespace
-			err := c.Client.List(context.Background(), &clusterServiceVersionList, &listOpts)
-			if err != nil {
-				logger.Errorf("Unable to list CSVs in namespace %s: %w", namespace, err)
-				return nil, err
-			}
-
-			if len(clusterServiceVersionList.Items) == 0 {
-
-				continue
-
-			} else if clusterServiceVersionList.Items[0].Status.Phase == operatorv1alpha1.CSVPhaseSucceeded {
-
-				return &clusterServiceVersionList.Items[0], nil
-
-			} else {
-				continue
-			}
+			break
 		}
 
 	}
 
-	return nil, errors.New("Deadline exceeded for CSV on namespace: " + namespace)
+	return string(csv.Status.Phase), nil
 }
