@@ -29,3 +29,4 @@ openshift
 
 /std*.json
 report.json
+.DS_Store
