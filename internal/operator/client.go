@@ -6,6 +6,7 @@ import (
 
 	log "opcap/internal/logger"
 
+	configv1 "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -14,11 +15,7 @@ import (
 
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"os"
-
 	pkgsclientv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
-
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var logger = log.Sugar
@@ -38,7 +35,8 @@ type Client interface {
 }
 
 type operatorClient struct {
-	Client runtimeClient.Client
+	Client        runtimeClient.Client
+	KubeClientSet *configv1.ConfigV1Client
 }
 
 func NewClient() (Client, error) {
@@ -66,19 +64,28 @@ func NewClient() (Client, error) {
 		return nil, err
 	}
 
+	clientset, err := configv1.NewForConfig(kubeconfig)
+	if err != nil {
+		logger.Errorf("could not get kubernetes client")
+		return nil, err
+	}
+
 	var operatorClient Client = &operatorClient{
-		Client: client,
+		Client:        client,
+		KubeClientSet: clientset,
 	}
 	return operatorClient, nil
 }
 
 func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
 
-	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	kubeconfig, err := ctrl.GetConfig()
 	if err != nil {
-		logger.Errorf("Unable to build config from flags: %w", err)
+		logger.Errorf("could not get kubeconfig")
+		return nil, err
 	}
-	pkgsclient, err := pkgsclientv1.NewForConfig(cfg)
+
+	pkgsclient, err := pkgsclientv1.NewForConfig(kubeconfig)
 	if err != nil {
 		return nil, err
 	}

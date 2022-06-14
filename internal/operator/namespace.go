@@ -2,22 +2,21 @@ package operator
 
 import (
 	"context"
-	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // NewClient
 func GetK8sClient() *kubernetes.Clientset {
 	// create k8s client
-	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	kubeconfig, err := ctrl.GetConfig()
 	if err != nil {
 		logger.Errorf("unable to build config from flags: %w", err)
 	}
-	clientset, _ := kubernetes.NewForConfig(cfg)
+	clientset, _ := kubernetes.NewForConfig(kubeconfig)
 
 	return clientset
 }

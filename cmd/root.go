@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	log "opcap/internal/logger"
 	"opcap/internal/operator"
 	"os"
 
@@ -12,6 +13,7 @@ import (
 )
 
 var osversion string
+var logger = log.Sugar
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -33,6 +35,7 @@ to quickly create a Cobra application.`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		logger.Errorf("Opcap tool execution failed: %s", err)
 		os.Exit(1)
 	}
 }
@@ -40,11 +43,13 @@ func Execute() {
 func init() {
 	opClient, err := operator.NewClient()
 	if err != nil {
-		// TODO: handle error
+		logger.Errorf("Failed to initialize OpenShift client: %s", err)
+		os.Exit(1)
 	}
 
 	osversion, err = opClient.GetOpenShiftVersion()
 	if err != nil {
-		// TODO: handle error
+		logger.Errorf("Failed to connect to OpenShift: %s", err)
+		os.Exit(1)
 	}
 }
