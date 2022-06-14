@@ -49,7 +49,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
 	logger.Debugw("installing package", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 
-	namespace := strings.Join([]string{"opcap", s.Package, s.Channel, strings.ToLower(string(s.InstallModeType))}, "-")
+	namespace := strings.Join([]string{"opcap", strings.ReplaceAll(s.Package, ".", "-")}, "-")
 	targetNs1 := strings.Join([]string{namespace, "targetNs1"}, "-")
 	targetNs2 := strings.Join([]string{namespace, "targetNs2"}, "-")
 	operatorGroup := strings.Join([]string{s.Name, s.Channel, "group"}, "-")
@@ -59,6 +59,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
 	// Checking install modes and
 	// creating operatorGroup per operator package/channel
+	installedNS := []string{namespace}
 	switch s.InstallModeType {
 
 	case operatorv1alpha1.InstallModeTypeAllNamespaces:
@@ -75,6 +76,7 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 			Name:             operatorGroup,
 			TargetNamespaces: []string{targetNs1},
 		}
+		installedNS = append(installedNS, targetNs1)
 		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
 
 	case operatorv1alpha1.InstallModeTypeOwnNamespace:
@@ -92,6 +94,8 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 			Name:             operatorGroup,
 			TargetNamespaces: []string{targetNs1, targetNs2},
 		}
+		installedNS = append(installedNS, targetNs1)
+		installedNS = append(installedNS, targetNs2)
 		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
 
 	}
@@ -140,9 +144,8 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	}
 
 	// delete namespaces
-	operator.DeleteNamespace(context.Background(), namespace)
-	operator.DeleteNamespace(context.Background(), targetNs1)
-	operator.DeleteNamespace(context.Background(), targetNs2)
-
+	for _, ns := range installedNS {
+		operator.DeleteNamespace(context.Background(), ns)
+	}
 	return nil
 }
