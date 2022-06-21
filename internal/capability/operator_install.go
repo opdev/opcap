@@ -50,8 +50,8 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	logger.Debugw("installing package", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 
 	namespace := strings.Join([]string{"opcap", strings.ReplaceAll(s.Package, ".", "-")}, "-")
-	targetNs1 := strings.Join([]string{namespace, "targetNs1"}, "-")
-	targetNs2 := strings.Join([]string{namespace, "targetNs2"}, "-")
+	targetNs1 := strings.Join([]string{namespace, "targetns1"}, "-")
+	targetNs2 := strings.Join([]string{namespace, "targetns2"}, "-")
 	operatorGroup := strings.Join([]string{s.Name, s.Channel, "group"}, "-")
 
 	// create operator namespace
@@ -119,15 +119,13 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 		return err
 	}
 
-	_, err = c.CSVSuceededOnNamespace(namespace)
+	csvStatus, err := c.WaitForCsvOnNamespace(namespace)
 
 	if err != nil {
 		logger.Infow("failed", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 	} else {
-		logger.Infow("succeeded", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
+		logger.Infow(strings.ToLower(csvStatus), "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 	}
-
-	// generate and send report
 
 	// delete subscription
 	err = c.DeleteSubscription(context.Background(), s.Name, namespace)

@@ -16,6 +16,7 @@ import (
 
 	"os"
 
+	olmclient "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	pkgsclientv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -33,7 +34,7 @@ type Client interface {
 	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
 	InstallPlanApprove(namespace string) error
 	WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
-	CSVSuceededOnNamespace(namespace string) (*operatorv1alpha1.ClusterServiceVersion, error)
+	WaitForCsvOnNamespace(namespace string) (string, error)
 	GetOpenShiftVersion() (string, error)
 }
 
@@ -84,4 +85,19 @@ func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
 	}
 
 	return pkgsclient, nil
+}
+
+func NewOlmClientset() (*olmclient.Clientset, error) {
+
+	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return nil, err
+	}
+
+	olmClientset, err := olmclient.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return olmClientset, nil
 }
