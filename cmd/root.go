@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"opcap/internal/operator"
 	"os"
 
@@ -33,6 +34,7 @@ to quickly create a Cobra application.`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		fmt.Fprintln(os.Stderr, "Opcap tool execution failed: ", err)
 		os.Exit(1)
 	}
 }
@@ -40,11 +42,13 @@ func Execute() {
 func init() {
 	opClient, err := operator.NewClient()
 	if err != nil {
-		// TODO: handle error
+		fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
+		os.Exit(1)
 	}
 
 	osversion, err = opClient.GetOpenShiftVersion()
 	if err != nil {
-		// TODO: handle error
+		fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
+		os.Exit(1)
 	}
 }
