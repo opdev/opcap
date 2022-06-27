@@ -17,7 +17,6 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 
 	err := wait.ExponentialBackoff(wait.Backoff{Steps: 3, Duration: 2 * time.Second, Factor: 5, Cap: 90 * time.Second},
 		func() (bool, error) {
-
 			var err error
 
 			olmClientset, err := NewOlmClientset()
@@ -33,7 +32,6 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 			}
 
 			return true, nil
-
 		})
 	if err != nil {
 		logger.Error("Failed to create csv.")

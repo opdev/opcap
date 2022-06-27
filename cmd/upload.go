@@ -8,14 +8,15 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"github.com/gobuffalo/envy"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gobuffalo/envy"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/spf13/cobra"
 )
 
 type UploadCommandFlags struct {
@@ -65,7 +66,6 @@ var uploadCmd = &cobra.Command{
 			Creds:  credentials.NewStaticV4(uploadflags.AccessKeyID, uploadflags.SecretAccessKey, ""),
 			Secure: usessl,
 		})
-
 		if err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ var uploadCmd = &cobra.Command{
 			return err
 		}
 
-		if err = ioutil.WriteFile("report.json", data, 0644); err != nil {
+		if err = ioutil.WriteFile("report.json", data, 0o644); err != nil {
 			return err
 		}
 

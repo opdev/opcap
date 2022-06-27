@@ -22,7 +22,6 @@ type SubscriptionData struct {
 // to be installed and tested
 // It's a unique list of package/channels for operator install
 func Subscriptions(catalogSource string, catalogSourceNamespace string) ([]SubscriptionData, error) {
-
 	c, err := NewPackageServerClient()
 	if err != nil {
 		logger.Errorf("Error while creating new PackageServerClient: %w", err)
@@ -57,7 +56,6 @@ func Subscriptions(catalogSource string, catalogSourceNamespace string) ([]Subsc
 						}
 					}
 				}
-
 			}
 		}
 	}

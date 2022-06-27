@@ -6,8 +6,9 @@ package cmd
 
 import (
 	"fmt"
-	"opcap/internal/operator"
 	"os"
+
+	"opcap/internal/operator"
 
 	"github.com/spf13/cobra"
 )

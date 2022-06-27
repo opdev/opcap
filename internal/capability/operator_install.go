@@ -2,9 +2,10 @@ package capability
 
 import (
 	"context"
+	"strings"
+
 	log "opcap/internal/logger"
 	"opcap/internal/operator"
-	"strings"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
@@ -16,7 +17,6 @@ var logger = log.Sugar
 // And possibly indicate a specific condition
 
 func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
-
 	s, err := operator.Subscriptions(catalogSource, catalogSourceNamespace)
 	if err != nil {
 		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
@@ -46,7 +46,6 @@ func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace 
 }
 
 func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
-
 	logger.Debugw("installing package", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 
 	namespace := strings.Join([]string{"opcap", strings.ReplaceAll(s.Package, ".", "-")}, "-")

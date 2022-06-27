@@ -12,7 +12,6 @@ import (
 )
 
 func (c operatorClient) InstallPlanApprove(namespace string) error {
-
 	installPlanList := operatorv1alpha1.InstallPlanList{}
 
 	listOpts := runtimeClient.ListOptions{
