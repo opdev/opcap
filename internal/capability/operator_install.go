@@ -15,6 +15,14 @@ var logger = log.Sugar
 // We will need other arguments that can tweak how many to test at a time
 // And possibly indicate a specific condition
 
+type operatorData struct {
+	namespace     string
+	targetNs1     string
+	targetNs2     string
+	operatorGroup string
+	installedNS   []string
+}
+
 func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
 
 	s, err := operator.Subscriptions(catalogSource, catalogSourceNamespace)
@@ -49,59 +57,23 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 
 	logger.Debugw("installing package", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 
-	namespace := strings.Join([]string{"opcap", strings.ReplaceAll(s.Package, ".", "-")}, "-")
-	targetNs1 := strings.Join([]string{namespace, "targetns1"}, "-")
-	targetNs2 := strings.Join([]string{namespace, "targetns2"}, "-")
-	operatorGroup := strings.Join([]string{s.Name, s.Channel, "group"}, "-")
+	od := new(operatorData)
+
+	od.namespace = strings.Join([]string{"opcap", strings.ReplaceAll(s.Package, ".", "-")}, "-")
+	od.targetNs1 = strings.Join([]string{od.namespace, "targetns1"}, "-")
+	od.targetNs2 = strings.Join([]string{od.namespace, "targetns2"}, "-")
+	od.operatorGroup = strings.Join([]string{s.Name, s.Channel, "group"}, "-")
 
 	// create operator namespace
-	operator.CreateNamespace(context.Background(), namespace)
+	operator.CreateNamespace(context.Background(), od.namespace)
 
 	// Checking install modes and
 	// creating operatorGroup per operator package/channel
-	installedNS := []string{namespace}
-	switch s.InstallModeType {
-
-	case operatorv1alpha1.InstallModeTypeAllNamespaces:
-		opGroupData := operator.OperatorGroupData{
-			Name:             operatorGroup,
-			TargetNamespaces: []string{},
-		}
-		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
-
-	case operatorv1alpha1.InstallModeTypeSingleNamespace:
-
-		operator.CreateNamespace(context.Background(), targetNs1)
-		opGroupData := operator.OperatorGroupData{
-			Name:             operatorGroup,
-			TargetNamespaces: []string{targetNs1},
-		}
-		installedNS = append(installedNS, targetNs1)
-		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
-
-	case operatorv1alpha1.InstallModeTypeOwnNamespace:
-		opGroupData := operator.OperatorGroupData{
-			Name:             operatorGroup,
-			TargetNamespaces: []string{namespace},
-		}
-		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
-
-	case operatorv1alpha1.InstallModeTypeMultiNamespace:
-
-		operator.CreateNamespace(context.Background(), targetNs1)
-		operator.CreateNamespace(context.Background(), targetNs2)
-		opGroupData := operator.OperatorGroupData{
-			Name:             operatorGroup,
-			TargetNamespaces: []string{targetNs1, targetNs2},
-		}
-		installedNS = append(installedNS, targetNs1)
-		installedNS = append(installedNS, targetNs2)
-		c.CreateOperatorGroup(context.Background(), opGroupData, namespace)
-
-	}
+	od.installedNS = []string{od.namespace}
+	createGroupByInstallMode(s, c, *od)
 
 	// create subscription per operator package/channel
-	sub, err := c.CreateSubscription(context.Background(), s, namespace)
+	sub, err := c.CreateSubscription(context.Background(), s, od.namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
@@ -113,13 +85,13 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	}
 	// check/approve install plan
 	// TODO: check the name standard for installPlan
-	err = c.InstallPlanApprove(namespace)
+	err = c.InstallPlanApprove(od.namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
 	}
 
-	csvStatus, err := c.WaitForCsvOnNamespace(namespace)
+	csvStatus, err := c.WaitForCsvOnNamespace(od.namespace)
 
 	if err != nil {
 		logger.Infow("failed", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
@@ -127,23 +99,73 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 		logger.Infow(strings.ToLower(csvStatus), "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
 	}
 
+	cleanUp(s, c, *od)
+
+	return nil
+}
+
+func createGroupByInstallMode(s operator.SubscriptionData, c operator.Client, m operatorData) {
+
+	switch s.InstallModeType {
+
+	case operatorv1alpha1.InstallModeTypeAllNamespaces:
+		opGroupData := operator.OperatorGroupData{
+			Name:             m.operatorGroup,
+			TargetNamespaces: []string{},
+		}
+		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+
+	case operatorv1alpha1.InstallModeTypeSingleNamespace:
+
+		operator.CreateNamespace(context.Background(), m.targetNs1)
+		opGroupData := operator.OperatorGroupData{
+			Name:             m.operatorGroup,
+			TargetNamespaces: []string{m.targetNs1},
+		}
+		m.installedNS = append(m.installedNS, m.targetNs1)
+		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+
+	case operatorv1alpha1.InstallModeTypeOwnNamespace:
+		opGroupData := operator.OperatorGroupData{
+			Name:             m.operatorGroup,
+			TargetNamespaces: []string{m.namespace},
+		}
+		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+
+	case operatorv1alpha1.InstallModeTypeMultiNamespace:
+
+		operator.CreateNamespace(context.Background(), m.targetNs1)
+		operator.CreateNamespace(context.Background(), m.targetNs2)
+		opGroupData := operator.OperatorGroupData{
+			Name:             m.operatorGroup,
+			TargetNamespaces: []string{m.targetNs1, m.targetNs2},
+		}
+		m.installedNS = append(m.installedNS, m.targetNs1)
+		m.installedNS = append(m.installedNS, m.targetNs2)
+		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+
+	}
+
+}
+
+func cleanUp(s operator.SubscriptionData, c operator.Client, m operatorData) {
+
 	// delete subscription
-	err = c.DeleteSubscription(context.Background(), s.Name, namespace)
+	err := c.DeleteSubscription(context.Background(), s.Name, m.namespace)
 	if err != nil {
 		logger.Debugf("Error while deleting Subscription: %w", err)
-		return err
+		return
 	}
 
 	// delete operator group
-	err = c.DeleteOperatorGroup(context.Background(), operatorGroup, namespace)
+	err = c.DeleteOperatorGroup(context.Background(), m.operatorGroup, m.namespace)
 	if err != nil {
 		logger.Debugf("Error while deleting OperatorGroup: %w", err)
-		return err
+		return
 	}
 
 	// delete namespaces
-	for _, ns := range installedNS {
+	for _, ns := range m.installedNS {
 		operator.DeleteNamespace(context.Background(), ns)
 	}
-	return nil
 }
