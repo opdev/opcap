@@ -8,14 +8,15 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"github.com/gobuffalo/envy"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gobuffalo/envy"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/spf13/cobra"
 )
 
 type UploadCommandFlags struct {
@@ -25,6 +26,7 @@ type UploadCommandFlags struct {
 	AccessKeyID     string `json:"accesskeyid"`
 	SecretAccessKey string `json:"secretaccesskey"`
 	UseSSL          string `json:"usessl"`
+	Trace           string `json:"trace"`
 }
 
 type Report struct {
@@ -57,8 +59,9 @@ var uploadCmd = &cobra.Command{
 	Short: "Upload audit logs to an S3 compatible storage service.",
 	Long:  `Upload audit logs to an S3 compatible storage service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Convert uploadflags.UseSSL (string) to bool
+		// Convert uploadflags.UseSSL and Trace to bool
 		usessl, _ := strconv.ParseBool(uploadflags.UseSSL)
+		trace, _ := strconv.ParseBool(uploadflags.Trace)
 
 		// Create a minio client to interact with minio object store
 		minioClient, err := minio.New(uploadflags.Endpoint, &minio.Options{
@@ -68,6 +71,10 @@ var uploadCmd = &cobra.Command{
 
 		if err != nil {
 			return err
+		}
+
+		if trace {
+			minioClient.TraceOn(os.Stdout)
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -142,4 +149,6 @@ func init() {
 		"s3 secret access key for authentication")
 	flags.StringVar(&uploadflags.UseSSL, "usessl", envy.Get("S3_USESSL", "false"),
 		"when used s3 backend is expected to be accessible via https; false by default")
+	flags.StringVar(&uploadflags.Trace, "trace", envy.Get("TRACE", "false"),
+		"enable tracing; false by default")
 }
