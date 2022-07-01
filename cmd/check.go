@@ -5,7 +5,11 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"go/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"opcap/internal/operator"
 
 	"opcap/internal/capability"
 
@@ -26,6 +30,23 @@ var checkCmd = &cobra.Command{
 	Short: "",
 	// TODO: provide Long description for check command
 	Long: ``,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		psc, err := operator.NewPackageServerClient()
+		if err != nil {
+			return types.Error{Msg: "Unable to create PackageServer client."}
+		}
+
+		pml, err := psc.OperatorsV1().PackageManifests("").List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return types.Error{Msg: "Unable to list PackageManifests."}
+		}
+
+		if len(pml.Items) == 0 {
+			return types.Error{Msg: "No PackageManifests returned from PackageServer."}
+		}
+
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
 		capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
