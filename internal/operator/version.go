@@ -2,10 +2,11 @@ package operator
 
 import (
 	"context"
+	"os"
+
 	configv1 "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
 )
 
 // getConfigClient returns a OpenShift Config clientset used to get the ClusterVersion resource

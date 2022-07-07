@@ -1,6 +1,9 @@
 package operator
 
 import (
+	"context"
+	"os"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -10,11 +13,7 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"context"
-
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	"os"
 
 	olmclient "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	pkgsclientv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
@@ -43,7 +42,6 @@ type operatorClient struct {
 }
 
 func NewClient() (Client, error) {
-
 	scheme := runtime.NewScheme()
 
 	if err := operatorv1.AddToScheme(scheme); err != nil {
@@ -55,7 +53,6 @@ func NewClient() (Client, error) {
 	}
 
 	kubeconfig, err := ctrl.GetConfig()
-
 	if err != nil {
 		logger.Errorf("could not get kubeconfig")
 		return nil, err
@@ -74,7 +71,6 @@ func NewClient() (Client, error) {
 }
 
 func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
-
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
 		logger.Errorf("Unable to build config from flags: %w", err)
@@ -88,7 +84,6 @@ func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
 }
 
 func NewOlmClientset() (*olmclient.Clientset, error) {
-
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
 		return nil, err

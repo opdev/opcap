@@ -68,7 +68,6 @@ var uploadCmd = &cobra.Command{
 			Creds:  credentials.NewStaticV4(uploadflags.AccessKeyID, uploadflags.SecretAccessKey, ""),
 			Secure: usessl,
 		})
-
 		if err != nil {
 			return err
 		}
@@ -117,7 +116,7 @@ var uploadCmd = &cobra.Command{
 			return err
 		}
 
-		if err = ioutil.WriteFile("report.json", data, 0644); err != nil {
+		if err = ioutil.WriteFile("report.json", data, 0o644); err != nil {
 			return err
 		}
 

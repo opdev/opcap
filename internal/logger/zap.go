@@ -6,8 +6,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var logger *zap.Logger
-var Sugar *zap.SugaredLogger
+var (
+	logger *zap.Logger
+	Sugar  *zap.SugaredLogger
+)
 
 func init() {
 	var err error
