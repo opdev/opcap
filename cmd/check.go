@@ -7,8 +7,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"go/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"opcap/internal/operator"
 
 	"opcap/internal/capability"
@@ -31,17 +31,17 @@ var checkCmd = &cobra.Command{
 	// TODO: provide Long description for check command
 	Long: ``,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		psc, err := operator.NewPackageServerClient()
+		psc, err := operator.NewOpCapClient()
 		if err != nil {
-			return types.Error{Msg: "Unable to create PackageServer client."}
+			return types.Error{Msg: "Unable to create OpCap client."}
 		}
-
-		pml, err := psc.OperatorsV1().PackageManifests("").List(context.TODO(), metav1.ListOptions{})
+		var packageManifestList pkgserverv1.PackageManifestList
+		err = psc.ListPackageManifests(context.TODO(), &packageManifestList)
 		if err != nil {
 			return types.Error{Msg: "Unable to list PackageManifests."}
 		}
 
-		if len(pml.Items) == 0 {
+		if len(packageManifestList.Items) == 0 {
 			return types.Error{Msg: "No PackageManifests returned from PackageServer."}
 		}
 

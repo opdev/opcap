@@ -16,7 +16,7 @@ import (
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	olmclient "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-	pkgsclientv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned"
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -30,18 +30,19 @@ type Client interface {
 	DeleteSecret(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
-	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
 	InstallPlanApprove(namespace string) error
 	WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
 	WaitForCsvOnNamespace(namespace string) (string, error)
 	GetOpenShiftVersion() (string, error)
+	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList) error
+	GetSubscriptionData(source string, namespace string) ([]SubscriptionData, error)
 }
 
 type operatorClient struct {
 	Client runtimeClient.Client
 }
 
-func NewClient() (Client, error) {
+func NewOpCapClient() (Client, error) {
 	scheme := runtime.NewScheme()
 
 	if err := operatorv1.AddToScheme(scheme); err != nil {
@@ -49,6 +50,10 @@ func NewClient() (Client, error) {
 	}
 
 	if err := operatorv1alpha1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+
+	if err := pkgserverv1.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
@@ -68,19 +73,6 @@ func NewClient() (Client, error) {
 		Client: client,
 	}
 	return operatorClient, nil
-}
-
-func NewPackageServerClient() (*pkgsclientv1.Clientset, error) {
-	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
-	if err != nil {
-		logger.Errorf("Unable to build config from flags: %w", err)
-	}
-	pkgsclient, err := pkgsclientv1.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return pkgsclient, nil
 }
 
 func NewOlmClientset() (*olmclient.Clientset, error) {
