@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	log "opcap/internal/logger"
@@ -26,8 +25,6 @@ var logger = log.Sugar
 type Client interface {
 	CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error)
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
-	CreateSecret(ctx context.Context, name string, content map[string]string, secretType corev1.SecretType, namespace string) (*corev1.Secret, error)
-	DeleteSecret(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
