@@ -24,6 +24,18 @@ type operatorData struct {
 	installedNS   []string
 }
 
+type InstallModeTypeAllNamespaces struct {}
+
+type InstallModeTypeOwnNamespace struct {}
+
+type InstallModeTypeSingleNamespace struct {}
+
+type InstallModeTypeMultiNamespace struct {}
+
+type installModeData interface {
+	createFromOpertorData(data operatorData) (operator.OperatorGroupData)
+ }
+
 func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
 	s, err := operator.Subscriptions(catalogSource, catalogSourceNamespace)
 	if err != nil {
@@ -107,45 +119,64 @@ func createGroupByInstallMode(s operator.SubscriptionData, c operator.Client, m 
 
 	switch s.InstallModeType {
 
-	case operatorv1alpha1.InstallModeTypeAllNamespaces:
-		opGroupData := operator.OperatorGroupData{
-			Name:             m.operatorGroup,
-			TargetNamespaces: []string{},
+		case operatorv1alpha1.InstallModeTypeAllNamespaces:
+	
+			installModeData := &InstallModeTypeAllNamespaces{}
+			opGroupData := installModeData.createFromOperatorData(m)
+			c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+	
+		case operatorv1alpha1.InstallModeTypeMultiNamespace:
+			installModeData := &InstallModeTypeMultiNamespace{}
+			opGroupData := installModeData.createFromOperatorData(m)
+			c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+		
+		case operatorv1alpha1.InstallModeTypeOwnNamespace:
+	
+			installModeData := &InstallModeTypeOwnNamespace{}
+			opGroupData := installModeData.createFromOperatorData(m)
+			c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
+		
+		case operatorv1alpha1.InstallModeTypeSingleNamespace:
+			installModeData := &InstallModeTypeSingleNamespace{}
+			opGroupData := installModeData.createFromOperatorData(m)
+			c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
 		}
-		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
-
-	case operatorv1alpha1.InstallModeTypeSingleNamespace:
-
-		operator.CreateNamespace(context.Background(), m.targetNs1)
-		opGroupData := operator.OperatorGroupData{
-			Name:             m.operatorGroup,
-			TargetNamespaces: []string{m.targetNs1},
-		}
-		m.installedNS = append(m.installedNS, m.targetNs1)
-		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
-
-	case operatorv1alpha1.InstallModeTypeOwnNamespace:
-		opGroupData := operator.OperatorGroupData{
-			Name:             m.operatorGroup,
-			TargetNamespaces: []string{m.namespace},
-		}
-		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
-
-	case operatorv1alpha1.InstallModeTypeMultiNamespace:
-
-		operator.CreateNamespace(context.Background(), m.targetNs1)
-		operator.CreateNamespace(context.Background(), m.targetNs2)
-		opGroupData := operator.OperatorGroupData{
-			Name:             m.operatorGroup,
-			TargetNamespaces: []string{m.targetNs1, m.targetNs2},
-		}
-		m.installedNS = append(m.installedNS, m.targetNs1)
-		m.installedNS = append(m.installedNS, m.targetNs2)
-		c.CreateOperatorGroup(context.Background(), opGroupData, m.namespace)
-
-	}
-
 }
+
+func (m *InstallModeTypeAllNamespaces) createFromOperatorData(data operatorData) operator.OperatorGroupData{
+	opGroupData := operator.OperatorGroupData{
+	   Name:             data.operatorGroup,
+	   TargetNamespaces: []string{},
+	}
+	return opGroupData
+ }
+ 
+ func (m *InstallModeTypeMultiNamespace) createFromOperatorData(data operatorData) (operator.OperatorGroupData){
+	 operator.CreateNamespace(context.Background(), data.targetNs1)
+	 operator.CreateNamespace(context.Background(), data.targetNs2)
+	 opGroupData := operator.OperatorGroupData{
+		 Name:			data.operatorGroup,
+		 TargetNamespaces: []string{data.targetNs1, data.targetNs2},
+	 }
+	 return opGroupData
+ }
+ 
+ func (m *InstallModeTypeOwnNamespace) createFromOperatorData(data operatorData) (operator.OperatorGroupData){
+	 opGroupData := operator.OperatorGroupData{
+		 Name:			  data.operatorGroup,
+		 TargetNamespaces: []string{data.namespace},
+	 }
+	 return opGroupData
+ }
+ 
+ func (m *InstallModeTypeSingleNamespace) createFromOperatorData(data operatorData) (operator.OperatorGroupData){
+	 operator.CreateNamespace(context.Background(), data.targetNs1)
+	 opGroupData := operator.OperatorGroupData{
+		 Name:			  data.operatorGroup,
+		 TargetNamespaces: []string{data.targetNs1},
+	 }
+	 return opGroupData
+ }
 
 func cleanUp(s operator.SubscriptionData, c operator.Client, m operatorData) {
 
