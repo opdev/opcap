@@ -2,11 +2,11 @@ package operator
 
 import (
 	"context"
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"strings"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SubscriptionData struct {
@@ -21,14 +21,9 @@ type SubscriptionData struct {
 // SubscriptionList represent the set of operators
 // to be installed and tested
 // It's a unique list of package/channels for operator install
-func Subscriptions(catalogSource string, catalogSourceNamespace string) ([]SubscriptionData, error) {
-	c, err := NewPackageServerClient()
-	if err != nil {
-		logger.Errorf("Error while creating new PackageServerClient: %w", err)
-		return nil, err
-	}
-
-	packageManifests, err := c.OperatorsV1().PackageManifests("").List(context.Background(), metav1.ListOptions{})
+func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceNamespace string) ([]SubscriptionData, error) {
+	var packageManifests pkgserverv1.PackageManifestList
+	err := c.ListPackageManifests(context.Background(), &packageManifests)
 	if err != nil {
 		logger.Errorf("Error while listing new PackageManifest Objects: %w", err)
 		return nil, err
@@ -90,12 +85,6 @@ func (c operatorClient) DeleteSubscription(ctx context.Context, name string, nam
 	return c.Client.Delete(ctx, subscription)
 }
 
-func (c operatorClient) GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error) {
-	subscription := &operatorv1alpha1.Subscription{}
-	err := c.Client.Get(ctx, runtimeclient.ObjectKey{
-		Name:      name,
-		Namespace: namespace,
-	}, subscription)
-
-	return subscription, err
+func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList) error {
+	return c.Client.List(ctx, list)
 }

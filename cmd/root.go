@@ -41,7 +41,7 @@ func Execute() {
 }
 
 func init() {
-	opClient, err := operator.NewClient()
+	opClient, err := operator.NewOpCapClient()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
 		os.Exit(1)

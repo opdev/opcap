@@ -25,17 +25,19 @@ type operatorData struct {
 }
 
 func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
-	s, err := operator.Subscriptions(catalogSource, catalogSourceNamespace)
+
+	c, err := operator.NewOpCapClient()
+	if err != nil {
+		logger.Errorf("Error while creating OpCapClient: %w", err)
+		return err
+	}
+
+	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace)
 	if err != nil {
 		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
 		return err
 	}
 
-	c, err := operator.NewClient()
-	if err != nil {
-		logger.Errorf("Error while creating PackageServerClient: %w", err)
-		return err
-	}
 
 	for _, subscription := range s {
 

@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// NewClient
+// NewOpCapClient
 func GetK8sClient() *kubernetes.Clientset {
 	// create k8s client
 	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
