@@ -8,8 +8,9 @@ import (
 	"context"
 	"fmt"
 	"go/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"opcap/internal/operator"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"opcap/internal/capability"
 
@@ -49,6 +50,7 @@ var checkCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
+		//capability.OperandInstallForOperator("opcap-dynatrace-operator")
 		capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
 	},
 }
