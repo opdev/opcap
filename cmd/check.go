@@ -7,9 +7,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"go/types"
+	"opcap/internal/logger"
 	"opcap/internal/operator"
+
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
 	"opcap/internal/capability"
 
@@ -49,7 +51,22 @@ var checkCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
-		capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
+		// capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
+
+		// TODO: create separate function to build auditPlan by flags
+		var auditPlan []string
+
+		auditPlan = append(auditPlan, "OperatorInstall")
+		auditPlan = append(auditPlan, "OperatorCleanUp")
+
+		// TODO: create separate function to build auditor by flags
+		// Build auditor by catalog
+		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, auditPlan)
+		if err != nil {
+			logger.Sugar.Fatal("Unable to build auditor")
+		}
+		// run all dynamically built audits in the auditor workqueue
+		auditor.RunAudits()
 	},
 }
 
