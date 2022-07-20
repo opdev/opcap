@@ -57,6 +57,7 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	for _, subscription := range s {
 
 		var ca capAudit
+		ca.client = c
 		ca.namespace = strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
 		ca.subscription = subscription
 		ca.auditPlan = auditPlan

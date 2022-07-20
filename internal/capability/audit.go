@@ -1,7 +1,6 @@
 package capability
 
 import (
-	"fmt"
 	"opcap/internal/operator"
 )
 
@@ -15,6 +14,10 @@ type Audit interface {
 
 // capAudit is an implementation of the Audit interface
 type capAudit struct {
+
+	// client has access to all operator methods
+	client operator.Client
+
 	// namespace is the ns where the operator will be installed
 	namespace string
 
@@ -29,15 +32,8 @@ type capAudit struct {
 
 // Temporary fake install for testing
 // will remove before merging this PR
-func (ca *capAudit) OperatorInstall() error {
-	fmt.Printf("Installing package %s\n", ca.subscription.Package)
-	return nil
-}
+// func (ca *capAudit) OperatorCleanUp() error {
 
-// Temporary fake install for testing
-// will remove before merging this PR
-func (ca *capAudit) OperatorCleanUp() error {
-
-	fmt.Printf("Cleaning up package %s\n", ca.subscription.Package)
-	return nil
-}
+// 	fmt.Printf("Cleaning up package %s\n", ca.subscription.Package)
+// 	return nil
+// }

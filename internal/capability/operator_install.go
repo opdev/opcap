@@ -24,46 +24,15 @@ type operatorData struct {
 	installedNS   []string
 }
 
-func OperatorInstallAllFromCatalog(catalogSource string, catalogSourceNamespace string) error {
-
-	c, err := operator.NewOpCapClient()
-	if err != nil {
-		logger.Errorf("Error while creating OpCapClient: %w", err)
-		return err
-	}
-
-	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace)
-	if err != nil {
-		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
-		return err
-	}
-
-
-	for _, subscription := range s {
-
-		// TODO: implement this with goroutines for concurrent testing
-		// TODO: transform subscriptions list in a queuing mechanism
-		// for the test work. Run all individual tests under the umbrella
-		// of it's operator dedicated goroutine
-		err := OperatorInstall(subscription, c)
-		if err != nil {
-			logger.Errorw("installing operator", "package", subscription.Package, "channel", subscription.Channel, "installmode", subscription.InstallModeType)
-		}
-
-	}
-
-	return nil
-}
-
-func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
-	logger.Debugw("installing package", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
+func (ca *capAudit) OperatorInstall() error {
+	logger.Debugw("installing package", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
 	od := new(operatorData)
 
-	od.namespace = strings.Join([]string{"opcap", strings.ReplaceAll(s.Package, ".", "-")}, "-")
+	od.namespace = strings.Join([]string{"opcap", strings.ReplaceAll(ca.subscription.Package, ".", "-")}, "-")
 	od.targetNs1 = strings.Join([]string{od.namespace, "targetns1"}, "-")
 	od.targetNs2 = strings.Join([]string{od.namespace, "targetns2"}, "-")
-	od.operatorGroup = strings.Join([]string{s.Name, s.Channel, "group"}, "-")
+	od.operatorGroup = strings.Join([]string{ca.subscription.Name, ca.subscription.Channel, "group"}, "-")
 
 	// create operator namespace
 	operator.CreateNamespace(context.Background(), od.namespace)
@@ -71,36 +40,36 @@ func OperatorInstall(s operator.SubscriptionData, c operator.Client) error {
 	// Checking install modes and
 	// creating operatorGroup per operator package/channel
 	od.installedNS = []string{od.namespace}
-	createGroupByInstallMode(s, c, *od)
+	createGroupByInstallMode(ca.subscription, ca.client, *od)
 
 	// create subscription per operator package/channel
-	sub, err := c.CreateSubscription(context.Background(), s, od.namespace)
+	sub, err := ca.client.CreateSubscription(context.Background(), ca.subscription, od.namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
 	}
 
-	if err = c.WaitForInstallPlan(context.Background(), sub); err != nil {
+	if err = ca.client.WaitForInstallPlan(context.Background(), sub); err != nil {
 		logger.Debugf("Waiting for InstallPlan: %w", err)
 		return err
 	}
 	// check/approve install plan
 	// TODO: check the name standard for installPlan
-	err = c.InstallPlanApprove(od.namespace)
+	err = ca.client.InstallPlanApprove(od.namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
 	}
 
-	csvStatus, err := c.WaitForCsvOnNamespace(od.namespace)
+	csvStatus, err := ca.client.WaitForCsvOnNamespace(od.namespace)
 
 	if err != nil {
-		logger.Infow("failed", "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
+		logger.Infow("failed", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 	} else {
-		logger.Infow(strings.ToLower(csvStatus), "package", s.Package, "channel", s.Channel, "installmode", s.InstallModeType)
+		logger.Infow(strings.ToLower(csvStatus), "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 	}
 
-	cleanUp(s, c, *od)
+	cleanUp(ca.subscription, ca.client, *od)
 
 	return nil
 }

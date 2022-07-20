@@ -57,7 +57,7 @@ var checkCmd = &cobra.Command{
 		var auditPlan []string
 
 		auditPlan = append(auditPlan, "OperatorInstall")
-		auditPlan = append(auditPlan, "OperatorCleanUp")
+		// auditPlan = append(auditPlan, "OperatorCleanUp")
 
 		// TODO: create separate function to build auditor by flags
 		// Build auditor by catalog
