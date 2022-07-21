@@ -18,13 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CheckCommandFlags struct {
-	CatalogSource          string `json:"catalogsource"`
-	CatalogSourceNamespace string `json:"catalogsourcenamespace"`
-}
-
-var checkflags CheckCommandFlags
-
 // TODO: provide godoc compatible comment for checkCmd
 var checkCmd = &cobra.Command{
 	Use: "check",
@@ -53,15 +46,15 @@ var checkCmd = &cobra.Command{
 		fmt.Println("check called")
 		// capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
 
-		// TODO: create separate function to build auditPlan by flags
-		var auditPlan []string
+		// // TODO: create separate function to build auditPlan by flags
+		// var auditPlan []string
 
-		auditPlan = append(auditPlan, "OperatorInstall")
-		auditPlan = append(auditPlan, "OperatorCleanUp")
+		// auditPlan = append(auditPlan, "OperatorInstall")
+		// auditPlan = append(auditPlan, "OperatorCleanUp")
 
 		// TODO: create separate function to build auditor by flags
 		// Build auditor by catalog
-		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, auditPlan)
+		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan)
 		if err != nil {
 			logger.Sugar.Fatal("Unable to build auditor")
 		}
@@ -70,7 +63,18 @@ var checkCmd = &cobra.Command{
 	},
 }
 
+type CheckCommandFlags struct {
+	AuditPlan              []string `json:"auditPlan"`
+	CatalogSource          string   `json:"catalogsource"`
+	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
+}
+
+var checkflags CheckCommandFlags
+
 func init() {
+
+	var defaultAuditPlan = []string{"OperatorInstall", "OperatorCleanUp"}
+
 	rootCmd.AddCommand(checkCmd)
 	flags := checkCmd.Flags()
 
@@ -78,4 +82,5 @@ func init() {
 		"")
 	flags.StringVar(&checkflags.CatalogSourceNamespace, "catalogsourcenamespace", "openshift-marketplace",
 		"")
+	flags.StringArrayVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 }
