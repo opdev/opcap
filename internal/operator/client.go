@@ -27,8 +27,7 @@ type Client interface {
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
-	InstallPlanApprove(namespace string) error
-	WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
+	ApproveInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
 	WaitForCsvOnNamespace(namespace string) (string, error)
 	GetOpenShiftVersion() (string, error)
 	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList) error
