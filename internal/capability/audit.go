@@ -2,6 +2,9 @@ package capability
 
 import (
 	"opcap/internal/operator"
+	"strings"
+
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 // Audit defines all the methods used to run a full audit Plan against a single operator
@@ -21,6 +24,9 @@ type capAudit struct {
 	// namespace is the ns where the operator will be installed
 	namespace string
 
+	// operatorGroupData contains information to create operator groups
+	operatorGroupData operator.OperatorGroupData
+
 	// subscription holds the data to install an operator via OLM
 	subscription operator.SubscriptionData
 
@@ -30,10 +36,45 @@ type capAudit struct {
 	auditPlan []string
 }
 
-// Temporary fake install for testing
-// will remove before merging this PR
-// func (ca *capAudit) OperatorCleanUp() error {
+func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) capAudit {
 
-// 	fmt.Printf("Cleaning up package %s\n", ca.subscription.Package)
-// 	return nil
-// }
+	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
+	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
+
+	return capAudit{
+		client:            c,
+		namespace:         ns,
+		operatorGroupData: newOperatorGroupData(operatorGroupName, getTargetNamespaces(subscription, ns)),
+		subscription:      subscription,
+		auditPlan:         auditPlan,
+	}
+}
+
+func newOperatorGroupData(name string, targetNamespaces []string) operator.OperatorGroupData {
+
+	return operator.OperatorGroupData{
+		Name:             name,
+		TargetNamespaces: targetNamespaces,
+	}
+}
+
+func getTargetNamespaces(s operator.SubscriptionData, namespace string) []string {
+
+	targetNs1 := strings.Join([]string{namespace, "targetns1"}, "-")
+	targetNs2 := strings.Join([]string{namespace, "targetns2"}, "-")
+
+	switch s.InstallModeType {
+
+	case operatorv1alpha1.InstallModeTypeSingleNamespace:
+
+		return []string{targetNs1}
+
+	case operatorv1alpha1.InstallModeTypeOwnNamespace:
+		return []string{namespace}
+
+	case operatorv1alpha1.InstallModeTypeMultiNamespace:
+
+		return []string{targetNs1, targetNs2}
+	}
+	return []string{}
+}

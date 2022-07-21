@@ -3,7 +3,6 @@ package capability
 import (
 	"opcap/internal/operator"
 	"reflect"
-	"strings"
 )
 
 // Auditor interface represents the object running capability audits against operators
@@ -56,14 +55,8 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	// add capAudits to the workqueue
 	for _, subscription := range s {
 
-		var ca capAudit
-		ca.client = c
-		ca.namespace = strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
-		ca.subscription = subscription
-		ca.auditPlan = auditPlan
-
 		// load workqueue with capAudit
-		capAuditor.WorkQueue <- ca
+		capAuditor.WorkQueue <- newCapAudit(c, subscription, auditPlan)
 
 	}
 
