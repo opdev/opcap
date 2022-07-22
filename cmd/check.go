@@ -44,15 +44,7 @@ var checkCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
-		// capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
 
-		// // TODO: create separate function to build auditPlan by flags
-		// var auditPlan []string
-
-		// auditPlan = append(auditPlan, "OperatorInstall")
-		// auditPlan = append(auditPlan, "OperatorCleanUp")
-
-		// TODO: create separate function to build auditor by flags
 		// Build auditor by catalog
 		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan)
 		if err != nil {
