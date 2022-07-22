@@ -7,21 +7,16 @@ package cmd
 import (
 	"context"
 	"fmt"
-	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"go/types"
+	"opcap/internal/logger"
 	"opcap/internal/operator"
+
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
 	"opcap/internal/capability"
 
 	"github.com/spf13/cobra"
 )
-
-type CheckCommandFlags struct {
-	CatalogSource          string `json:"catalogsource"`
-	CatalogSourceNamespace string `json:"catalogsourcenamespace"`
-}
-
-var checkflags CheckCommandFlags
 
 // TODO: provide godoc compatible comment for checkCmd
 var checkCmd = &cobra.Command{
@@ -49,11 +44,29 @@ var checkCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
-		capability.OperatorInstallAllFromCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace)
+
+		// Build auditor by catalog
+		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan)
+		if err != nil {
+			logger.Sugar.Fatal("Unable to build auditor")
+		}
+		// run all dynamically built audits in the auditor workqueue
+		auditor.RunAudits()
 	},
 }
 
+type CheckCommandFlags struct {
+	AuditPlan              []string `json:"auditPlan"`
+	CatalogSource          string   `json:"catalogsource"`
+	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
+}
+
+var checkflags CheckCommandFlags
+
 func init() {
+
+	var defaultAuditPlan = []string{"OperatorInstall", "OperatorCleanUp"}
+
 	rootCmd.AddCommand(checkCmd)
 	flags := checkCmd.Flags()
 
@@ -61,4 +74,5 @@ func init() {
 		"")
 	flags.StringVar(&checkflags.CatalogSourceNamespace, "catalogsourcenamespace", "openshift-marketplace",
 		"")
+	flags.StringArrayVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 }

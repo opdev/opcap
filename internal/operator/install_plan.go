@@ -11,7 +11,40 @@ import (
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (c operatorClient) InstallPlanApprove(namespace string) error {
+// ApproveInstallPlan waits and approves installPlans
+func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error {
+	subKey := types.NamespacedName{
+		Namespace: sub.GetNamespace(),
+		Name:      sub.GetName(),
+	}
+
+	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
+		if err := c.Client.Get(ctx, subKey, sub); err != nil {
+			return false, err
+		}
+		if sub.Status.InstallPlanRef != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
+		logger.Errorf("install plan is not available for the subscription %s: %w", sub.Name, err)
+		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
+	}
+
+	err := c.installPlanApprove(sub.ObjectMeta.Namespace)
+	if err != nil {
+		logger.Debugf("Error creating subscriptions: %w", err)
+		return err
+	}
+
+	return nil
+}
+
+// InstallPlanApprove logic
+// TODO: consolidate ApproveInstallPlan and InstallPlanApprove in a single and cleaner function
+func (c operatorClient) installPlanApprove(namespace string) error {
 	installPlanList := operatorv1alpha1.InstallPlanList{}
 
 	listOpts := runtimeClient.ListOptions{
@@ -47,29 +80,6 @@ func (c operatorClient) InstallPlanApprove(namespace string) error {
 			logger.Errorf("Error: %w", err)
 			return err
 		}
-	}
-	return nil
-}
-
-func (c operatorClient) WaitForInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error {
-	subKey := types.NamespacedName{
-		Namespace: sub.GetNamespace(),
-		Name:      sub.GetName(),
-	}
-
-	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
-		if err := c.Client.Get(ctx, subKey, sub); err != nil {
-			return false, err
-		}
-		if sub.Status.InstallPlanRef != nil {
-			return true, nil
-		}
-		return false, nil
-	})
-
-	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
-		logger.Errorf("install plan is not available for the subscription %s: %w", sub.Name, err)
-		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 	return nil
 }
