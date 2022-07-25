@@ -13,6 +13,7 @@ import (
 // instance and as part of an auditPlan
 type Audit interface {
 	OperatorInstall() error
+	OperandInstall() error
 	OperatorCleanUp() error
 }
 
