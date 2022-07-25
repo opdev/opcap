@@ -33,26 +33,56 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 
 			return true, nil
 		})
+
 	if err != nil {
 		logger.Error("Failed to create csv.")
 		return "", err
 	}
 
+	// csv will catch CSVs from watch events
 	var csv *operatorv1alpha1.ClusterServiceVersion
 	var ok bool
 
-	for event := range watcher.ResultChan() {
-		csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
-		if !ok {
-			return "", fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
-		}
-		if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
-			csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
+	// eventChan receives all events from CSVs on the selected namespace
+	// If a CSV changes we verify if it succeeded or failed
+	eventChan := watcher.ResultChan()
 
-			break
-		}
+	// delay and timeout to control how long we should wait for a CSV
+	// to fail or succeed
+	delay := 1 * time.Minute
+	timeout := time.After(delay)
 
+	// ticker will make the for loop below behave better for our purposes
+	// we don't need a super fast sub second looping here
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for t := range ticker.C {
+
+		select {
+
+		//case catches CSV events
+		case event := <-eventChan:
+			csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
+			// fail on wrong objects
+			if !ok {
+				return "", fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
+			}
+			// check for succeed or failed
+			if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
+				csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
+
+				return string(csv.Status.Phase), nil
+			}
+
+		// if it takes more than delay return with error
+		case <-timeout:
+			return "", fmt.Errorf("operator install timeout after %v at %d", t, delay)
+
+		default:
+			continue
+
+		}
 	}
-
-	return string(csv.Status.Phase), nil
+	return "", fmt.Errorf("couldn't get CVS status")
 }
