@@ -40,8 +40,10 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 
 	var csv *operatorv1alpha1.ClusterServiceVersion
 	var ok bool
+	var csvPhase string = ""
+	var event watch.Event
 
-	for event := range watcher.ResultChan() {
+	for event = range watcher.ResultChan() {
 		csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
 		if !ok {
 			return "", fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
@@ -49,10 +51,20 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 		if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
 			csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
 
+			//only if phase has an actual value, convert it to string
+			csvPhase = string(csv.Status.Phase)
+
 			break
 		}
 
 	}
 
-	return string(csv.Status.Phase), nil
+	// If an error occurs or Stop() is called on ResultChan() above,
+	// the implementation will close this channel and release any resources used by the watch.
+	// That will render an empty CSV phase, error must be raised and handled here.
+	if csvPhase == "" {
+		return "", fmt.Errorf("watcher.ResultChan encountered an error or Stop() method has been called prematurely. Channel data: %v", event)
+	}
+
+	return csvPhase, nil
 }
