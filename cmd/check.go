@@ -10,6 +10,7 @@ import (
 	"go/types"
 	"opcap/internal/logger"
 	"opcap/internal/operator"
+	"os"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
@@ -40,6 +41,13 @@ var checkCmd = &cobra.Command{
 			return types.Error{Msg: "No PackageManifests returned from PackageServer."}
 		}
 
+		if checkflags.ListPackages {
+			for _, packageManifest := range packageManifestList.Items {
+				fmt.Println(packageManifest.Name)
+			}
+			os.Exit(0)
+		}
+
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -59,6 +67,7 @@ type CheckCommandFlags struct {
 	AuditPlan              []string `json:"auditPlan"`
 	CatalogSource          string   `json:"catalogsource"`
 	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
+	ListPackages           bool     `json:"listPackages"`
 }
 
 var checkflags CheckCommandFlags
@@ -75,4 +84,5 @@ func init() {
 	flags.StringVar(&checkflags.CatalogSourceNamespace, "catalogsourcenamespace", "openshift-marketplace",
 		"")
 	flags.StringArrayVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
+	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
 }
