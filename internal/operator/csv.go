@@ -39,26 +39,9 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 		return "", err
 	}
 
+	// csv will catch CSVs from watch events
 	var csv *operatorv1alpha1.ClusterServiceVersion
 	var ok bool
-	// var csvPhase string = ""
-	// var event watch.Event
-
-	// for event = range watcher.ResultChan() {
-	// 	csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
-	// 	if !ok {
-	// 		return "", fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
-	// 	}
-	// 	if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
-	// 		csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
-
-	// 		//only if phase has an actual value, convert it to string
-	// 		csvPhase = string(csv.Status.Phase)
-
-	// 		break
-	// 	}
-
-	// }
 
 	// eventChan receives all events from CSVs on the selected namespace
 	// If a CSV changes we verify if it succeeded or failed
@@ -78,17 +61,21 @@ func (c operatorClient) WaitForCsvOnNamespace(namespace string) (string, error) 
 
 		select {
 
+		//case catches CSV events
 		case event := <-eventChan:
 			csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
+			// fail on wrong objects
 			if !ok {
 				return "", fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
 			}
+			// check for succeed or failed
 			if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
 				csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
 
 				return string(csv.Status.Phase), nil
 			}
 
+		// if it takes more than delay return with error
 		case <-timeout:
 			return "", fmt.Errorf("operator install timeout after %v at %d", t, delay)
 
