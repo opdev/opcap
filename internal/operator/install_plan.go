@@ -8,7 +8,6 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ApproveInstallPlan waits and approves installPlans
@@ -18,6 +17,7 @@ func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1a
 		Name:      sub.GetName(),
 	}
 
+	// Wait for an installPlan to be associated to the subscription.
 	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
 		if err := c.Client.Get(ctx, subKey, sub); err != nil {
 			return false, err
@@ -33,32 +33,18 @@ func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1a
 		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 
-	installPlanList := operatorv1alpha1.InstallPlanList{}
 	namespace := sub.GetNamespace()
 
-	listOpts := runtimeClient.ListOptions{
-		Namespace: namespace,
-	}
-
-	err := c.Client.List(ctx, &installPlanList, &listOpts)
-	if err != nil {
-		logger.Errorf("Unable to list InstallPlans in Namespace %s: %w", namespace, err)
-		return err
-	}
-
-	if len(installPlanList.Items) == 0 {
-		logger.Errorf("no installPlan found in namespace %s", namespace)
-		return fmt.Errorf("no installPlan found in namespace %s", namespace)
-	}
-
+	// Get installPlan referenced by sub.Status.InstallPlanRef
 	installPlan := operatorv1alpha1.InstallPlan{}
-
-	err = c.Client.Get(ctx, types.NamespacedName{Name: installPlanList.Items[0].ObjectMeta.Name, Namespace: namespace}, &installPlan)
+	installPlanKey := types.NamespacedName{Name: sub.Status.InstallPlanRef.Name, Namespace: namespace}
+	err := c.Client.Get(ctx, installPlanKey, &installPlan)
 	if err != nil {
-		logger.Errorf("no installPlan found in namespace %s: %w", namespace, err)
+		logger.Errorf("installPlan %s not found in namespace %s: %w", sub.Status.InstallPlanRef.Name, namespace, err)
 		return err
 	}
 
+	// Approve installPlan if necessary
 	if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual {
 		installPlan.Spec.Approved = true
 		err := c.Client.Update(ctx, &installPlan)
