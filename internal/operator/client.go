@@ -17,6 +17,7 @@ import (
 	olmclient "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -82,4 +83,17 @@ func NewOlmClientset() (*olmclient.Clientset, error) {
 	}
 
 	return olmClientset, nil
+}
+
+// NewDynamicClient creates a new dynamic client or returns an error.
+func NewDynamicClient() (dynamic.Interface, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return nil, err
+	}
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }

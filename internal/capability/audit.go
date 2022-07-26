@@ -1,11 +1,14 @@
 package capability
 
 import (
+	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/opdev/opcap/internal/operator"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Audit defines all the methods used to run a full audit Plan against a single operator
@@ -13,6 +16,7 @@ import (
 // instance and as part of an auditPlan
 type Audit interface {
 	OperatorInstall() error
+	GetAlmExamples() error
 	OperandInstall() error
 	OperatorCleanUp() error
 }
@@ -36,6 +40,10 @@ type capAudit struct {
 	// all of them must be an implemented method of capAudit and must be part
 	// of the Audit interface
 	auditPlan []string
+
+	// customResources is a map of string interface that has all the CR(almExamples) that needs to be installed
+	// as part of the OperandInstall function
+	customResources []map[string]interface{}
 }
 
 func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) capAudit {
@@ -58,6 +66,38 @@ func newOperatorGroupData(name string, targetNamespaces []string) operator.Opera
 		Name:             name,
 		TargetNamespaces: targetNamespaces,
 	}
+}
+
+// function to get all the ALMExamples present in a given CSV
+func (ca *capAudit) GetAlmExamples() error {
+	ctx := context.Background()
+
+	olmClientset, err := operator.NewOlmClientset()
+	if err != nil {
+		return err
+	}
+
+	opts := v1.ListOptions{}
+
+	// gets the list of CSVs present in a particular namespace
+	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.namespace).List(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	// map of string interface which consist of ALM examples from the CSVList
+	almExamples := CSVList.Items[0].ObjectMeta.Annotations["alm-examples"]
+
+	var almList []map[string]interface{}
+
+	err = json.Unmarshal([]byte(almExamples), &almList)
+	if err != nil {
+		return err
+	}
+
+	ca.customResources = almList
+
+	return nil
 }
 
 func getTargetNamespaces(s operator.SubscriptionData, namespace string) []string {
