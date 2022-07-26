@@ -12,12 +12,14 @@ import (
 
 // ApproveInstallPlan waits and approves installPlans
 func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error {
-	subKey := types.NamespacedName{
-		Namespace: sub.GetNamespace(),
-		Name:      sub.GetName(),
-	}
+	subNamespace := sub.GetNamespace()
+	subName := sub.GetName()
 
 	// Wait for an installPlan to be associated to the subscription.
+	subKey := types.NamespacedName{
+		Namespace: subNamespace,
+		Name:      subName,
+	}
 	ipCheck := wait.ConditionFunc(func() (done bool, err error) {
 		if err := c.Client.Get(ctx, subKey, sub); err != nil {
 			return false, err
@@ -27,20 +29,20 @@ func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1a
 		}
 		return false, nil
 	})
-
 	if err := wait.PollImmediateUntil(200*time.Millisecond, ipCheck, ctx.Done()); err != nil {
-		logger.Errorf("install plan is not available for the subscription %s: %w", sub.Name, err)
-		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
+		logger.Errorf("installPlan is not available for the subscription %s: %w", subName, err)
+		return fmt.Errorf("installPlan is not available for the subscription %s: %v", subName, err)
 	}
-
-	namespace := sub.GetNamespace()
 
 	// Get installPlan referenced by sub.Status.InstallPlanRef
 	installPlan := operatorv1alpha1.InstallPlan{}
-	installPlanKey := types.NamespacedName{Name: sub.Status.InstallPlanRef.Name, Namespace: namespace}
+	installPlanKey := types.NamespacedName{
+		Name:      sub.Status.InstallPlanRef.Name,
+		Namespace: subNamespace,
+	}
 	err := c.Client.Get(ctx, installPlanKey, &installPlan)
 	if err != nil {
-		logger.Errorf("installPlan %s not found in namespace %s: %w", sub.Status.InstallPlanRef.Name, namespace, err)
+		logger.Errorf("installPlan %s not found in namespace %s: %w", sub.Status.InstallPlanRef.Name, subNamespace, err)
 		return err
 	}
 
@@ -49,10 +51,10 @@ func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1a
 		installPlan.Spec.Approved = true
 		err := c.Client.Update(ctx, &installPlan)
 		if err != nil {
-			logger.Errorf("Unable to approve installPlan %s in namespace %s: %w", installPlan.ObjectMeta.Name, namespace, err)
+			logger.Errorf("Unable to approve installPlan %s in namespace %s: %w", installPlan.ObjectMeta.Name, subNamespace, err)
 			return err
 		}
-		logger.Debugf("%s installPlan approved in Namespace %s", installPlan.ObjectMeta.Name, namespace)
+		logger.Debugf("%s installPlan approved in Namespace %s", installPlan.ObjectMeta.Name, subNamespace)
 	}
 	return nil
 }
