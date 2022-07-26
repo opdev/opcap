@@ -58,8 +58,8 @@ func (c operatorClient) installPlanApprove(namespace string) error {
 	}
 
 	if len(installPlanList.Items) == 0 {
-		logger.Errorf("no installPlan found in namespace %s: %w", namespace, err)
-		return fmt.Errorf("no installPlan found in namespace %s", fmt.Sprint(len(installPlanList.Items)))
+		logger.Errorf("no installPlan found in namespace %s", namespace)
+		return fmt.Errorf("no installPlan found in namespace %s", namespace)
 	}
 
 	installPlan := operatorv1alpha1.InstallPlan{}
@@ -72,14 +72,13 @@ func (c operatorClient) installPlanApprove(namespace string) error {
 	}
 
 	if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual {
-
 		installPlan.Spec.Approved = true
-		logger.Debugf("%s installPlan approved in Namespace %s", installPlan.ObjectMeta.Name, namespace)
 		err := c.Client.Update(context.Background(), &installPlan)
 		if err != nil {
-			logger.Errorf("Error: %w", err)
+			logger.Errorf("Unable to approve installPlan %s in namespace %s: %w", installPlan.ObjectMeta.Name, namespace, err)
 			return err
 		}
+		logger.Debugf("%s installPlan approved in Namespace %s", installPlan.ObjectMeta.Name, namespace)
 	}
 	return nil
 }
