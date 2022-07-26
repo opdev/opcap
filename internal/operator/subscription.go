@@ -2,8 +2,9 @@ package operator
 
 import (
 	"context"
-	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"strings"
+
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,7 @@ type SubscriptionData struct {
 	CatalogSourceNamespace string
 	Package                string
 	InstallModeType        operatorv1alpha1.InstallModeType
+	InstallPlanApproval    operatorv1alpha1.Approval
 }
 
 // SubscriptionList represent the set of operators
@@ -44,6 +46,7 @@ func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceN
 								CatalogSourceNamespace: catalogSourceNamespace,
 								Package:                pkgm.Name,
 								InstallModeType:        installMode.Type,
+								InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
 							}
 
 							SubscriptionList = append(SubscriptionList, s)
@@ -68,6 +71,7 @@ func (c operatorClient) CreateSubscription(ctx context.Context, data Subscriptio
 			CatalogSource:          data.CatalogSource,
 			CatalogSourceNamespace: data.CatalogSourceNamespace,
 			Channel:                data.Channel,
+			InstallPlanApproval:    data.InstallPlanApproval,
 			Package:                data.Package,
 		},
 	}
