@@ -6,6 +6,8 @@ import (
 
 	log "opcap/internal/logger"
 	"opcap/internal/operator"
+
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 var logger = log.Sugar
@@ -34,9 +36,11 @@ func (ca *capAudit) OperatorInstall() error {
 	}
 
 	// wait for installPlan and approve it if it's in manual mode
-	if err = ca.client.ApproveInstallPlan(context.Background(), sub); err != nil {
-		logger.Debugf("Waiting for InstallPlan: %w", err)
-		return err
+	if sub.Spec.InstallPlanApproval == operatorv1alpha1.ApprovalManual {
+		if err = ca.client.ApproveInstallPlan(context.Background(), sub); err != nil {
+			logger.Debugf("Waiting for InstallPlan: %w", err)
+			return err
+		}
 	}
 
 	csvStatus, err := ca.client.WaitForCsvOnNamespace(ca.namespace)
