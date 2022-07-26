@@ -38,7 +38,7 @@ func (ca *capAudit) OperatorInstall() error {
 	// wait for installPlan and approve it if it's in manual mode
 	if sub.Spec.InstallPlanApproval == operatorv1alpha1.ApprovalManual {
 		if err = ca.client.ApproveInstallPlan(context.Background(), sub); err != nil {
-			logger.Debugf("Waiting for InstallPlan: %w", err)
+			logger.Debugf("Error approving InstallPlan: %w", err)
 			return err
 		}
 	}
