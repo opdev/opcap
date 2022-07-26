@@ -33,25 +33,14 @@ func (c operatorClient) ApproveInstallPlan(ctx context.Context, sub *operatorv1a
 		return fmt.Errorf("install plan is not available for the subscription %s: %v", sub.Name, err)
 	}
 
-	err := c.installPlanApprove(sub.ObjectMeta.Namespace)
-	if err != nil {
-		logger.Debugf("Error creating subscriptions: %w", err)
-		return err
-	}
-
-	return nil
-}
-
-// InstallPlanApprove logic
-// TODO: consolidate ApproveInstallPlan and InstallPlanApprove in a single and cleaner function
-func (c operatorClient) installPlanApprove(namespace string) error {
 	installPlanList := operatorv1alpha1.InstallPlanList{}
+	namespace := sub.GetNamespace()
 
 	listOpts := runtimeClient.ListOptions{
 		Namespace: namespace,
 	}
 
-	err := c.Client.List(context.Background(), &installPlanList, &listOpts)
+	err := c.Client.List(ctx, &installPlanList, &listOpts)
 	if err != nil {
 		logger.Errorf("Unable to list InstallPlans in Namespace %s: %w", namespace, err)
 		return err
@@ -64,8 +53,7 @@ func (c operatorClient) installPlanApprove(namespace string) error {
 
 	installPlan := operatorv1alpha1.InstallPlan{}
 
-	err = c.Client.Get(context.Background(), types.NamespacedName{Name: installPlanList.Items[0].ObjectMeta.Name, Namespace: namespace}, &installPlan)
-
+	err = c.Client.Get(ctx, types.NamespacedName{Name: installPlanList.Items[0].ObjectMeta.Name, Namespace: namespace}, &installPlan)
 	if err != nil {
 		logger.Errorf("no installPlan found in namespace %s: %w", namespace, err)
 		return err
@@ -73,7 +61,7 @@ func (c operatorClient) installPlanApprove(namespace string) error {
 
 	if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual {
 		installPlan.Spec.Approved = true
-		err := c.Client.Update(context.Background(), &installPlan)
+		err := c.Client.Update(ctx, &installPlan)
 		if err != nil {
 			logger.Errorf("Unable to approve installPlan %s in namespace %s: %w", installPlan.ObjectMeta.Name, namespace, err)
 			return err
