@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -30,7 +31,7 @@ type Client interface {
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
-	WaitForCsvOnNamespace(namespace string) (string, error)
+	GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error)
 	GetOpenShiftVersion() (string, error)
 	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error
 	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
