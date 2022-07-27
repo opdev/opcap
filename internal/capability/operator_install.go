@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opdev/opcap/internal/operator"
-
 	log "github.com/opdev/opcap/internal/logger"
+	"github.com/opdev/opcap/internal/operator"
+	"github.com/opdev/opcap/internal/report"
 )
 
 var logger = log.Sugar
@@ -51,6 +51,20 @@ func (ca *capAudit) OperatorInstall() error {
 
 	// if operator completed log Succeeded or Failed according to status field
 	logger.Infow(strings.ToLower(string(csv.Status.Phase)), "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
+
+	ocpVersion, err := ca.client.GetOpenShiftVersion()
+	if err != nil {
+		return err
+	}
+
+	reportOts := report.ReportOptions{report.ReportOptPrint}
+
+	r := report.NewOperatorInstallReport(ocpVersion, ca.subscription.Package, ca.subscription.Channel, ca.subscription.CatalogSource, string(ca.subscription.InstallModeType), csv.Status, reportOts)
+
+	err = r.GenerateReport()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
