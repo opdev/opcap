@@ -5,7 +5,7 @@ GO_VERSION:=$(shell go version | cut -f 3 -d " ")
 BUILD_TIME:=$(shell date)
 GIT_USER:=$(shell git log | grep -A2 $$(git rev-list -1 HEAD) | grep Author)
 GIT_COMMIT=$(shell git rev-parse HEAD)
-OPCAP_VERSION?="0.0.0"
+OPCAP_VERSION?="0.0.1"
 
 PLATFORMS=linux
 ARCHITECTURES=amd64 arm64 ppc64le s390x
