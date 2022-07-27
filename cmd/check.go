@@ -32,7 +32,7 @@ var checkCmd = &cobra.Command{
 			return types.Error{Msg: "Unable to create OpCap client."}
 		}
 		var packageManifestList pkgserverv1.PackageManifestList
-		err = psc.ListPackageManifests(context.TODO(), &packageManifestList)
+		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.FilterPackages)
 		if err != nil {
 			return types.Error{Msg: "Unable to list PackageManifests."}
 		}
@@ -54,7 +54,7 @@ var checkCmd = &cobra.Command{
 		fmt.Println("check called")
 
 		// Build auditor by catalog
-		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan)
+		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan, checkflags.FilterPackages)
 		if err != nil {
 			logger.Sugar.Fatal("Unable to build auditor")
 		}
@@ -68,6 +68,7 @@ type CheckCommandFlags struct {
 	CatalogSource          string   `json:"catalogsource"`
 	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
 	ListPackages           bool     `json:"listPackages"`
+	FilterPackages         []string `json:"filterPackages"`
 }
 
 var checkflags CheckCommandFlags
@@ -85,4 +86,5 @@ func init() {
 		"")
 	flags.StringArrayVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
+	flags.StringSliceVar(&checkflags.FilterPackages, "filter-packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
 }

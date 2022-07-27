@@ -30,8 +30,8 @@ type Client interface {
 	ApproveInstallPlan(ctx context.Context, sub *operatorv1alpha1.Subscription) error
 	WaitForCsvOnNamespace(namespace string) (string, error)
 	GetOpenShiftVersion() (string, error)
-	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList) error
-	GetSubscriptionData(source string, namespace string) ([]SubscriptionData, error)
+	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error
+	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
 }
 
 type operatorClient struct {

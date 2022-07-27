@@ -21,9 +21,9 @@ type SubscriptionData struct {
 // SubscriptionList represent the set of operators
 // to be installed and tested
 // It's a unique list of package/channels for operator install
-func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceNamespace string) ([]SubscriptionData, error) {
+func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceNamespace string, filter []string) ([]SubscriptionData, error) {
 	var packageManifests pkgserverv1.PackageManifestList
-	err := c.ListPackageManifests(context.Background(), &packageManifests)
+	err := c.ListPackageManifests(context.Background(), &packageManifests, filter)
 	if err != nil {
 		logger.Errorf("Error while listing new PackageManifest Objects: %w", err)
 		return nil, err
@@ -85,6 +85,23 @@ func (c operatorClient) DeleteSubscription(ctx context.Context, name string, nam
 	return c.Client.Delete(ctx, subscription)
 }
 
-func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList) error {
-	return c.Client.List(ctx, list)
+func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error {
+	var tmppkgmlist pkgserverv1.PackageManifestList
+	if err := c.Client.List(ctx, &tmppkgmlist); err != nil {
+		return err
+	}
+
+	if len(filter) > 0 {
+		for _, f := range filter {
+			for _, pkgm := range tmppkgmlist.Items {
+				if pkgm.Name == f {
+					list.Items = append(list.Items, pkgm)
+				}
+			}
+		}
+	} else {
+		list.Items = tmppkgmlist.Items
+	}
+
+	return nil
 }

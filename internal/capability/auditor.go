@@ -21,10 +21,10 @@ type capAuditor struct {
 }
 
 // BuildAuditorByCatalog creates a new Auditor with workqueue based on a selected catalog
-func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string) (capAuditor, error) {
+func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) (capAuditor, error) {
 
 	var auditor capAuditor
-	err := auditor.BuildWorkQueueByCatalog(catalogSource, catalogSourceNamespace, auditPlan)
+	err := auditor.BuildWorkQueueByCatalog(catalogSource, catalogSourceNamespace, auditPlan, filter)
 	if err != nil {
 		logger.Fatalf("Unable to build workqueue err := %s", err.Error())
 	}
@@ -32,7 +32,7 @@ func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, 
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string) error {
+func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) error {
 
 	c, err := operator.NewOpCapClient()
 	if err != nil {
@@ -42,7 +42,7 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
-	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace)
+	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace, filter)
 	if err != nil {
 		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
 		return err
