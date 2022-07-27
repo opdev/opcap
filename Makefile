@@ -1,18 +1,23 @@
-.DEFAULT_GOAL:=help
-
 BINARY?=bin/opcap
 IMAGE_BUILDER?=podman
 IMAGE_REPO?=quay.io/opdev
-VERSION=$(shell git rev-parse HEAD)
-RELEASE_TAG ?= "0.0.0"
+GO_VERSION:=$(shell go version | cut -f 3 -d " ")
+BUILD_TIME:=$(shell date)
+GIT_USER:=$(shell git log | grep -A2 $$(git rev-list -1 HEAD) | grep Author)
+GIT_COMMIT=$(shell git rev-parse HEAD)
+OPCAP_VERSION?="0.0.1"
 
 PLATFORMS=linux
 ARCHITECTURES=amd64 arm64 ppc64le s390x
 
 .PHONY: build
 build:
-	go build -o $(BINARY) -ldflags "-X github.com/opdev/opcap/version.commit=$(VERSION) -X github.com/opdev/opcap/version.version=$(RELEASE_TAG)" main.go
-	@ls | grep -e '^opcap$$' &> /dev/null
+	go build -ldflags "-X 'opcap/cmd.GitCommit=$(GIT_COMMIT)' \
+		-X 'opcap/cmd.Version=$(OPCAP_VERSION)' \
+		-X 'opcap/cmd.GoVersion=$(GO_VERSION)' \
+		-X 'opcap/cmd.BuildTime=$(BUILD_TIME)' \
+		-X 'opcap/cmd.GitUser=$(GIT_USER)'" \
+		-o $(BINARY) main.go
 
 .PHONY: build-multi-arch
 build-multi-arch: $(addprefix build-linux-,$(ARCHITECTURES))
@@ -20,8 +25,8 @@ build-multi-arch: $(addprefix build-linux-,$(ARCHITECTURES))
 define ARCHITECTURE_template
 .PHONY: build-linux-$(1)
 build-linux-$(1):
-	GOOS=linux GOARCH=$(1) go build -o $(BINARY)-linux-$(1) -ldflags "-X github.com/opdev/opcap/version.commit=$(VERSION) \
-				-X github.com/opdev/opcap/version.version=$(RELEASE_TAG)" main.go
+	GOOS=linux GOARCH=$(1) go build -o $(BINARY)-linux-$(1) -ldflags "-X 'opcap/cmd.GitCommit=$(GIT_COMMIT)' \
+				-X 'opcap/cmd.Version=$(OPCAP_VERSION)'" main.go
 endef
 
 $(foreach arch,$(ARCHITECTURES),$(eval $(call ARCHITECTURE_template,$(arch))))
@@ -36,23 +41,15 @@ tidy:
 	go mod tidy -compat=1.17
 	git diff --exit-code
 
-#.PHONY: image-build
-#image-build:
-#	$(IMAGE_BUILDER) build --build-arg release_tag=$(RELEASE_TAG) --build-arg opcap_commit=$(VERSION) -t $(IMAGE_REPO)/opcap:$(VERSION) .
-
-#.PHONY: image-push
-#image-push:
-#	$(IMAGE_BUILDER) push $(IMAGE_REPO)/opcap:$(VERSION)
-
 .PHONY: test
 test:
 	go test -v $$(go list ./...) \
-	-ldflags "-X github.com/opdev/opcap/version.commit=bar -X github.com/opdev/opcap/version.version=foo"
+	-ldflags "-X 'opcap/cmd.GitCommit=bar' -X 'opcap/cmd.Version=foo'"
 
 .PHONY: cover
 cover:
 	go test -v \
-	 -ldflags "-X github.com/opdev/opcap/version.commit=bar -X github.com/opdev/opcap/version.version=foo" \
+	 -ldflags "-X 'opcap/cmd.GitCommit=bar' -X 'opcap/cmd.Version=foo'" \
 	 $$(go list ./...) \
 	 -race \
 	 -cover -coverprofile=coverage.out
@@ -72,7 +69,7 @@ clean:
 	$(shell if [ -f "$(BINARY)-$(GOOS)-$(GOARCH)" ]; then rm -f $(BINARY)-$(GOOS)-$(GOARCH); fi)))
 
 GOFUMPT = $(shell pwd)/bin/gofumpt
-gofumpt: ## Download envtest-setup locally if necessary.
+gofumpt: ## Download gofumpt locally if necessary.
 	$(call go-install-tool,$(GOFUMPT),mvdan.cc/gofumpt@latest)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
