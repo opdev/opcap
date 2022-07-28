@@ -2,13 +2,13 @@ package capability
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/opdev/opcap/internal/operator"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // Audit defines all the methods used to run a full audit Plan against a single operator
@@ -18,6 +18,7 @@ type Audit interface {
 	OperatorInstall() error
 	GetAlmExamples() error
 	OperandInstall() error
+	OperandCleanUp() error
 	OperatorCleanUp() error
 }
 
@@ -90,7 +91,7 @@ func (ca *capAudit) GetAlmExamples() error {
 
 	var almList []map[string]interface{}
 
-	err = json.Unmarshal([]byte(almExamples), &almList)
+	err = yaml.Unmarshal([]byte(almExamples), &almList)
 	if err != nil {
 		return err
 	}
