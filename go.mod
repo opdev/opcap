@@ -1,4 +1,4 @@
-module opcap
+module github.com/opdev/opcap
 
 go 1.17
 

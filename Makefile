@@ -12,11 +12,11 @@ ARCHITECTURES=amd64 arm64 ppc64le s390x
 
 .PHONY: build
 build:
-	go build -ldflags "-X 'opcap/cmd.GitCommit=$(GIT_COMMIT)' \
-		-X 'opcap/cmd.Version=$(OPCAP_VERSION)' \
-		-X 'opcap/cmd.GoVersion=$(GO_VERSION)' \
-		-X 'opcap/cmd.BuildTime=$(BUILD_TIME)' \
-		-X 'opcap/cmd.GitUser=$(GIT_USER)'" \
+	go build -ldflags "-X 'github.com/opdev/opcap/cmd.GitCommit=$(GIT_COMMIT)' \
+		-X 'github.com/opdev/opcap/cmd.Version=$(OPCAP_VERSION)' \
+		-X 'github.com/opdev/opcap/cmd.GoVersion=$(GO_VERSION)' \
+		-X 'github.com/opdev/opcap/cmd.BuildTime=$(BUILD_TIME)' \
+		-X 'github.com/opdev/opcap/cmd.GitUser=$(GIT_USER)'" \
 		-o $(BINARY) main.go
 
 .PHONY: build-multi-arch
@@ -25,8 +25,8 @@ build-multi-arch: $(addprefix build-linux-,$(ARCHITECTURES))
 define ARCHITECTURE_template
 .PHONY: build-linux-$(1)
 build-linux-$(1):
-	GOOS=linux GOARCH=$(1) go build -o $(BINARY)-linux-$(1) -ldflags "-X 'opcap/cmd.GitCommit=$(GIT_COMMIT)' \
-				-X 'opcap/cmd.Version=$(OPCAP_VERSION)'" main.go
+	GOOS=linux GOARCH=$(1) go build -o $(BINARY)-linux-$(1) -ldflags "-X 'github.com/opdev/opcap/cmd.GitCommit=$(GIT_COMMIT)' \
+				-X 'github.com/opdev/opcap/cmd.Version=$(OPCAP_VERSION)'" main.go
 endef
 
 $(foreach arch,$(ARCHITECTURES),$(eval $(call ARCHITECTURE_template,$(arch))))
@@ -44,12 +44,12 @@ tidy:
 .PHONY: test
 test:
 	go test -v $$(go list ./...) \
-	-ldflags "-X 'opcap/cmd.GitCommit=bar' -X 'opcap/cmd.Version=foo'"
+	-ldflags "-X 'github.com/opdev/opcap/cmd.GitCommit=bar' -X 'github.com/opdev/opcap/cmd.Version=foo'"
 
 .PHONY: cover
 cover:
 	go test -v \
-	 -ldflags "-X 'opcap/cmd.GitCommit=bar' -X 'opcap/cmd.Version=foo'" \
+	 -ldflags "-X 'github.com/opdev/opcap/cmd.GitCommit=bar' -X 'github.com/opdev/opcap/cmd.Version=foo'" \
 	 $$(go list ./...) \
 	 -race \
 	 -cover -coverprofile=coverage.out

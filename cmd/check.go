@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 	"go/types"
-	"opcap/internal/logger"
-	"opcap/internal/operator"
 	"os"
 
-	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
+	"github.com/opdev/opcap/internal/capability"
+	"github.com/opdev/opcap/internal/logger"
+	"github.com/opdev/opcap/internal/operator"
 
-	"opcap/internal/capability"
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
 	"github.com/spf13/cobra"
 )
