@@ -2,8 +2,10 @@ package capability
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"opcap/internal/operator"
+
+	"github.com/opdev/opcap/internal/operator"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
@@ -85,9 +87,9 @@ func (ca *capAudit) OperandInstall() error {
 	// create the resource using the dynamic client and log the error if it occurs in stdout.json
 	_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 	if err != nil {
-		logger.Infow("failed", "operand", Resource, "package", ca.subscription.Package, "error", err.Error())
+		fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
 	} else {
-		logger.Infow("succeeded", "operand", Resource, "package", ca.subscription.Package)
+		fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
 	}
 
 	return nil

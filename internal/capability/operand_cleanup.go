@@ -2,8 +2,10 @@ package capability
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"opcap/internal/operator"
+
+	"github.com/opdev/opcap/internal/operator"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
@@ -52,7 +54,7 @@ func (ca *capAudit) OperandCleanUp() error {
 	// delete the resource using the dynamic client
 	err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
 	if err != nil {
-		logger.Infow("failed", "operandCleanUp", Resource, "package", ca.subscription.Package, "error", err.Error())
+		fmt.Printf("failed operandCleanUp: %s package: %s error: %s", Resource, ca.subscription.Package, err.Error())
 	}
 
 	return nil
