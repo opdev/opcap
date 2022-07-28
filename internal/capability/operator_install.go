@@ -28,15 +28,9 @@ func (ca *capAudit) OperatorInstall() error {
 	ca.client.CreateOperatorGroup(context.Background(), ca.operatorGroupData, ca.namespace)
 
 	// create subscription for operator package/channel
-	sub, err := ca.client.CreateSubscription(context.Background(), ca.subscription, ca.namespace)
+	_, err := ca.client.CreateSubscription(context.Background(), ca.subscription, ca.namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
-		return err
-	}
-
-	// wait for installPlan and approve it if it's in manual mode
-	if err = ca.client.ApproveInstallPlan(context.Background(), sub); err != nil {
-		logger.Debugf("Waiting for InstallPlan: %w", err)
 		return err
 	}
 
