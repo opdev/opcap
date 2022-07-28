@@ -8,6 +8,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/opdev/opcap/internal/operator"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -18,6 +20,8 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/spf13/cobra"
 )
+
+var osversion string
 
 type UploadCommandFlags struct {
 	Bucket          string `json:"bucket"`
@@ -58,6 +62,21 @@ var uploadCmd = &cobra.Command{
 	Use:   "upload",
 	Short: "Upload audit logs to an S3 compatible storage service.",
 	Long:  `Upload audit logs to an S3 compatible storage service.`,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		opClient, err := operator.NewOpCapClient()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
+			os.Exit(1)
+		}
+
+		osversion, err = opClient.GetOpenShiftVersion()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
+			os.Exit(1)
+		}
+
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Convert uploadflags.UseSSL and Trace to bool
 		usessl, _ := strconv.ParseBool(uploadflags.UseSSL)

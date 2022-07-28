@@ -8,12 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/opdev/opcap/internal/operator"
-
 	"github.com/spf13/cobra"
 )
-
-var osversion string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -36,20 +32,6 @@ func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Opcap tool execution failed: ", err)
-		os.Exit(1)
-	}
-}
-
-func init() {
-	opClient, err := operator.NewOpCapClient()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
-		os.Exit(1)
-	}
-
-	osversion, err = opClient.GetOpenShiftVersion()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
 		os.Exit(1)
 	}
 }
