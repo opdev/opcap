@@ -1,14 +1,11 @@
 package capability
 
 import (
-	"context"
 	"strings"
 
 	"github.com/opdev/opcap/internal/operator"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // Audit defines all the methods used to run a full audit Plan against a single operator
@@ -16,7 +13,6 @@ import (
 // instance and as part of an auditPlan
 type Audit interface {
 	OperatorInstall() error
-	GetAlmExamples() error
 	OperandInstall() error
 	OperandCleanUp() error
 	OperatorCleanUp() error
@@ -67,38 +63,6 @@ func newOperatorGroupData(name string, targetNamespaces []string) operator.Opera
 		Name:             name,
 		TargetNamespaces: targetNamespaces,
 	}
-}
-
-// function to get all the ALMExamples present in a given CSV
-func (ca *capAudit) GetAlmExamples() error {
-	ctx := context.Background()
-
-	olmClientset, err := operator.NewOlmClientset()
-	if err != nil {
-		return err
-	}
-
-	opts := v1.ListOptions{}
-
-	// gets the list of CSVs present in a particular namespace
-	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.namespace).List(ctx, opts)
-	if err != nil {
-		return err
-	}
-
-	// map of string interface which consist of ALM examples from the CSVList
-	almExamples := CSVList.Items[0].ObjectMeta.Annotations["alm-examples"]
-
-	var almList []map[string]interface{}
-
-	err = yaml.Unmarshal([]byte(almExamples), &almList)
-	if err != nil {
-		return err
-	}
-
-	ca.customResources = almList
-
-	return nil
 }
 
 func getTargetNamespaces(s operator.SubscriptionData, namespace string) []string {
