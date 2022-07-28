@@ -1,8 +1,9 @@
 package capability
 
 import (
-	"opcap/internal/operator"
 	"strings"
+
+	"github.com/opdev/opcap/internal/operator"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )

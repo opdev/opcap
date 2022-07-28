@@ -2,7 +2,8 @@ package capability
 
 import (
 	"context"
-	"opcap/internal/operator"
+
+	"github.com/opdev/opcap/internal/operator"
 )
 
 func (ca *capAudit) OperatorCleanUp() error {

@@ -4,8 +4,9 @@ import (
 	"context"
 	"strings"
 
-	log "opcap/internal/logger"
-	"opcap/internal/operator"
+	"github.com/opdev/opcap/internal/operator"
+
+	log "github.com/opdev/opcap/internal/logger"
 )
 
 var logger = log.Sugar

@@ -1,8 +1,9 @@
 package capability
 
 import (
-	"opcap/internal/operator"
 	"reflect"
+
+	"github.com/opdev/opcap/internal/operator"
 )
 
 // Auditor interface represents the object running capability audits against operators

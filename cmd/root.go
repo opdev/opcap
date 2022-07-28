@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"opcap/internal/operator"
+	"github.com/opdev/opcap/internal/operator"
 
 	"github.com/spf13/cobra"
 )
