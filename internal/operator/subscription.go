@@ -7,6 +7,7 @@ import (
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -108,4 +109,9 @@ func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserve
 	}
 
 	return nil
+}
+
+// ListCRDs returns the list of CRDs present in the cluster
+func (c operatorClient) ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error {
+	return c.Client.List(ctx, list)
 }

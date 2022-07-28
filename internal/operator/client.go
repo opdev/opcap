@@ -8,6 +8,8 @@ import (
 
 	log "github.com/opdev/opcap/internal/logger"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,8 +32,9 @@ type Client interface {
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	WaitForCsvOnNamespace(namespace string) (string, error)
 	GetOpenShiftVersion() (string, error)
-	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error
-	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
+	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList) error
+	GetSubscriptionData(source string, namespace string) ([]SubscriptionData, error)
+	ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error
 }
 
 type operatorClient struct {
@@ -50,6 +53,10 @@ func NewOpCapClient() (Client, error) {
 	}
 
 	if err := pkgserverv1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+
+	if err := apiextensionsv1.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
