@@ -4,7 +4,8 @@ import (
 	"context"
 	"log"
 	"opcap/internal/operator"
-	"strings"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,16 +26,33 @@ func (ca *capAudit) OperandInstall() error {
 		log.Println(err)
 	}
 
-	groupVersion := strings.Split(obj.GetAPIVersion(), "/")
+	obj.SetNamespace(ca.namespace)
+
+	var crdList apiextensionsv1.CustomResourceDefinitionList
+	err = ca.client.ListCRDs(context.TODO(), &crdList)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	var Resource string
+
+	for _, crd := range crdList.Items {
+		if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
+			Resource = crd.Spec.Names.Plural
+		}
+	}
+
 	gvr := schema.GroupVersionResource{
-		Group:    groupVersion[0],
-		Version:  groupVersion[1],
-		Resource: obj.GetKind(),
+		Group:    obj.GroupVersionKind().Group,
+		Version:  obj.GroupVersionKind().Version,
+		Resource: Resource,
 	}
 
 	_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 	if err != nil {
-		log.Println(err)
+		logger.Infow("failed", "operand", Resource, "package", ca.subscription.Package, "error", err.Error())
+	} else {
+		logger.Infow("succeeded", "operand", Resource, "package", ca.subscription.Package)
 	}
 
 	return nil
