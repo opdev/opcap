@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/opdev/opcap/internal/operator"
 
@@ -84,12 +85,17 @@ func (ca *capAudit) OperandInstall() error {
 		Resource: Resource,
 	}
 
-	// create the resource using the dynamic client and log the error if it occurs in stdout.json
-	_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
-	if err != nil {
-		fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
+	csvStatus, _ := ca.client.WaitForCsvOnNamespace(ca.namespace)
+	if strings.ToLower(csvStatus) == "succeeded" {
+		// create the resource using the dynamic client and log the error if it occurs in stdout.json
+		_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+		if err != nil {
+			fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
+		} else {
+			fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
+		}
 	} else {
-		fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
+		fmt.Printf("exiting OperandInstall since CSV has failed")
 	}
 
 	return nil
