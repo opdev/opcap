@@ -57,11 +57,14 @@ func (ca *capAudit) OperatorInstall() error {
 		return err
 	}
 
-	reportOts := report.ReportOptions{report.ReportOptPrint}
+	// Initializing new operator report
+	// TODO: consolidate data in capAudit object and pass the whole object
+	r := report.NewOperatorInstallReport().Init(ocpVersion,
+		ca.subscription.Package, ca.subscription.Channel, ca.subscription.CatalogSource,
+		string(ca.subscription.InstallModeType), csv.Status, report.OpInstallRptOptPrint{},
+		report.OpInstallRptOptFile{FilePath: "report.json"})
 
-	r := report.NewOperatorInstallReport(ocpVersion, ca.subscription.Package, ca.subscription.Channel, ca.subscription.CatalogSource, string(ca.subscription.InstallModeType), csv.Status, reportOts)
-
-	err = r.GenerateReport()
+	err = r.Report()
 	if err != nil {
 		return err
 	}
