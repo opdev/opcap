@@ -54,48 +54,49 @@ func (ca *capAudit) OperandInstall() error {
 	ca.getAlmExamples()
 
 	// TODO: we need a stratergy to select which CR to select from ALMExamplesList
-	obj := &unstructured.Unstructured{Object: ca.customResources[0]}
-
-	// using dynamic client to create Unstructured objests in k8s
-	client, err := operator.NewDynamicClient()
-	if err != nil {
-		log.Println(err)
-	}
-
-	// set the namespace of CR to the namespace of the subscription
-	obj.SetNamespace(ca.namespace)
-
-	var crdList apiextensionsv1.CustomResourceDefinitionList
-	err = ca.client.ListCRDs(context.TODO(), &crdList)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	var Resource string
-
-	for _, crd := range crdList.Items {
-		if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
-			Resource = crd.Spec.Names.Plural
-		}
-	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    obj.GroupVersionKind().Group,
-		Version:  obj.GroupVersionKind().Version,
-		Resource: Resource,
-	}
-
-	csvStatus, _ := ca.client.WaitForCsvOnNamespace(ca.namespace)
-	if strings.ToLower(csvStatus) == "succeeded" {
-		// create the resource using the dynamic client and log the error if it occurs in stdout.json
-		_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+	if len(ca.customResources) > 0 {
+		obj := &unstructured.Unstructured{Object: ca.customResources[0]}
+		// using dynamic client to create Unstructured objests in k8s
+		client, err := operator.NewDynamicClient()
 		if err != nil {
-			fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
-		} else {
-			fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
+			log.Println(err)
 		}
-	} else {
-		fmt.Printf("exiting OperandInstall since CSV has failed")
+
+		// set the namespace of CR to the namespace of the subscription
+		obj.SetNamespace(ca.namespace)
+
+		var crdList apiextensionsv1.CustomResourceDefinitionList
+		err = ca.client.ListCRDs(context.TODO(), &crdList)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+
+		var Resource string
+
+		for _, crd := range crdList.Items {
+			if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
+				Resource = crd.Spec.Names.Plural
+			}
+		}
+
+		gvr := schema.GroupVersionResource{
+			Group:    obj.GroupVersionKind().Group,
+			Version:  obj.GroupVersionKind().Version,
+			Resource: Resource,
+		}
+
+		csvStatus, _ := ca.client.WaitForCsvOnNamespace(ca.namespace)
+		if strings.ToLower(csvStatus) == "succeeded" {
+			// create the resource using the dynamic client and log the error if it occurs in stdout.json
+			_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+			if err != nil {
+				fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
+			} else {
+				fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
+			}
+		} else {
+			fmt.Printf("exiting OperandInstall since CSV has failed")
+		}
 	}
 
 	return nil
