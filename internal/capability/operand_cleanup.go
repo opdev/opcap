@@ -18,43 +18,49 @@ import (
 func (ca *capAudit) OperandCleanUp() error {
 	logger.Debugw("cleaningUp operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
-	obj := &unstructured.Unstructured{Object: ca.customResources[0]}
+	if len(ca.customResources) > 0 {
+		obj := &unstructured.Unstructured{Object: ca.customResources[0]}
 
-	// using dynamic client to create Unstructured objests in k8s
-	client, err := operator.NewDynamicClient()
-	if err != nil {
-		log.Println(err)
-	}
-
-	var crdList apiextensionsv1.CustomResourceDefinitionList
-	err = ca.client.ListCRDs(context.TODO(), &crdList)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	var Resource string
-
-	// iterate over the CRD list to find the CRD for the resource we are trying to delete
-	for _, crd := range crdList.Items {
-		if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
-			Resource = crd.Spec.Names.Plural
+		// using dynamic client to create Unstructured objests in k8s
+		client, err := operator.NewDynamicClient()
+		if err != nil {
+			log.Println(err)
 		}
-	}
 
-	// register the GVR to be deleted
-	gvr := schema.GroupVersionResource{
-		Group:    obj.GroupVersionKind().Group,
-		Version:  obj.GroupVersionKind().Version,
-		Resource: Resource,
-	}
+		var crdList apiextensionsv1.CustomResourceDefinitionList
+		err = ca.client.ListCRDs(context.TODO(), &crdList)
+		if err != nil {
+			logger.Error(err.Error())
+		}
 
-	// extract name from CustomResource object and delete it
-	name := obj.Object["metadata"].(map[string]interface{})["name"].(string)
+		var Resource string
 
-	// delete the resource using the dynamic client
-	err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
-	if err != nil {
-		fmt.Printf("failed operandCleanUp: %s package: %s error: %s", Resource, ca.subscription.Package, err.Error())
+		// iterate over the CRD list to find the CRD for the resource we are trying to delete
+		for _, crd := range crdList.Items {
+			if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
+				Resource = crd.Spec.Names.Plural
+			}
+		}
+
+		// register the GVR to be deleted
+		gvr := schema.GroupVersionResource{
+			Group:    obj.GroupVersionKind().Group,
+			Version:  obj.GroupVersionKind().Version,
+			Resource: Resource,
+		}
+
+		// extract name from CustomResource object and delete it
+		name := obj.Object["metadata"].(map[string]interface{})["name"].(string)
+
+		// check if CR exists, only then cleanup the operand
+		crInstance, _ := client.Resource(gvr).Namespace(ca.namespace).Get(context.TODO(), name, v1.GetOptions{})
+		if crInstance != nil {
+			// delete the resource using the dynamic client
+			err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
+			if err != nil {
+				fmt.Printf("failed operandCleanUp: %s package: %s error: %s", Resource, ca.subscription.Package, err.Error())
+			}
+		}
 	}
 
 	return nil
