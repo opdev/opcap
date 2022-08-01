@@ -97,6 +97,8 @@ func (ca *capAudit) OperandInstall() error {
 		} else {
 			fmt.Printf("exiting OperandInstall since CSV has failed")
 		}
+	} else {
+		fmt.Printf("exiting OperandInstall since no ALM_Examples found in CSV")
 	}
 
 	return nil
