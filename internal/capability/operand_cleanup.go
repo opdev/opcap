@@ -56,7 +56,7 @@ func (ca *capAudit) OperandCleanUp() error {
 			// delete the resource using the dynamic client
 			err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
 			if err != nil {
-				fmt.Printf("failed operandCleanUp: %s package: %s error: %s", Resource, ca.subscription.Package, err.Error())
+				fmt.Printf("failed operandCleanUp: %s package: %s error: %s\n", Resource, ca.subscription.Package, err.Error())
 				return err
 			}
 		}

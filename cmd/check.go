@@ -76,7 +76,6 @@ var checkflags CheckCommandFlags
 func init() {
 
 	var defaultAuditPlan = []string{"OperatorInstall", "OperatorCleanUp"}
-	//for install Operand, add "OperandInstall", "OperandCleanUp" to defaultAuditPlan
 
 	rootCmd.AddCommand(checkCmd)
 	flags := checkCmd.Flags()

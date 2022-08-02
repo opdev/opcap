@@ -89,16 +89,16 @@ func (ca *capAudit) OperandInstall() error {
 			// create the resource using the dynamic client and log the error if it occurs in stdout.json
 			_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 			if err != nil {
-				fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
+				fmt.Printf("operand failed to create: %s package: %s error: %s\n", Resource, ca.subscription.Package, err)
 				return err
 			} else {
 				fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
 			}
 		} else {
-			fmt.Printf("exiting OperandInstall since CSV has failed")
+			fmt.Printf("exiting OperandInstall since CSV has failed\n")
 		}
 	} else {
-		fmt.Printf("exiting OperandInstall since no ALM_Examples found in CSV")
+		fmt.Printf("exiting OperandInstall since no ALM_Examples found in CSV\n")
 	}
 
 	return nil
