@@ -3,7 +3,6 @@ package capability
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/opdev/opcap/internal/operator"
@@ -59,7 +58,7 @@ func (ca *capAudit) OperandInstall() error {
 		// using dynamic client to create Unstructured objests in k8s
 		client, err := operator.NewDynamicClient()
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 
 		// set the namespace of CR to the namespace of the subscription
@@ -68,7 +67,7 @@ func (ca *capAudit) OperandInstall() error {
 		var crdList apiextensionsv1.CustomResourceDefinitionList
 		err = ca.client.ListCRDs(context.TODO(), &crdList)
 		if err != nil {
-			logger.Error(err.Error())
+			return err
 		}
 
 		var Resource string
@@ -91,6 +90,7 @@ func (ca *capAudit) OperandInstall() error {
 			_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 			if err != nil {
 				fmt.Printf("operand failed to create: %s package: %s error: %s", Resource, ca.subscription.Package, err)
+				return err
 			} else {
 				fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
 			}

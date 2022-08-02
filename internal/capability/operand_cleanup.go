@@ -3,7 +3,6 @@ package capability
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/opdev/opcap/internal/operator"
 
@@ -24,13 +23,13 @@ func (ca *capAudit) OperandCleanUp() error {
 		// using dynamic client to create Unstructured objests in k8s
 		client, err := operator.NewDynamicClient()
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 
 		var crdList apiextensionsv1.CustomResourceDefinitionList
 		err = ca.client.ListCRDs(context.TODO(), &crdList)
 		if err != nil {
-			logger.Error(err.Error())
+			return err
 		}
 
 		var Resource string
@@ -42,7 +41,6 @@ func (ca *capAudit) OperandCleanUp() error {
 			}
 		}
 
-		// register the GVR to be deleted
 		gvr := schema.GroupVersionResource{
 			Group:    obj.GroupVersionKind().Group,
 			Version:  obj.GroupVersionKind().Version,
@@ -59,6 +57,7 @@ func (ca *capAudit) OperandCleanUp() error {
 			err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
 			if err != nil {
 				fmt.Printf("failed operandCleanUp: %s package: %s error: %s", Resource, ca.subscription.Package, err.Error())
+				return err
 			}
 		}
 	}
