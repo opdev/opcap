@@ -8,6 +8,8 @@ import (
 
 	log "github.com/opdev/opcap/internal/logger"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -17,6 +19,7 @@ import (
 	olmclient "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -31,6 +34,7 @@ type Client interface {
 	GetOpenShiftVersion() (string, error)
 	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error
 	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
+	ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error
 }
 
 type operatorClient struct {
@@ -49,6 +53,10 @@ func NewOpCapClient() (Client, error) {
 	}
 
 	if err := pkgserverv1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+
+	if err := apiextensionsv1.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
@@ -82,4 +90,17 @@ func NewOlmClientset() (*olmclient.Clientset, error) {
 	}
 
 	return olmClientset, nil
+}
+
+// NewDynamicClient creates a new dynamic client or returns an error.
+func NewDynamicClient() (dynamic.Interface, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return nil, err
+	}
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }

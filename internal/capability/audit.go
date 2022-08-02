@@ -13,6 +13,8 @@ import (
 // instance and as part of an auditPlan
 type Audit interface {
 	OperatorInstall() error
+	OperandInstall() error
+	OperandCleanUp() error
 	OperatorCleanUp() error
 }
 
@@ -35,6 +37,10 @@ type capAudit struct {
 	// all of them must be an implemented method of capAudit and must be part
 	// of the Audit interface
 	auditPlan []string
+
+	// customResources is a map of string interface that has all the CR(almExamples) that needs to be installed
+	// as part of the OperandInstall function
+	customResources []map[string]interface{}
 }
 
 func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) capAudit {
