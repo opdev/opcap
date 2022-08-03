@@ -62,7 +62,7 @@ func (ca *capAudit) OperatorInstall() error {
 	r := report.NewOperatorInstallReport().Init(ocpVersion,
 		ca.subscription.Package, ca.subscription.Channel, ca.subscription.CatalogSource,
 		string(ca.subscription.InstallModeType), csv.Status, report.OpInstallRptOptPrint{},
-		report.OpInstallRptOptFile{FilePath: "report.json"})
+		report.OpInstallRptOptFile{FilePath: "operator_install_report.json"})
 
 	err = r.Report()
 	if err != nil {
