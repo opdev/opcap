@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/opdev/opcap/internal/operator"
 
@@ -84,8 +85,8 @@ func (ca *capAudit) OperandInstall() error {
 			Resource: Resource,
 		}
 
-		csvStatus, _ := ca.client.WaitForCsvOnNamespace(ca.namespace)
-		if strings.ToLower(csvStatus) == "succeeded" {
+		csv, _ := ca.client.GetCompletedCsvWithTimeout(ca.namespace, time.Minute)
+		if strings.ToLower(string(csv.Status.Phase)) == "succeeded" {
 			// create the resource using the dynamic client and log the error if it occurs in stdout.json
 			_, err = client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 			if err != nil {
