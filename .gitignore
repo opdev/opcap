@@ -28,5 +28,5 @@ openshift
 /logs
 
 /std*.json
-report.json
+*report.json
 .DS_Store

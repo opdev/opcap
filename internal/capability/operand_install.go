@@ -93,7 +93,7 @@ func (ca *capAudit) OperandInstall() error {
 				fmt.Printf("operand failed to create: %s package: %s error: %s\n", Resource, ca.subscription.Package, err)
 				return err
 			} else {
-				fmt.Printf("operand succeeded: %s package: %s", Resource, ca.subscription.Package)
+				fmt.Printf("operand succeeded: %s package: %s\n", Resource, ca.subscription.Package)
 			}
 		} else {
 			fmt.Printf("exiting OperandInstall since CSV has failed\n")
