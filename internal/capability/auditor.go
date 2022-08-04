@@ -18,7 +18,7 @@ type Auditor interface {
 type capAuditor struct {
 
 	// Workqueue holds capAudits in a buffered channel in order to execute them
-	WorkQueue chan capAudit
+	WorkQueue chan CapAudit
 }
 
 // BuildAuditorByCatalog creates a new Auditor with workqueue based on a selected catalog
@@ -50,7 +50,7 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	}
 
 	// build workqueue as buffered channel based subscriptionData list size
-	capAuditor.WorkQueue = make(chan capAudit, len(s))
+	capAuditor.WorkQueue = make(chan CapAudit, len(s))
 	defer close(capAuditor.WorkQueue)
 
 	// add capAudits to the workqueue
@@ -77,7 +77,7 @@ func (capAuditor *capAuditor) RunAudits() error {
 
 		// read a particular audit's auditPlan for functions
 		// to be executed against operator
-		for _, function := range audit.auditPlan {
+		for _, function := range audit.AuditPlan {
 
 			// run function/method by name
 			m := reflect.ValueOf(&audit).MethodByName(function)
