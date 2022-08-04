@@ -23,9 +23,10 @@ type ReportOption interface {
 	report(ca CapAudit) error
 }
 
-type RptOptionPrint struct{}
+// Simple print option implmentation for operator install
+type OpInstallRptOptionPrint struct{}
 
-func (RptOptionPrint) report(ca CapAudit) error {
+func (OpInstallRptOptionPrint) report(ca CapAudit) error {
 
 	fmt.Println()
 	fmt.Println("opcap report:")
@@ -50,11 +51,12 @@ func (RptOptionPrint) report(ca CapAudit) error {
 	return nil
 }
 
-type RptOptionFile struct {
+// Simple file option implementation for operator install
+type OpInstallRptOptionFile struct {
 	FilePath string
 }
 
-func (opt RptOptionFile) report(ca CapAudit) error {
+func (opt OpInstallRptOptionFile) report(ca CapAudit) error {
 
 	file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {

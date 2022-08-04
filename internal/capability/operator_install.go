@@ -49,7 +49,7 @@ func (ca *CapAudit) OperatorInstall() error {
 	// if operator completed log Succeeded or Failed according to status field
 	logger.Infow(strings.ToLower(string(ca.Csv.Status.Phase)), "package", ca.Subscription.Package, "channel", ca.Subscription.Channel, "installmode", ca.Subscription.InstallModeType)
 
-	ca.Report(RptOptionFile{FilePath: "operator_install_report.json"}, RptOptionPrint{})
+	ca.Report(OpInstallRptOptionFile{FilePath: "operator_install_report.json"}, OpInstallRptOptionPrint{})
 
 	return nil
 }
