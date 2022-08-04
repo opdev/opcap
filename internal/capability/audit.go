@@ -2,6 +2,7 @@ package capability
 
 import (
 	"strings"
+	"time"
 
 	"github.com/opdev/opcap/internal/operator"
 
@@ -40,6 +41,12 @@ type CapAudit struct {
 	// Cluster CSV for current operator under test
 	Csv operatorv1alpha1.ClusterServiceVersion
 
+	// How much time to wait for a CSV before timeout
+	CsvWaitTime time.Duration
+
+	// If the given CSV timed out on install
+	CsvTimeout bool
+
 	// auditPlan is a list of functions to be run in sequence in a given audit
 	// all of them must be an implemented method of CapAudit and must be part
 	// of the Audit interface
@@ -67,6 +74,8 @@ func newCapAudit(c operator.Client, subscription operator.SubscriptionData, audi
 		Namespace:         ns,
 		OperatorGroupData: newOperatorGroupData(operatorGroupName, getTargetNamespaces(subscription, ns)),
 		Subscription:      subscription,
+		CsvWaitTime:       time.Minute,
+		CsvTimeout:        false,
 		AuditPlan:         auditPlan,
 	}, nil
 }

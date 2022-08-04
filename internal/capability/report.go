@@ -36,7 +36,13 @@ func (RptOptionPrint) report(ca CapAudit) error {
 	fmt.Printf("Channel: %s\n", ca.Subscription.Channel)
 	fmt.Printf("Catalog Source: %s\n", ca.Subscription.CatalogSource)
 	fmt.Printf("Install Mode: %s\n", ca.Subscription.InstallModeType)
-	fmt.Printf("Result:: %s\n", ca.Csv.Status.Phase)
+
+	if !ca.CsvTimeout {
+		fmt.Printf("Result: %s\n", ca.Csv.Status.Phase)
+	} else {
+		fmt.Println("Result: timeout")
+	}
+
 	fmt.Printf("Message: %s\n", ca.Csv.Status.Message)
 	fmt.Printf("Reason: %s\n", ca.Csv.Status.Reason)
 	fmt.Println("-----------------------------------------")
@@ -57,7 +63,13 @@ func (opt RptOptionFile) report(ca CapAudit) error {
 	}
 	defer file.Close()
 
-	file.WriteString("{\"level\":\"info\",\"message\":\"" + string(ca.Csv.Status.Phase) + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
+	if !ca.CsvTimeout {
+
+		file.WriteString("{\"level\":\"info\",\"message\":\"" + string(ca.Csv.Status.Phase) + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
+	} else {
+
+		file.WriteString("{\"level\":\"info\",\"message\":\"" + "timeout" + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
+	}
 
 	return nil
 }

@@ -3,7 +3,6 @@ package capability
 import (
 	"context"
 	"strings"
-	"time"
 
 	log "github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
@@ -35,14 +34,13 @@ func (ca *CapAudit) OperatorInstall() error {
 	}
 
 	// Get a Succeeded or Failed CSV with one minute timeout
-	ca.Csv, err = ca.Client.GetCompletedCsvWithTimeout(ca.Namespace, 1*time.Minute)
+	ca.Csv, err = ca.Client.GetCompletedCsvWithTimeout(ca.Namespace, ca.CsvWaitTime)
 
 	if err != nil {
 
 		// If error is timeout than don't log phase but timeout
 		if err.Error() == "operator install timeout" {
-			logger.Infow("timeout", "package", ca.Subscription.Package, "channel", ca.Subscription.Channel, "installmode", ca.Subscription.InstallModeType)
-			return nil
+			ca.CsvTimeout = true
 		} else {
 			return err
 		}
