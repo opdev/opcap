@@ -36,7 +36,7 @@ func (ca *capAudit) OperatorInstall() error {
 	}
 
 	// Get a Succeeded or Failed CSV with one minute timeout
-	csv, err := ca.client.GetCompletedCsvWithTimeout(ca.namespace, 1*time.Minute)
+	ca.csv, err = ca.client.GetCompletedCsvWithTimeout(ca.namespace, 1*time.Minute)
 
 	if err != nil {
 
@@ -50,18 +50,18 @@ func (ca *capAudit) OperatorInstall() error {
 	}
 
 	// if operator completed log Succeeded or Failed according to status field
-	logger.Infow(strings.ToLower(string(csv.Status.Phase)), "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
+	logger.Infow(strings.ToLower(string(ca.csv.Status.Phase)), "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
-	ocpVersion, err := ca.client.GetOpenShiftVersion()
-	if err != nil {
-		return err
-	}
+	// ocpVersion, err := ca.client.GetOpenShiftVersion()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// Initializing new operator report
 	// TODO: consolidate data in capAudit object and pass the whole object
-	r := report.NewOperatorInstallReport().Init(ocpVersion,
+	r := report.NewOperatorInstallReport().Init(ca.ocpVersion,
 		ca.subscription.Package, ca.subscription.Channel, ca.subscription.CatalogSource,
-		string(ca.subscription.InstallModeType), csv.Status, report.OpInstallRptOptPrint{},
+		string(ca.subscription.InstallModeType), ca.csv.Status, report.OpInstallRptOptPrint{},
 		report.OpInstallRptOptFile{FilePath: "operator_install_report.json"})
 
 	err = r.Report()

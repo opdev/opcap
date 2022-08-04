@@ -56,9 +56,14 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	// add capAudits to the workqueue
 	for _, subscription := range s {
 
-		// load workqueue with capAudit
-		capAuditor.WorkQueue <- newCapAudit(c, subscription, auditPlan)
+		capAudit, err := newCapAudit(c, subscription, auditPlan)
+		if err != nil {
+			logger.Debugw("Couldn't build capAudit for subscription %s", "Err:", err)
+			return err
+		}
 
+		// load workqueue with capAudit
+		capAuditor.WorkQueue <- capAudit
 	}
 
 	return nil

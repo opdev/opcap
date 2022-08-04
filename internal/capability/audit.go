@@ -24,6 +24,9 @@ type capAudit struct {
 	// client has access to all operator methods
 	client operator.Client
 
+	// OpenShift Cluster Version under test
+	ocpVersion string
+
 	// namespace is the ns where the operator will be installed
 	namespace string
 
@@ -32,6 +35,9 @@ type capAudit struct {
 
 	// subscription holds the data to install an operator via OLM
 	subscription operator.SubscriptionData
+
+	// Cluster CSV for current operator under test
+	csv operatorv1alpha1.ClusterServiceVersion
 
 	// auditPlan is a list of functions to be run in sequence in a given audit
 	// all of them must be an implemented method of capAudit and must be part
@@ -43,18 +49,25 @@ type capAudit struct {
 	customResources []map[string]interface{}
 }
 
-func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) capAudit {
+func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (capAudit, error) {
 
 	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
+	ocpVersion, err := c.GetOpenShiftVersion()
+	if err != nil {
+		logger.Debugw("Couldn't get OpenShift version for testing", "Err:", err)
+		return capAudit{}, err
+	}
+
 	return capAudit{
 		client:            c,
+		ocpVersion:        ocpVersion,
 		namespace:         ns,
 		operatorGroupData: newOperatorGroupData(operatorGroupName, getTargetNamespaces(subscription, ns)),
 		subscription:      subscription,
 		auditPlan:         auditPlan,
-	}
+	}, nil
 }
 
 func newOperatorGroupData(name string, targetNamespaces []string) operator.OperatorGroupData {
