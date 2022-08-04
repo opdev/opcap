@@ -23,9 +23,26 @@ import (
 var checkCmd = &cobra.Command{
 	Use: "check",
 	// TODO: provide Short description for check command
-	Short: "",
+	Short: "Checks if operator meets minimum capability requirement.",
 	// TODO: provide Long description for check command
-	Long: ``,
+	Long:  `The 'check' command checks if OpenShift operators meet minimum
+requirements for Operator Capabilities Level to attest operator
+advanced features by running custom resources provided by CSVs
+and/or users.
+
+Usage:
+opcap check [flags]
+
+Example:
+opcap check --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace --list-packages=false'
+
+Flags:
+--catalogsource				specifies the catalogsource to test against
+--catalogsourcenamespace	specifies the namespace where the catalogsource exists
+--auditplan					audit plan is the ordered list of operator test functions to be called during a capability audit
+--list-packages				list packages in the catalog
+--filter-packages			a list of package(s) which limits audits and/or other flag(s) output
+`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		psc, err := operator.NewOpCapClient()
 		if err != nil {
@@ -81,9 +98,9 @@ func init() {
 	flags := checkCmd.Flags()
 
 	flags.StringVar(&checkflags.CatalogSource, "catalogsource", "certified-operators",
-		"")
+		"specifies the catalogsource to test against")
 	flags.StringVar(&checkflags.CatalogSourceNamespace, "catalogsourcenamespace", "openshift-marketplace",
-		"")
+		"specifies the namespace where the catalogsource exists")
 	flags.StringArrayVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
 	flags.StringSliceVar(&checkflags.FilterPackages, "filter-packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
