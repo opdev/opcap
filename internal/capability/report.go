@@ -12,7 +12,7 @@ func (ca CapAudit) Report(opts ...ReportOption) error {
 
 		err := opt.report(ca)
 		if err != nil {
-			logger.Debugw("Unable to generate report for %T", opt, "Error: %s", err)
+			logger.Debugf("Unable to generate report for %T", opt, "Error: %s", err)
 		}
 
 	}

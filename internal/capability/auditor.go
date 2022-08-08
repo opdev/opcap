@@ -58,7 +58,7 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 
 		capAudit, err := newCapAudit(c, subscription, auditPlan)
 		if err != nil {
-			logger.Debugw("Couldn't build capAudit for subscription %s", "Err:", err)
+			logger.Debugf("Couldn't build capAudit for subscription %s", "Err:", err)
 			return err
 		}
 
