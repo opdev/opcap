@@ -14,11 +14,11 @@ import (
 )
 
 // OperandCleanup removes the operand from the OCP cluster in the ca.namespace
-func (ca *capAudit) OperandCleanUp() error {
-	logger.Debugw("cleaningUp operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
+func (ca *CapAudit) OperandCleanUp() error {
+	logger.Debugw("cleaningUp operand for operator", "package", ca.Subscription.Package, "channel", ca.Subscription.Channel, "installmode", ca.Subscription.InstallModeType)
 
-	if len(ca.customResources) > 0 {
-		obj := &unstructured.Unstructured{Object: ca.customResources[0]}
+	if len(ca.CustomResources) > 0 {
+		obj := &unstructured.Unstructured{Object: ca.CustomResources[0]}
 
 		// using dynamic client to create Unstructured objests in k8s
 		client, err := operator.NewDynamicClient()
@@ -27,7 +27,7 @@ func (ca *capAudit) OperandCleanUp() error {
 		}
 
 		var crdList apiextensionsv1.CustomResourceDefinitionList
-		err = ca.client.ListCRDs(context.TODO(), &crdList)
+		err = ca.Client.ListCRDs(context.TODO(), &crdList)
 		if err != nil {
 			return err
 		}
@@ -51,12 +51,12 @@ func (ca *capAudit) OperandCleanUp() error {
 		name := obj.Object["metadata"].(map[string]interface{})["name"].(string)
 
 		// check if CR exists, only then cleanup the operand
-		crInstance, _ := client.Resource(gvr).Namespace(ca.namespace).Get(context.TODO(), name, v1.GetOptions{})
+		crInstance, _ := client.Resource(gvr).Namespace(ca.Namespace).Get(context.TODO(), name, v1.GetOptions{})
 		if crInstance != nil {
 			// delete the resource using the dynamic client
-			err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
+			err = client.Resource(gvr).Namespace(ca.Namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
 			if err != nil {
-				fmt.Printf("failed operandCleanUp: %s package: %s error: %s\n", Resource, ca.subscription.Package, err.Error())
+				fmt.Printf("failed operandCleanUp: %s package: %s error: %s\n", Resource, ca.Subscription.Package, err.Error())
 				return err
 			}
 		}

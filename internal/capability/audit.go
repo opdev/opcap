@@ -2,6 +2,7 @@ package capability
 
 import (
 	"strings"
+	"time"
 
 	"github.com/opdev/opcap/internal/operator"
 
@@ -9,52 +10,74 @@ import (
 )
 
 // Audit defines all the methods used to run a full audit Plan against a single operator
-// All new capability tests should be added to this interface and used with a capAudit
+// All new capability tests should be added to this interface and used with a CapAudit
 // instance and as part of an auditPlan
 type Audit interface {
 	OperatorInstall() error
 	OperandInstall() error
 	OperandCleanUp() error
 	OperatorCleanUp() error
+	Report() error
 }
 
-// capAudit is an implementation of the Audit interface
-type capAudit struct {
+// CapAudit is an implementation of the Audit interface
+type CapAudit struct {
 
 	// client has access to all operator methods
-	client operator.Client
+	Client operator.Client
+
+	// OpenShift Cluster Version under test
+	OcpVersion string
 
 	// namespace is the ns where the operator will be installed
-	namespace string
+	Namespace string
 
 	// operatorGroupData contains information to create operator groups
-	operatorGroupData operator.OperatorGroupData
+	OperatorGroupData operator.OperatorGroupData
 
 	// subscription holds the data to install an operator via OLM
-	subscription operator.SubscriptionData
+	Subscription operator.SubscriptionData
+
+	// Cluster CSV for current operator under test
+	Csv operatorv1alpha1.ClusterServiceVersion
+
+	// How much time to wait for a CSV before timeout
+	CsvWaitTime time.Duration
+
+	// If the given CSV timed out on install
+	CsvTimeout bool
 
 	// auditPlan is a list of functions to be run in sequence in a given audit
-	// all of them must be an implemented method of capAudit and must be part
+	// all of them must be an implemented method of CapAudit and must be part
 	// of the Audit interface
-	auditPlan []string
+	AuditPlan []string
 
 	// customResources is a map of string interface that has all the CR(almExamples) that needs to be installed
 	// as part of the OperandInstall function
-	customResources []map[string]interface{}
+	CustomResources []map[string]interface{}
 }
 
-func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) capAudit {
+func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (CapAudit, error) {
 
 	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
-	return capAudit{
-		client:            c,
-		namespace:         ns,
-		operatorGroupData: newOperatorGroupData(operatorGroupName, getTargetNamespaces(subscription, ns)),
-		subscription:      subscription,
-		auditPlan:         auditPlan,
+	ocpVersion, err := c.GetOpenShiftVersion()
+	if err != nil {
+		logger.Debugw("Couldn't get OpenShift version for testing", "Err:", err)
+		return CapAudit{}, err
 	}
+
+	return CapAudit{
+		Client:            c,
+		OcpVersion:        ocpVersion,
+		Namespace:         ns,
+		OperatorGroupData: newOperatorGroupData(operatorGroupName, getTargetNamespaces(subscription, ns)),
+		Subscription:      subscription,
+		CsvWaitTime:       time.Minute,
+		CsvTimeout:        false,
+		AuditPlan:         auditPlan,
+	}, nil
 }
 
 func newOperatorGroupData(name string, targetNamespaces []string) operator.OperatorGroupData {

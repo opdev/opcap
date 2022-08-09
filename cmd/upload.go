@@ -9,11 +9,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/opdev/opcap/internal/operator"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/opdev/opcap/internal/operator"
 
 	"github.com/gobuffalo/envy"
 	"github.com/minio/minio-go/v7"
@@ -116,7 +117,7 @@ var uploadCmd = &cobra.Command{
 		report.CatalogNamespace = checkflags.CatalogSourceNamespace
 
 		// for each line is stdout.json which is provided by opcap create an Audit object and add to the rawreport Audits field.
-		f, err := os.Open("stdout.json")
+		f, err := os.Open("operator_install_report.json")
 		if err != nil {
 			return err
 		}

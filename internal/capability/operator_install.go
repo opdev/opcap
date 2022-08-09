@@ -2,72 +2,50 @@ package capability
 
 import (
 	"context"
-	"strings"
-	"time"
 
 	log "github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
-	"github.com/opdev/opcap/internal/report"
 )
 
 var logger = log.Sugar
 
-func (ca *capAudit) OperatorInstall() error {
-	logger.Debugw("installing package", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
+func (ca *CapAudit) OperatorInstall() error {
+	logger.Debugw("installing package", "package", ca.Subscription.Package, "channel", ca.Subscription.Channel, "installmode", ca.Subscription.InstallModeType)
 
 	// create operator's own namespace
-	operator.CreateNamespace(context.Background(), ca.namespace)
+	operator.CreateNamespace(context.Background(), ca.Namespace)
 
 	// create remaining target namespaces watched by the operator
-	for _, ns := range ca.operatorGroupData.TargetNamespaces {
-		if ns != ca.namespace {
+	for _, ns := range ca.OperatorGroupData.TargetNamespaces {
+		if ns != ca.Namespace {
 			operator.CreateNamespace(context.Background(), ns)
 		}
 	}
 
 	// create operator group for operator package/channel
-	ca.client.CreateOperatorGroup(context.Background(), ca.operatorGroupData, ca.namespace)
+	ca.Client.CreateOperatorGroup(context.Background(), ca.OperatorGroupData, ca.Namespace)
 
 	// create subscription for operator package/channel
-	_, err := ca.client.CreateSubscription(context.Background(), ca.subscription, ca.namespace)
+	_, err := ca.Client.CreateSubscription(context.Background(), ca.Subscription, ca.Namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
 	}
 
 	// Get a Succeeded or Failed CSV with one minute timeout
-	csv, err := ca.client.GetCompletedCsvWithTimeout(ca.namespace, 1*time.Minute)
+	ca.Csv, err = ca.Client.GetCompletedCsvWithTimeout(ca.Namespace, ca.CsvWaitTime)
 
 	if err != nil {
 
 		// If error is timeout than don't log phase but timeout
 		if err.Error() == "operator install timeout" {
-			logger.Infow("timeout", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
-			return nil
+			ca.CsvTimeout = true
 		} else {
 			return err
 		}
 	}
 
-	// if operator completed log Succeeded or Failed according to status field
-	logger.Infow(strings.ToLower(string(csv.Status.Phase)), "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
-
-	ocpVersion, err := ca.client.GetOpenShiftVersion()
-	if err != nil {
-		return err
-	}
-
-	// Initializing new operator report
-	// TODO: consolidate data in capAudit object and pass the whole object
-	r := report.NewOperatorInstallReport().Init(ocpVersion,
-		ca.subscription.Package, ca.subscription.Channel, ca.subscription.CatalogSource,
-		string(ca.subscription.InstallModeType), csv.Status, report.OpInstallRptOptPrint{},
-		report.OpInstallRptOptFile{FilePath: "operator_install_report.json"})
-
-	err = r.Report()
-	if err != nil {
-		return err
-	}
+	ca.Report(OpInstallRptOptionFile{FilePath: "operator_install_report.json"}, OpInstallRptOptionPrint{})
 
 	return nil
 }
