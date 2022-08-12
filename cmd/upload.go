@@ -127,7 +127,7 @@ var uploadCmd = &cobra.Command{
 			if err := json.Unmarshal(s.Bytes(), &audit); err != nil {
 				return err
 			}
-			if audit.Message == "succeeded" || audit.Message == "failed" {
+			if audit.Message == "Succeeded" || audit.Message == "failed" || audit.Message == "timeout" {
 				report.Audits = append(report.Audits, audit)
 			}
 		}
