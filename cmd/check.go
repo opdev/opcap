@@ -25,7 +25,7 @@ var checkCmd = &cobra.Command{
 	// TODO: provide Short description for check command
 	Short: "Checks if operator meets minimum capability requirement.",
 	// TODO: provide Long description for check command
-	Long:  `The 'check' command checks if OpenShift operators meet minimum
+	Long: `The 'check' command checks if OpenShift operators meet minimum
 requirements for Operator Capabilities Level to attest operator
 advanced features by running custom resources provided by CSVs
 and/or users.

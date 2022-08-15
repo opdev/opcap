@@ -15,13 +15,13 @@ import (
 func (c operatorClient) GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error) {
 
 	// csv will catch CSVs from watch events
-	var csv *operatorv1alpha1.ClusterServiceVersion
+	csv := &operatorv1alpha1.ClusterServiceVersion{}
 	var ok bool
 
 	// get watcher for csv
 	watcher, err := c.csvWatcher(namespace)
 	if err != nil {
-		return operatorv1alpha1.ClusterServiceVersion{}, err
+		return *csv, err
 	}
 
 	// eventChan receives all events from CSVs on the selected namespace
