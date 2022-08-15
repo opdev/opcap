@@ -32,9 +32,11 @@ func (ca *CapAudit) getAlmExamples() error {
 		return err
 	}
 
+	almExamples := ""
 	// map of string interface which consist of ALM examples from the CSVList
-	almExamples := CSVList.Items[0].ObjectMeta.Annotations["alm-examples"]
-
+	if len(CSVList.Items) > 0 {
+		almExamples = CSVList.Items[0].ObjectMeta.Annotations["alm-examples"]
+	}
 	var almList []map[string]interface{}
 
 	err = yaml.Unmarshal([]byte(almExamples), &almList)
