@@ -45,7 +45,7 @@ func (ca *CapAudit) OperatorInstall() error {
 		}
 	}
 
-	ca.Report(OpInstallRptOptionFile{FilePath: "operator_install_report.json"}, OpInstallRptOptionPrint{})
+	ca.Report(OperatorInstallRptOptionFile{FilePath: "operator_install_report.json"}, OperatorInstallRptOptionPrint{})
 
 	return nil
 }

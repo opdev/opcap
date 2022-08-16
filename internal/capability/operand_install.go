@@ -89,21 +89,21 @@ func (ca *CapAudit) OperandInstall() error {
 		csv, _ := ca.Client.GetCompletedCsvWithTimeout(ca.Namespace, time.Minute)
 		if strings.ToLower(string(csv.Status.Phase)) == "succeeded" {
 			// create the resource using the dynamic client and log the error if it occurs in stdout.json
-			_, err = client.Resource(gvr).Namespace(ca.Namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+			unstructuredCR, err := client.Resource(gvr).Namespace(ca.Namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 			if err != nil {
-				ca.OperandStatus = "Failed"
+
 				return err
 			} else {
-				ca.OperandStatus = "Succeeded"
+				ca.Operands = append(ca.Operands, *unstructuredCR)
 			}
 		} else {
-			ca.OperandStatus = "exiting OperandInstall since CSV has failed"
+			logger.Debug("exiting OperandInstall since CSV has failed")
 		}
 	} else {
-		ca.OperandStatus = "exiting OperandInstall since no ALM_Examples found in CSV"
+		logger.Debug("exiting OperandInstall since no ALM_Examples found in CSV")
 	}
 
-	ca.Report(OperandInstallRptOptionFile{FilePath: "operand_install_report.json"}, OpInstallRptOptionPrint{})
+	ca.Report(OperandInstallRptOptionFile{FilePath: "operand_install_report.json"}, OperandInstallRptOptionPrint{})
 
 	return nil
 }

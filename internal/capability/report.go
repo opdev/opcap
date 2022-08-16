@@ -24,14 +24,12 @@ type ReportOption interface {
 }
 
 // Simple print option implmentation for operator install
-type OpInstallRptOptionPrint struct{}
+type OperatorInstallRptOptionPrint struct{}
 
-type OperandInstallRptOptionPrint struct{}
-
-func (OpInstallRptOptionPrint) report(ca CapAudit) error {
+func (OperatorInstallRptOptionPrint) report(ca CapAudit) error {
 
 	fmt.Println()
-	fmt.Println("opcap report:")
+	fmt.Println("Operator Install Report:")
 	fmt.Println("-----------------------------------------")
 	fmt.Printf("Report Date: %s\n", time.Now())
 	fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
@@ -53,37 +51,12 @@ func (OpInstallRptOptionPrint) report(ca CapAudit) error {
 	return nil
 }
 
-func (OperandInstallRptOptionPrint) report(ca CapAudit) error {
-
-	fmt.Println()
-	fmt.Println("opcap report:")
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Report Date: %s\n", time.Now())
-	fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
-	fmt.Printf("Package Name: %s\n", ca.Subscription.Package)
-
-	if !ca.CsvTimeout {
-		fmt.Printf("Result: %s\n", ca.Csv.Status.Phase)
-	} else {
-		fmt.Println("Result: timeout")
-	}
-
-	fmt.Printf("Operand Status: %s\n", ca.OperandStatus)
-	fmt.Println("-----------------------------------------")
-
-	return nil
-}
-
 // Simple file option implementation for operator install
-type OpInstallRptOptionFile struct {
+type OperatorInstallRptOptionFile struct {
 	FilePath string
 }
 
-type OperandInstallRptOptionFile struct {
-	FilePath string
-}
-
-func (opt OpInstallRptOptionFile) report(ca CapAudit) error {
+func (opt OperatorInstallRptOptionFile) report(ca CapAudit) error {
 
 	file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -103,6 +76,33 @@ func (opt OpInstallRptOptionFile) report(ca CapAudit) error {
 	return nil
 }
 
+// Simple print option implmentation for operand install
+type OperandInstallRptOptionPrint struct{}
+
+func (OperandInstallRptOptionPrint) report(ca CapAudit) error {
+
+	fmt.Println()
+	fmt.Println("Operand Install Report:")
+	fmt.Println("-----------------------------------------")
+	fmt.Printf("Report Date: %s\n", time.Now())
+	fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
+	fmt.Printf("Package Name: %s\n", ca.Subscription.Package)
+
+	if len(ca.Operands) > 0 {
+		fmt.Println("Operand Creation: Succeeded")
+	} else {
+		fmt.Println("Operand Creation: Failed")
+	}
+	fmt.Println("-----------------------------------------")
+
+	return nil
+}
+
+// Simple file option implementation for operand install
+type OperandInstallRptOptionFile struct {
+	FilePath string
+}
+
 func (opt OperandInstallRptOptionFile) report(ca CapAudit) error {
 
 	file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -112,12 +112,12 @@ func (opt OperandInstallRptOptionFile) report(ca CapAudit) error {
 	}
 	defer file.Close()
 
-	if !ca.CsvTimeout {
+	if len(ca.Operands) > 0 {
 
-		file.WriteString("{\"level\":\"info\",\"message\":\"" + string(ca.Csv.Status.Phase) + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\",\"operandStatus\":\"" + ca.OperandStatus + "\"}\n")
+		file.WriteString("{\"level\":\"info\",\"message\":\"" + "created" + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
 	} else {
 
-		file.WriteString("{\"level\":\"info\",\"message\":\"" + "timeout" + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\",\"operandStatus\":\"" + ca.OperandStatus + "\"}\n")
+		file.WriteString("{\"level\":\"info\",\"message\":\"" + "failed" + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
 	}
 
 	return nil

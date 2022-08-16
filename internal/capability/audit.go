@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/opdev/opcap/internal/operator"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
@@ -52,11 +53,12 @@ type CapAudit struct {
 	// of the Audit interface
 	AuditPlan []string
 
-	// customResources is a map of string interface that has all the CR(almExamples) that needs to be installed
-	// as part of the OperandInstall function
+	// CustomResources stores CR manifests to deploy operands
 	CustomResources []map[string]interface{}
 
-	OperandStatus string
+	// Operands stores a list of unstructured custom resources that were created at the API level
+	// This data is used for further analysis on statuses, conditions and other patterns
+	Operands []unstructured.Unstructured
 }
 
 func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (CapAudit, error) {
