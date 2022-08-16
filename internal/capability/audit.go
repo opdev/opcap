@@ -55,6 +55,8 @@ type CapAudit struct {
 	// customResources is a map of string interface that has all the CR(almExamples) that needs to be installed
 	// as part of the OperandInstall function
 	CustomResources []map[string]interface{}
+
+	OperandStatus string
 }
 
 func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (CapAudit, error) {
