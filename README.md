@@ -22,6 +22,12 @@ The tool is currently under development but already tests operator installation 
 
 The roadmap includes climbing the maturity level testing up to auto-pilot without limiting the capabilities to this model in order to allow flexible badges that represent more granular features or features that may be important and are not included in the current model like security for example. Check out our general [operator maturity design document](/docs/maturity.md) for more detailed concepts.
 
+## Who Is It For?
+
+opcap is supposed to be used alongside OpenShift clusters and query catalog sources to run operators from published packages. That primarily puts opcap on the tooling shelf for quality engineers and operator enablement folks to check for operator capabilities and quickly identify problems that need to be addressed by reaching out to operator developers.
+
+Another potential big user are operator developers that want to make sure, in development time, that their next version will keep all the badges they already have and/or include a new one related to new features being included.
+
 ## Prerequisites
 
 - Provide opcap tool with kubeconfig for the cluster
