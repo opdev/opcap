@@ -2,6 +2,18 @@
 
 opcap is a cli tool that interacts with all operators available on OpenShift's operator hub in a live cluster to assess how smart and cloud native they are. 
 
+## The Problem opcap Solves
+
+The [operator framework](https://operatorframework.io/) has defined 5 different [maturity levels](https://sdk.operatorframework.io/docs/overview/operator-capabilities/) that range from a basic install to auto pilot. The [Operator Lifecycle Manager](https://olm.operatorframework.io/), which is part of the operator framework, provides a way for operator developers to declare on which of those 5 levels a particular operator is classified.
+
+As the market understands how essential a robust and resilient automation stack is to an application lifecycle, operators became more and more popular. Now we have hundreds of them being developed out there to accomplish tasks once done by human hands in a movement to win the hybrid cloud game.
+
+How can we assure that those operators being published to the operator hub actually have those features listed in the maturity levels? All sorts of issues have been seen with the maturity level model that we have now. From operators that require a lot of manual work from the user in order to be installed to operators that claim auto-pilot level without minimum requirements even for a basic install. At the same time maturity level understanding varies among developers since what we have are guidelines but not precise and testable atomic definitions for those maturity features.
+
+On another note operators are constantly evolving. It's impossible to guarantee by hand that every new version will keep up with the same features they started with.
+
+Hence, opcap's goal is to provide essential tooling for the operator hub to properly classify the operator's maturity without any human interaction, with precise methods and bringing, when applicable, new maturity features to improve the ecosystem.
+
 ## Prerequisites
 
 - Provide opcap tool with kubeconfig for the cluster
