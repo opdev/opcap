@@ -28,6 +28,12 @@ opcap is supposed to be used alongside OpenShift clusters and query catalog sour
 
 Another potential big user are operator developers that want to make sure, in development time, that their next version will keep all the badges they already have and/or include a new one related to new features being included.
 
+## Architectural Design and Operator Maturity Concepts
+
+- For a more in depth view on how this tool works check our [Architectural Design](/docs/design.md) doc.
+
+- For more in depth and precise operator maturity feature definitions check our [maturity](/docs/maturity.md) doc:
+
 ## Prerequisites
 
 - A working OpenShift cluster or Code Ready Containers (CRC) - For a full catalog check it's important to have a multi-node cluster. Some operators/operands don't install in Single Node OpenShift. They were design for multi-node experience.
@@ -102,7 +108,6 @@ And another file for operands will be created that will look like below:
 {"package":"kubeturbo-certified", "Operand Kind": "Kubeturbo", "Operand Name": "kubeturbo-release","message":"created"}
 {"package":"elasticsearch-eck-operator-certified", "Operand Kind": "Elasticsearch", "Operand Name": "elasticsearch-sample","message":"created"}
 {"package":"mongodb-enterprise", "Operand Kind": "MongoDB", "Operand Name": "my-replica-set","message":"created"}
-
 ```
 
 ### Upload operator reports to S3 buckets:
