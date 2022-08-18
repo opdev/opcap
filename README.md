@@ -14,6 +14,14 @@ On another note operators are constantly evolving. It's impossible to guarantee 
 
 Hence, opcap's goal is to provide essential tooling for the operator hub to properly classify the operator's maturity without any human interaction, with precise methods and bringing, when applicable, new maturity features to improve the ecosystem.
 
+## History Summary and Roadmap
+
+It started as a tool, used by the Operator Enablement and Tooling team at Red Hat, to identify problems installing operators and their respective applications with them. Quickly evolved into a bigger discussion on the whole operator maturity model and an attempt to automate complex operator behavior testing.
+
+The tool is currently under development but already tests operator installation as well as all the APIs, AKA CRDs, provided with them on initial deployment.
+
+The roadmap includes climbing the maturity level testing up to auto-pilot without limiting the capabilities to this model in order to allow flexible badges that represent more granular features or features that may be important and are not included in the current model like security for example. Check out our general [operator maturity design document](/docs/maturity.md) for more detailed concepts.
+
 ## Prerequisites
 
 - Provide opcap tool with kubeconfig for the cluster
