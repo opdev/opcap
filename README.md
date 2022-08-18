@@ -30,65 +30,38 @@ Another potential big user are operator developers that want to make sure, in de
 
 ## Prerequisites
 
-- Provide opcap tool with kubeconfig for the cluster
+- A working OpenShift cluster or Code Ready Containers (CRC) - For a full catalog check it's important to have a multi-node cluster. Some operators/operands don't install in Single Node OpenShift. They were design for multi-node experience.
+- KUBECONFIG environment variable set on opcap's terminal with cluster admin access or present on default home path ($HOME/.kube/config)
+- If testing against custom catalog sources those must be running before opcap runs
 
-## Environment Variables
-
-The opcap binary currently requires that you have the following variables set in the environment
+opcap can store json reports on S3 type object storage devices by using the upload command. In order to use this command you may also opt to provide environment variables like the ones below or use flags to configure it.
 
 | Name                 |                    Value                      | 
 |----------------------|:---------------------------------------------:|
-| KUBECONFIG		       |	kubeconfig for the cluster to run opcap tool |
 | S3_ENDPOINT          |  any non-SSL S3 compatible endpoint           |
 | S3_ACCESS_KEY        |  the user/username to login to the S3 backend |
 | S3_SECRET_ACCESS_KEY |  the password to login to the S3 backend      |
 
 ## Usage
 
-The `opcap` utility allows users to confirm that Operator projects in a provided catalogSource
-comply with Operator capabilities levels.
-
-A brief summary of the available sub-commands is as follows:
+### Checking all the operators in a catalog source:
 
 ```text
-A utility that allows users to check if the operator satisfies the capabilities levels of an operator.
-```
-
-Usage:
-  opcap [command]
-
-Available Commands:
-  check        Run checks for an operator bundle capability levels
-  upload       It parses the stdout.json created by check command and creates a report.json. It uploads the report.json to Minio/S3 bucket provided
-
-To check an Operator capabilites, utilize the `check` sub-command:
-
-```text
-Example:
 opcap check --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace
 ```
 
+That will print to the screen a report that can be saved by redirection and also creates files where opcap is placed with the available reports. For now it defaults to check if operators are installing correctly.
 
-```
-Flags:
-  --catalogsource                 specifies the catalogsource to test against
-  --catalogsourcenamespace        specifies the namespace where the catalogsource exists
-```
-
-To upload the results of the Operator capabilities from 'check' command, use the 'upload' command and provide it with the following flags or set them as environment variable as described as specified above:
-
-```
-Flags:
-  --bucket          s3 bucket where result will be stored(will create a bucket if not provided)
-  --path            s3 path where result will be stored
-  --endpoint        s3 endpoint where bucket will be created
-  --accesskeyid     s3 access key id for authentication
-  --secretaccesskey s3 secret access key for authentication
-  --usessl          when used s3 backend is expected to be accessible via https; false by default
-  --trace           enable tracing; false by default
-```
+### Upload operator reports to S3 buckets:
 
 ```text
-Example:
 opcap upload --bucket=xxxxxx --path=xxxxxx --endpoint=xxxxxx --accesskeyid=xxxxxx --secretaccesskey=xxxxxx
+```
+
+That command will read the reports on file and upload to the bucket.
+
+### Listing available packages from a catalog source:
+
+```text
+opcap check --list-packages --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace
 ```
