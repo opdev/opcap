@@ -46,15 +46,68 @@ opcap can store json reports on S3 type object storage devices by using the uplo
 
 ### Checking all the operators in a catalog source:
 
-```text
+```
 opcap check --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace
 ```
 
-That will print to the screen a report that can be saved by redirection and also creates files where opcap is placed with the available reports. For now it defaults to check if operators are installing correctly.
+That will print to the screen a report that can be saved by redirection and also creates files where opcap is placed with the available reports. For now it defaults to check if operators only are installing correctly and renders a file that looks like below:
+
+```
+{"level":"info","message":"Succeeded","package":"hazelcast-platform-operator","channel":"alpha","installmode":"OwnNamespace"}
+{"level":"info","message":"Succeeded","package":"kubeturbo-certified","channel":"stable","installmode":"OwnNamespace"}
+{"level":"info","message":"Succeeded","package":"elasticsearch-eck-operator-certified","channel":"stable","installmode":"OwnNamespace"}
+{"level":"info","message":"timeout","package":"mongodb-enterprise","channel":"stable","installmode":"OwnNamespace"}
+```
+
+In order to test operands, i.e., the CRs or applications with the operators we need to modify the audit plan like below:
+
+```
+./bin/opcap check --auditplan=OperatorInstall,OperandInstall,OperandCleanUp,OperatorCleanUp
+```
+
+And that's what you should see on the screen. Both operator and operand tested for basic install.
+
+```
+I0818 15:24:28.288017  360146 request.go:601] Waited for 1.000589353s due to client-side throttling, not priority and fairness, request: GET:https://api.exedb-sno-pool-7nw9p.opdev.io:6443/apis/template.openshift.io/v1?timeout=32s
+check called
+
+Operator Install Report:
+-----------------------------------------
+Report Date: 2022-08-18 15:25:42.951700038 -0400 EDT m=+76.015550330
+OpenShift Version: 4.10.26
+Package Name: mongodb-enterprise
+Channel: stable
+Catalog Source: certified-operators
+Install Mode: OwnNamespace
+Result: timeout
+Message: installing: waiting for deployment mongodb-enterprise-operator to become ready: deployment "mongodb-enterprise-operator" not available: Deployment does not have minimum availability.
+Reason: InstallWaiting
+-----------------------------------------
+
+Operand Install Report:
+-----------------------------------------
+Report Date: 2022-08-18 15:25:45.855014223 -0400 EDT m=+78.918864516
+OpenShift Version: 4.10.26
+Package Name: mongodb-enterprise
+Operand Kind: MongoDB
+Operand Name: my-replica-set
+Operand Creation: Succeeded
+-----------------------------------------
+```
+
+And another file for operands will be created that will look like below:
+
+```
+{"package":"hazelcast-platform-operator", "Operand Kind": "Hazelcast", "Operand Name": "hazelcast","message":"created"}
+{"package":"kubeturbo-certified", "Operand Kind": "Kubeturbo", "Operand Name": "kubeturbo-release","message":"created"}
+{"package":"elasticsearch-eck-operator-certified", "Operand Kind": "Elasticsearch", "Operand Name": "elasticsearch-sample","message":"created"}
+{"package":"mongodb-enterprise", "Operand Kind": "MongoDB", "Operand Name": "my-replica-set","message":"created"}
+
+```
 
 ### Upload operator reports to S3 buckets:
 
-```text
+```
 opcap upload --bucket=xxxxxx --path=xxxxxx --endpoint=xxxxxx --accesskeyid=xxxxxx --secretaccesskey=xxxxxx
 ```
 
@@ -62,6 +115,6 @@ That command will read the reports on file and upload to the bucket.
 
 ### Listing available packages from a catalog source:
 
-```text
+```
 opcap check --list-packages --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace
 ```
