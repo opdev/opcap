@@ -81,16 +81,6 @@ func kubeConfig() (*rest.Config, error) {
 	return ctrl.GetConfig()
 }
 
-// mustGetConfig returns only the kubernetes cluster config.
-// nil is returned when an error is encountered
-func mustGetConfig() *rest.Config {
-	config, err := kubeConfig()
-	if err != nil {
-		return nil
-	}
-	return config
-}
-
 func NewOlmClientset() (*olmclient.Clientset, error) {
 	cfg, err := kubeConfig()
 	if err != nil {
