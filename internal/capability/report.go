@@ -83,24 +83,25 @@ type OperandInstallRptOptionPrint struct{}
 
 func (OperandInstallRptOptionPrint) report(ca CapAudit) error {
 
-	operand := &unstructured.Unstructured{Object: ca.CustomResources[0]}
+	for _, cr := range ca.CustomResources {
+		operand := &unstructured.Unstructured{Object: cr}
 
-	fmt.Println()
-	fmt.Println("Operand Install Report:")
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Report Date: %s\n", time.Now())
-	fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
-	fmt.Printf("Package Name: %s\n", ca.Subscription.Package)
-	fmt.Printf("Operand Kind: %s\n", operand.GetKind())
-	fmt.Printf("Operand Name: %s\n", operand.GetName())
+		fmt.Println()
+		fmt.Println("Operand Install Report:")
+		fmt.Println("-----------------------------------------")
+		fmt.Printf("Report Date: %s\n", time.Now())
+		fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
+		fmt.Printf("Package Name: %s\n", ca.Subscription.Package)
+		fmt.Printf("Operand Kind: %s\n", operand.GetKind())
+		fmt.Printf("Operand Name: %s\n", operand.GetName())
 
-	if len(ca.Operands) > 0 {
-		fmt.Println("Operand Creation: Succeeded")
-	} else {
-		fmt.Println("Operand Creation: Failed")
+		if len(ca.Operands) > 0 {
+			fmt.Println("Operand Creation: Succeeded")
+		} else {
+			fmt.Println("Operand Creation: Failed")
+		}
+		fmt.Println("-----------------------------------------")
 	}
-	fmt.Println("-----------------------------------------")
-
 	return nil
 }
 
@@ -111,21 +112,23 @@ type OperandInstallRptOptionFile struct {
 
 func (opt OperandInstallRptOptionFile) report(ca CapAudit) error {
 
-	operand := &unstructured.Unstructured{Object: ca.CustomResources[0]}
+	for _, cr := range ca.CustomResources {
+		operand := &unstructured.Unstructured{Object: cr}
 
-	file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		file.Close()
-		return err
-	}
-	defer file.Close()
+		file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			file.Close()
+			return err
+		}
+		defer file.Close()
 
-	if len(ca.Operands) > 0 {
+		if len(ca.Operands) > 0 {
 
-		file.WriteString("{\"package\":\"" + ca.Subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "created" + "\"}\n")
-	} else {
+			file.WriteString("{\"package\":\"" + ca.Subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "created" + "\"}\n")
+		} else {
 
-		file.WriteString("{\"package\":\"" + ca.Subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "failed" + "\"}\n")
+			file.WriteString("{\"package\":\"" + ca.Subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "failed" + "\"}\n")
+		}
 	}
 
 	return nil
