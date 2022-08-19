@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -97,12 +98,23 @@ func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserve
 	}
 
 	if len(filter) > 0 {
+		var missingPackages []string
 		for _, f := range filter {
+			notFound := true
 			for _, pkgm := range tmppkgmlist.Items {
 				if pkgm.Name == f {
 					list.Items = append(list.Items, pkgm)
+					notFound = false
+					break
 				}
 			}
+			if notFound {
+				missingPackages = append(missingPackages, f)
+			}
+		}
+		if len(missingPackages) > 0 {
+			joinedMissingPackages := strings.Join(missingPackages, ", ")
+			return fmt.Errorf("Some or all filters are missing from the catalog source:\n%#v", joinedMissingPackages)
 		}
 	} else {
 		list.Items = tmppkgmlist.Items

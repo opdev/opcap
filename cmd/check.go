@@ -37,7 +37,7 @@ Flags:
 --catalogsourcenamespace	specifies the namespace where the catalogsource exists
 --auditplan					audit plan is the ordered list of operator test functions to be called during a capability audit
 --list-packages				list packages in the catalog
---filter-packages			a list of package(s) which limits audits and/or other flag(s) output
+--filter-packages			 one or more package names (comma-separated) that limit audits and/or other flag(s) output
 `,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		psc, err := operator.NewOpCapClient()
@@ -47,7 +47,7 @@ Flags:
 		var packageManifestList pkgserverv1.PackageManifestList
 		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.FilterPackages)
 		if err != nil {
-			return types.Error{Msg: "Unable to list PackageManifests."}
+			return types.Error{Msg: "Unable to list PackageManifests.\n" + err.Error()}
 		}
 
 		if len(packageManifestList.Items) == 0 {
