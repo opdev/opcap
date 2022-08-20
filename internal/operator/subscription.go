@@ -26,7 +26,7 @@ type SubscriptionData struct {
 // It's a unique list of package/channels for operator install
 func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceNamespace string, filter []string) ([]SubscriptionData, error) {
 	var packageManifests pkgserverv1.PackageManifestList
-	err := c.ListPackageManifests(context.Background(), &packageManifests, filter)
+	err := c.ListPackageManifests(context.Background(), &packageManifests, catalogSource, filter)
 	if err != nil {
 		logger.Errorf("Error while listing new PackageManifest Objects: %w", err)
 		return nil, err
@@ -90,25 +90,53 @@ func (c operatorClient) DeleteSubscription(ctx context.Context, name string, nam
 	return c.Client.Delete(ctx, subscription)
 }
 
-func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error {
-	var tmppkgmlist pkgserverv1.PackageManifestList
-	if err := c.Client.List(ctx, &tmppkgmlist); err != nil {
+func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error {
+	var pkgManifestsList pkgserverv1.PackageManifestList
+	if err := c.Client.List(ctx, &pkgManifestsList); err != nil {
 		return err
 	}
 
-	if len(filter) > 0 {
-		for _, f := range filter {
-			for _, pkgm := range tmppkgmlist.Items {
-				if pkgm.Name == f {
-					list.Items = append(list.Items, pkgm)
-				}
-			}
-		}
-	} else {
-		list.Items = tmppkgmlist.Items
-	}
+	pkgs := filterPackageManifests(pkgManifestsList.Items, catalogSource, filter)
+	list.Items = append(list.Items, pkgs...)
 
 	return nil
+}
+
+func filterPackageManifests(manifests []pkgserverv1.PackageManifest, catalogSource string, filter []string) []pkgserverv1.PackageManifest {
+	var result = []pkgserverv1.PackageManifest{}
+
+	if len(filter) == 0 && catalogSource == "" {
+		return manifests
+	}
+
+	matchCatalogSource := func(manifest pkgserverv1.PackageManifest) bool {
+		if catalogSource == "" {
+			return true
+		}
+		return manifest.Status.CatalogSource == catalogSource
+	}
+
+	matchFilters := func(manifest pkgserverv1.PackageManifest) bool {
+		if len(filter) == 0 {
+			return true
+		}
+
+		for _, f := range filter {
+			if f == manifest.Name {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	for _, pkg := range manifests {
+		if matchCatalogSource(pkg) && matchFilters(pkg) {
+			result = append(result, pkg)
+		}
+	}
+
+	return result
 }
 
 // ListCRDs returns the list of CRDs present in the cluster

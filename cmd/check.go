@@ -45,7 +45,7 @@ Flags:
 			return types.Error{Msg: "Unable to create OpCap client."}
 		}
 		var packageManifestList pkgserverv1.PackageManifestList
-		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.FilterPackages)
+		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.CatalogSource, checkflags.FilterPackages)
 		if err != nil {
 			return types.Error{Msg: "Unable to list PackageManifests."}
 		}
@@ -64,8 +64,6 @@ Flags:
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("check called")
-
 		// Build auditor by catalog
 		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan, checkflags.FilterPackages)
 		if err != nil {

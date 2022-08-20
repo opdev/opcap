@@ -34,7 +34,7 @@ type Client interface {
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error)
 	GetOpenShiftVersion() (string, error)
-	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, filter []string) error
+	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error
 	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
 	ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error
 }
