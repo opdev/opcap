@@ -43,18 +43,18 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
-	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace, filter)
+	subscriptions, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace, filter)
 	if err != nil {
 		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
 		return err
 	}
 
 	// build workqueue as buffered channel based subscriptionData list size
-	capAuditor.WorkQueue = make(chan CapAudit, len(s))
+	capAuditor.WorkQueue = make(chan CapAudit, len(subscriptions))
 	defer close(capAuditor.WorkQueue)
 
 	// add capAudits to the workqueue
-	for _, subscription := range s {
+	for _, subscription := range subscriptions {
 
 		capAudit, err := newCapAudit(c, subscription, auditPlan)
 		if err != nil {

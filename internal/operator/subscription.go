@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -35,26 +36,30 @@ func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceN
 	SubscriptionList := []SubscriptionData{}
 
 	for _, pkgm := range packageManifests.Items {
-		if pkgm.Status.CatalogSource == catalogSource {
-			for _, pkgch := range pkgm.Status.Channels {
-				if pkgch.IsDefaultChannel(pkgm) {
-					for _, installMode := range pkgch.CurrentCSVDesc.InstallModes {
-						if installMode.Supported {
-							s := SubscriptionData{
-								Name:                   strings.Join([]string{pkgch.Name, pkgm.Name, "subscription"}, "-"),
-								Channel:                pkgch.Name,
-								CatalogSource:          catalogSource,
-								CatalogSourceNamespace: catalogSourceNamespace,
-								Package:                pkgm.Name,
-								InstallModeType:        installMode.Type,
-								InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-							}
+		// iterate through the channels and set value
+		// for defaultChannel variable
+		var defaultChannel pkgserverv1.PackageChannel
+		for _, pkgch := range pkgm.Status.Channels {
+			if pkgch.IsDefaultChannel(pkgm) {
+				defaultChannel = pkgch
+			}
+		}
 
-							SubscriptionList = append(SubscriptionList, s)
-							break
-						}
-					}
-				}
+		// create a new subscription for each of the supported install mode types
+		// on the default channel
+		for _, installMode := range defaultChannel.CurrentCSVDesc.InstallModes {
+			if installMode.Supported {
+				SubscriptionList = append(SubscriptionList,
+					SubscriptionData{
+						Name:                   strings.Join([]string{defaultChannel.Name, pkgm.Name, strings.ToLower(string(installMode.Type)), "subscription"}, "-"),
+						Channel:                defaultChannel.Name,
+						CatalogSource:          catalogSource,
+						CatalogSourceNamespace: catalogSourceNamespace,
+						Package:                pkgm.Name,
+						InstallModeType:        installMode.Type,
+						InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+					},
+				)
 			}
 		}
 	}
@@ -97,6 +102,9 @@ func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserve
 	}
 
 	pkgs := filterPackageManifests(pkgManifestsList.Items, catalogSource, filter)
+	if len(pkgs) == 0 {
+		return errors.New("no operators match the search criteria")
+	}
 	list.Items = append(list.Items, pkgs...)
 
 	return nil
