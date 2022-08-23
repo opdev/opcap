@@ -25,9 +25,9 @@ type SubscriptionData struct {
 // SubscriptionList represent the set of operators
 // to be installed and tested
 // It's a unique list of package/channels for operator install
-func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceNamespace string, filter []string) ([]SubscriptionData, error) {
+func (c operatorClient) GetSubscriptionData(options OperatorCheckOptions) ([]SubscriptionData, error) {
 	var packageManifests pkgserverv1.PackageManifestList
-	err := c.ListPackageManifests(context.Background(), &packageManifests, catalogSource, filter)
+	err := c.ListPackageManifests(context.Background(), &packageManifests, options)
 	if err != nil {
 		logger.Errorf("Error while listing new PackageManifest Objects: %w", err)
 		return nil, err
@@ -36,26 +36,36 @@ func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceN
 	SubscriptionList := []SubscriptionData{}
 
 	for _, pkgm := range packageManifests.Items {
-		if pkgm.Status.CatalogSource == catalogSource {
-			for _, pkgch := range pkgm.Status.Channels {
-				if pkgch.IsDefaultChannel(pkgm) {
-					for _, installMode := range pkgch.CurrentCSVDesc.InstallModes {
-						if installMode.Supported {
-							s := SubscriptionData{
-								Name:                   strings.Join([]string{pkgch.Name, pkgm.Name, "subscription"}, "-"),
-								Channel:                pkgch.Name,
-								CatalogSource:          catalogSource,
-								CatalogSourceNamespace: catalogSourceNamespace,
-								Package:                pkgm.Name,
-								InstallModeType:        installMode.Type,
-								InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-							}
+		// iterate through the channels and set value
+		// for defaultChannel variable
+		var defaultChannel pkgserverv1.PackageChannel
+		for _, pkgch := range pkgm.Status.Channels {
+			if pkgch.IsDefaultChannel(pkgm) {
+				defaultChannel = pkgch
+			}
+		}
 
-							SubscriptionList = append(SubscriptionList, s)
-							break
-						}
-					}
-				}
+		// create a new subscription for each of the supported install mode types
+		// on the default channel
+		for _, installMode := range defaultChannel.CurrentCSVDesc.InstallModes {
+			if installMode.Supported {
+				SubscriptionList = append(SubscriptionList,
+					SubscriptionData{
+						Name:                   strings.Join([]string{defaultChannel.Name, pkgm.Name, strings.ToLower(string(installMode.Type)), "subscription"}, "-"),
+						Channel:                defaultChannel.Name,
+						CatalogSource:          options.CatalogSource,
+						CatalogSourceNamespace: options.CatalogSourceNamespace,
+						Package:                pkgm.Name,
+						InstallModeType:        installMode.Type,
+						InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+					},
+				)
+			}
+
+			// Return subscriptions for all install modes
+			// only when AllInstallModes is true
+			if !options.AllInstallModes {
+				break
 			}
 		}
 	}
@@ -91,18 +101,17 @@ func (c operatorClient) DeleteSubscription(ctx context.Context, name string, nam
 	return c.Client.Delete(ctx, subscription)
 }
 
-func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error {
+func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, options OperatorCheckOptions) error {
 	var pkgManifestsList pkgserverv1.PackageManifestList
 	if err := c.Client.List(ctx, &pkgManifestsList); err != nil {
 		return err
 	}
 
-	pkgs := filterPackageManifests(pkgManifestsList.Items, catalogSource, filter)
+	pkgs := filterPackageManifests(pkgManifestsList.Items, options.CatalogSource, options.FilterPackages)
 
-	if err := checkFilteredResults(pkgs, filter); err != nil {
+	if err := checkFilteredResults(pkgs, options.FilterPackages); err != nil {
 		return err
 	}
-
 	list.Items = append(list.Items, pkgs...)
 
 	return nil

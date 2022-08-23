@@ -63,7 +63,8 @@ type CapAudit struct {
 
 func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (CapAudit, error) {
 
-	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
+	// TODO: optimize performance by re-using the namespace for the same operator
+	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-"), strings.ToLower(string(subscription.InstallModeType))}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
 	ocpVersion, err := c.GetOpenShiftVersion()
