@@ -183,3 +183,12 @@ If you want to know more about debugging on VSCode check this page https://code.
 ### Contribution Guidelines
 
 Check our contribution guidelines [here](docs/contribution.md).
+
+### Weekly Meeting and Slack Channel
+
+If you are a member of the CoreOS workspace in Slack you can find us at #forum-opcap.
+
+Our weekly meeting happens on Fridays 10:30-11:30am EST via google meet:
+
+Operator Audit Meeting
+Video call link: https://meet.google.com/vix-fpch-nkw
