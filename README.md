@@ -123,3 +123,63 @@ That command will read the reports on file and upload to the bucket.
 ```
 opcap check --list-packages --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace
 ```
+
+# How to Build and Test opcap
+
+### Requirements
+
+- Go version 1.17+
+- Make 4+
+- Linux or MacOS
+
+### Simple build for testing
+
+To build opcap nothing more than `go build` is necessary if it's only to run commands and test the tool.
+
+### Building with version
+
+The `make build` command will include the version contained in the OPCAP_VERSION make var with other detailed information about the building environment and user. That information will be generated as compile time variables and will inform the `opcap version` command contained in the binary. That should be align with the tag used to create releases.
+
+With that if you run:
+
+`OPCAP_VERSION=0.0.1 make build`
+
+You should see a binary in the bin folder called opcap. When running `./bin/opcap version` you should see something like below:
+
+```
+Version:         0.0.1
+Go Version:      go1.18.3
+Build Time:      Thu Aug 18 03:15:09 PM EDT 2022
+Git User:        Author: acmenezes <adcmenezes@gmail.com>
+Git Commit:      5a3a6367518ccc6382ea06aabc4c611be62f3a72
+```
+
+### Using VSCode with launch.json
+
+If you want to run opcap with VSCode debugging features here is an example on how the launch.json file can looks like:
+
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch Package",
+        "type": "go",
+        "request": "launch",
+        "mode": "auto",
+        "program": "${fileDirname}",
+        "args": ["check"],
+        "env": {"KUBECONFIG":"/path/to/my/cluster/kubeconfig"}
+      }
+    ]
+  }
+
+```
+
+If you want to know more about debugging on VSCode check this page https://code.visualstudio.com/docs/editor/debugging
+
+    TIP: if you want to check a single operator or operand you can put a break point at the very beginning of OperatorInstall or OperandInstall functions that will allow you to stop right before creating a new one and also break at OperatorCleanUp and OperandCleanUp that will allow developers to check what's in the cluster before it gets cleaned up.
+
+### Contribution Guidelines
+
+Check our contribution guidelines [here](docs/contribution.md).
