@@ -47,7 +47,7 @@ Flags:
 		var packageManifestList pkgserverv1.PackageManifestList
 		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.CatalogSource, checkflags.FilterPackages)
 		if err != nil {
-			return types.Error{Msg: "Unable to list PackageManifests.\n" + err.Error()}
+			return types.Error{Msg: "Unable to list PackageManifests."}
 		}
 
 		if len(packageManifestList.Items) == 0 {
