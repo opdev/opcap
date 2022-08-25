@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -97,6 +98,11 @@ func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserve
 	}
 
 	pkgs := filterPackageManifests(pkgManifestsList.Items, catalogSource, filter)
+
+	if err := checkFilteredResults(pkgs, filter); err != nil {
+		return err
+	}
+
 	list.Items = append(list.Items, pkgs...)
 
 	return nil
@@ -137,6 +143,26 @@ func filterPackageManifests(manifests []pkgserverv1.PackageManifest, catalogSour
 	}
 
 	return result
+}
+
+func checkFilteredResults(pkgs []pkgserverv1.PackageManifest, filter []string) error {
+	if len(filter) > 0 && len(pkgs) != len(filter) {
+		var missingPackages []string
+		for _, f := range filter {
+			notFound := true
+			for _, pkg := range pkgs {
+				if f == pkg.Name {
+					notFound = false
+				}
+			}
+			if notFound {
+				missingPackages = append(missingPackages, f)
+			}
+		}
+		joinedMissingPackages := strings.Join(missingPackages, ", ")
+		return fmt.Errorf("Could not find the following requested package filters:\n%#v", joinedMissingPackages)
+	}
+	return nil
 }
 
 // ListCRDs returns the list of CRDs present in the cluster
