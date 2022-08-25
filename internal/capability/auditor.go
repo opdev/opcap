@@ -10,7 +10,7 @@ import (
 // It has methods to create a workqueue with all the package and audit requirements for a
 // particular audit run
 type Auditor interface {
-	BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string) error
+	BuildWorkQueueByCatalog(opts operator.OperatorCheckOptions) error
 	RunAudits() error
 }
 
@@ -22,10 +22,10 @@ type capAuditor struct {
 }
 
 // BuildAuditorByCatalog creates a new Auditor with workqueue based on a selected catalog
-func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) (capAuditor, error) {
+func BuildAuditorByCatalog(options operator.OperatorCheckOptions) (capAuditor, error) {
 
 	var auditor capAuditor
-	err := auditor.BuildWorkQueueByCatalog(catalogSource, catalogSourceNamespace, auditPlan, filter)
+	err := auditor.BuildWorkQueueByCatalog(options)
 	if err != nil {
 		logger.Fatalf("Unable to build workqueue err := %s", err.Error())
 	}
@@ -33,7 +33,7 @@ func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, 
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) error {
+func (capAuditor *capAuditor) BuildWorkQueueByCatalog(options operator.OperatorCheckOptions) error {
 
 	c, err := operator.NewOpCapClient()
 	if err != nil {
@@ -43,20 +43,20 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
-	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace, filter)
+	subscriptions, err := c.GetSubscriptionData(options)
 	if err != nil {
-		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
+		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", options.CatalogSource, err)
 		return err
 	}
 
 	// build workqueue as buffered channel based subscriptionData list size
-	capAuditor.WorkQueue = make(chan CapAudit, len(s))
+	capAuditor.WorkQueue = make(chan CapAudit, len(subscriptions))
 	defer close(capAuditor.WorkQueue)
 
 	// add capAudits to the workqueue
-	for _, subscription := range s {
+	for _, subscription := range subscriptions {
 
-		capAudit, err := newCapAudit(c, subscription, auditPlan)
+		capAudit, err := newCapAudit(c, subscription, options.AuditPlan)
 		if err != nil {
 			logger.Debugf("Couldn't build capAudit for subscription %s", "Err:", err)
 			return err
