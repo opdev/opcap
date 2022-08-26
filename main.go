@@ -1,7 +1,12 @@
 package main
 
-import "github.com/opdev/opcap/cmd"
+import (
+	"github.com/opdev/opcap/cmd"
+	"github.com/opdev/opcap/internal/logger"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		logger.Sugar.Fatal(err)
+	}
 }

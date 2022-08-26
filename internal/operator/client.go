@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -80,7 +79,11 @@ func NewOpCapClient() (Client, error) {
 		return nil, err
 	}
 
-	client, err := runtimeClient.New(kubeConfig(), runtimeClient.Options{Scheme: scheme})
+	kubeConfig, err := kubeConfig()
+	if err != nil {
+		return nil, fmt.Errorf("could not get kubeconfig: %v", err)
+	}
+	client, err := runtimeClient.New(kubeConfig, runtimeClient.Options{Scheme: scheme})
 	if err != nil {
 		logger.Errorf("could not get subscription client")
 		return nil, err
@@ -93,43 +96,56 @@ func NewOpCapClient() (Client, error) {
 }
 
 // kubeConfig return kubernetes cluster config
-func kubeConfig() *rest.Config {
+func kubeConfig() (*rest.Config, error) {
 	config, err := ctrl.GetConfig()
 	if err != nil {
 		// returned when there is no kubeconfig
 		if errors.Is(err, clientcmd.ErrEmptyConfig) {
-			fmt.Println("please provide kubeconfig before retrying")
-			os.Exit(1)
+			return nil, fmt.Errorf("please provide kubeconfig before retrying")
 		}
 
 		// returned when the kubeconfig has no servers
 		if errors.Is(err, clientcmd.ErrEmptyCluster) {
-			fmt.Println("malformed kubeconfig. Please check before retrying")
-			os.Exit(1)
+			return nil, fmt.Errorf("malformed kubeconfig. Please check before retrying")
 		}
 
 		// any other errors getting kubeconfig would be caught here
-		fmt.Println("error getting kubeconfig. Please check before retrying")
-		os.Exit(1)
+		return nil, fmt.Errorf("error getting kubeconfig. Please check before retrying")
 	}
-	return config
+	return config, nil
 }
 
 func NewOlmClientset() (*olmclient.Clientset, error) {
-	return olmclient.NewForConfig(kubeConfig())
+	kubeConfig, err := kubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	return olmclient.NewForConfig(kubeConfig)
 }
 
 // NewDynamicClient creates a new dynamic client or returns an error.
 func NewDynamicClient() (dynamic.Interface, error) {
-	return dynamic.NewForConfig(kubeConfig())
+	kubeConfig, err := kubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	return dynamic.NewForConfig(kubeConfig)
 }
 
 // NewKubernetesClient returns a kubernetes clientset
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
-	return kubernetes.NewForConfig(kubeConfig())
+	kubeConfig, err := kubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	return kubernetes.NewForConfig(kubeConfig)
 }
 
 func NewConfigClient() (*configv1.ConfigV1Client, error) {
 	// create openshift config clientset
-	return configv1.NewForConfig(kubeConfig())
+	kubeConfig, err := kubeConfig()
+	if err != nil {
+		return nil, err
+	}
+	return configv1.NewForConfig(kubeConfig)
 }
