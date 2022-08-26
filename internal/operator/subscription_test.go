@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"context"
 	"testing"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -54,6 +55,26 @@ var manifests = []pkgserverv1.PackageManifest{
 	},
 }
 
+func BenchmarkGetSubscriptionsData(b *testing.B) {
+	client, err := NewOpCapClient()
+	if err != nil {
+		b.Errorf("error creating client; %v\n", err)
+	}
+	manifests := &pkgserverv1.PackageManifestList{}
+
+	opts := OperatorCheckOptions{
+		FilterPackages: []string{"pachyderm-operator"},
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := client.ListPackageManifests(context.Background(), manifests, opts); err != nil {
+			b.Errorf("error getting package manifests; %v\n", err)
+		}
+	}
+}
+
 func TestFilterPackageManifests(t *testing.T) {
 	var cases = []struct {
 		catalog string
@@ -90,4 +111,12 @@ func TestFilterPackageManifests(t *testing.T) {
 		}
 		t.Logf("matched %d out of %d package manifests", len(results), len(manifests))
 	}
+}
+
+func TestCheckFilteredResults(t *testing.T) {
+	err := checkFilteredResults(manifests, []string{"nonexistent-operator", "mongodb-atlas-kubernetes"})
+	if err == nil {
+		t.Error("expecting 1 missing package. None found.")
+	}
+	t.Logf("packages not found in catalog sources: %v\n", err)
 }
