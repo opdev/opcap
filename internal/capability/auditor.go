@@ -15,16 +15,16 @@ type Auditor interface {
 }
 
 // capAuditor implements Auditor
-type capAuditor struct {
+type CapAuditor struct {
 
 	// Workqueue holds capAudits in a buffered channel in order to execute them
-	WorkQueue chan CapAudit
+	WorkQueue chan capAudit
 }
 
 // BuildAuditorByCatalog creates a new Auditor with workqueue based on a selected catalog
-func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) (capAuditor, error) {
+func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) (CapAuditor, error) {
 
-	var auditor capAuditor
+	var auditor CapAuditor
 	err := auditor.BuildWorkQueueByCatalog(catalogSource, catalogSourceNamespace, auditPlan, filter)
 	if err != nil {
 		logger.Fatalf("Unable to build workqueue err := %s", err.Error())
@@ -33,7 +33,7 @@ func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, 
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) error {
+func (capAuditor *CapAuditor) BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) error {
 
 	c, err := operator.NewOpCapClient()
 	if err != nil {
@@ -50,7 +50,7 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	}
 
 	// build workqueue as buffered channel based subscriptionData list size
-	capAuditor.WorkQueue = make(chan CapAudit, len(s))
+	capAuditor.WorkQueue = make(chan capAudit, len(s))
 	defer close(capAuditor.WorkQueue)
 
 	// add capAudits to the workqueue
@@ -70,14 +70,14 @@ func (capAuditor *capAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 }
 
 // RunAudits executes all selected functions in order for a given audit at a time
-func (capAuditor *capAuditor) RunAudits() error {
+func (capAuditor *CapAuditor) RunAudits() error {
 
 	// read workqueue for audits
 	for audit := range capAuditor.WorkQueue {
 
 		// read a particular audit's auditPlan for functions
 		// to be executed against operator
-		for _, function := range audit.AuditPlan {
+		for _, function := range audit.auditPlan {
 
 			// run function/method by name
 			m := reflect.ValueOf(&audit).MethodByName(function)

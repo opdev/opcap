@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func (ca *CapAudit) getAlmExamples() error {
+func (ca *capAudit) getAlmExamples() error {
 	ctx := context.Background()
 
 	olmClientset, err := operator.NewOlmClientset()
@@ -26,7 +26,7 @@ func (ca *CapAudit) getAlmExamples() error {
 	opts := v1.ListOptions{}
 
 	// gets the list of CSVs present in a particular namespace
-	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.Namespace).List(ctx, opts)
+	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.namespace).List(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -43,20 +43,20 @@ func (ca *CapAudit) getAlmExamples() error {
 		return err
 	}
 
-	ca.CustomResources = almList
+	ca.customResources = almList
 
 	return nil
 }
 
 // OperandInstall installs the operand from the ALMExamples in the ca.namespace
-func (ca *CapAudit) OperandInstall() error {
-	logger.Debugw("installing operand for operator", "package", ca.Subscription.Package, "channel", ca.Subscription.Channel, "installmode", ca.Subscription.InstallModeType)
+func (ca *capAudit) OperandInstall() error {
+	logger.Debugw("installing operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
 	ca.getAlmExamples()
 
 	// TODO: we need a stratergy to select which CR to select from ALMExamplesList
-	if len(ca.CustomResources) > 0 {
-		for _, cr := range ca.CustomResources {
+	if len(ca.customResources) > 0 {
+		for _, cr := range ca.customResources {
 			obj := &unstructured.Unstructured{Object: cr}
 			// using dynamic client to create Unstructured objests in k8s
 			client, err := operator.NewDynamicClient()
@@ -65,10 +65,10 @@ func (ca *CapAudit) OperandInstall() error {
 			}
 
 			// set the namespace of CR to the namespace of the subscription
-			obj.SetNamespace(ca.Namespace)
+			obj.SetNamespace(ca.namespace)
 
 			var crdList apiextensionsv1.CustomResourceDefinitionList
-			err = ca.Client.ListCRDs(context.TODO(), &crdList)
+			err = ca.client.ListCRDs(context.TODO(), &crdList)
 			if err != nil {
 				return err
 			}
@@ -87,15 +87,15 @@ func (ca *CapAudit) OperandInstall() error {
 				Resource: Resource,
 			}
 
-			csv, _ := ca.Client.GetCompletedCsvWithTimeout(ca.Namespace, time.Minute)
+			csv, _ := ca.client.GetCompletedCsvWithTimeout(ca.namespace, time.Minute)
 			if strings.ToLower(string(csv.Status.Phase)) == "succeeded" {
 				// create the resource using the dynamic client and log the error if it occurs in stdout.json
-				unstructuredCR, err := client.Resource(gvr).Namespace(ca.Namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+				unstructuredCR, err := client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
 				if err != nil {
 
 					return err
 				} else {
-					ca.Operands = append(ca.Operands, *unstructuredCR)
+					ca.operands = append(ca.operands, *unstructuredCR)
 				}
 			} else {
 				logger.Debug("exiting OperandInstall since CSV has failed")

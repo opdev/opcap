@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func (ca CapAudit) Report(opts ...ReportOption) error {
+func (ca capAudit) Report(opts ...ReportOption) error {
 
 	for _, opt := range opts {
 
@@ -22,32 +22,32 @@ func (ca CapAudit) Report(opts ...ReportOption) error {
 }
 
 type ReportOption interface {
-	report(ca CapAudit) error
+	report(ca capAudit) error
 }
 
 // Simple print option implmentation for operator install
 type OperatorInstallRptOptionPrint struct{}
 
-func (OperatorInstallRptOptionPrint) report(ca CapAudit) error {
+func (OperatorInstallRptOptionPrint) report(ca capAudit) error {
 
 	fmt.Println()
 	fmt.Println("Operator Install Report:")
 	fmt.Println("-----------------------------------------")
 	fmt.Printf("Report Date: %s\n", time.Now())
-	fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
-	fmt.Printf("Package Name: %s\n", ca.Subscription.Package)
-	fmt.Printf("Channel: %s\n", ca.Subscription.Channel)
-	fmt.Printf("Catalog Source: %s\n", ca.Subscription.CatalogSource)
-	fmt.Printf("Install Mode: %s\n", ca.Subscription.InstallModeType)
+	fmt.Printf("OpenShift Version: %s\n", ca.ocpVersion)
+	fmt.Printf("Package Name: %s\n", ca.subscription.Package)
+	fmt.Printf("Channel: %s\n", ca.subscription.Channel)
+	fmt.Printf("Catalog Source: %s\n", ca.subscription.CatalogSource)
+	fmt.Printf("Install Mode: %s\n", ca.subscription.InstallModeType)
 
-	if !ca.CsvTimeout {
-		fmt.Printf("Result: %s\n", ca.Csv.Status.Phase)
+	if !ca.csvTimeout {
+		fmt.Printf("Result: %s\n", ca.csv.Status.Phase)
 	} else {
 		fmt.Println("Result: timeout")
 	}
 
-	fmt.Printf("Message: %s\n", ca.Csv.Status.Message)
-	fmt.Printf("Reason: %s\n", ca.Csv.Status.Reason)
+	fmt.Printf("Message: %s\n", ca.csv.Status.Message)
+	fmt.Printf("Reason: %s\n", ca.csv.Status.Reason)
 	fmt.Println("-----------------------------------------")
 
 	return nil
@@ -58,7 +58,7 @@ type OperatorInstallRptOptionFile struct {
 	FilePath string
 }
 
-func (opt OperatorInstallRptOptionFile) report(ca CapAudit) error {
+func (opt OperatorInstallRptOptionFile) report(ca capAudit) error {
 
 	file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -67,12 +67,12 @@ func (opt OperatorInstallRptOptionFile) report(ca CapAudit) error {
 	}
 	defer file.Close()
 
-	if !ca.CsvTimeout {
+	if !ca.csvTimeout {
 
-		file.WriteString("{\"level\":\"info\",\"message\":\"" + string(ca.Csv.Status.Phase) + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
+		file.WriteString("{\"level\":\"info\",\"message\":\"" + string(ca.csv.Status.Phase) + "\",\"package\":\"" + ca.subscription.Package + "\",\"channel\":\"" + ca.subscription.Channel + "\",\"installmode\":\"" + string(ca.subscription.InstallModeType) + "\"}\n")
 	} else {
 
-		file.WriteString("{\"level\":\"info\",\"message\":\"" + "timeout" + "\",\"package\":\"" + ca.Subscription.Package + "\",\"channel\":\"" + ca.Subscription.Channel + "\",\"installmode\":\"" + string(ca.Subscription.InstallModeType) + "\"}\n")
+		file.WriteString("{\"level\":\"info\",\"message\":\"" + "timeout" + "\",\"package\":\"" + ca.subscription.Package + "\",\"channel\":\"" + ca.subscription.Channel + "\",\"installmode\":\"" + string(ca.subscription.InstallModeType) + "\"}\n")
 	}
 
 	return nil
@@ -81,21 +81,21 @@ func (opt OperatorInstallRptOptionFile) report(ca CapAudit) error {
 // Simple print option implmentation for operand install
 type OperandInstallRptOptionPrint struct{}
 
-func (OperandInstallRptOptionPrint) report(ca CapAudit) error {
+func (OperandInstallRptOptionPrint) report(ca capAudit) error {
 
-	for _, cr := range ca.CustomResources {
+	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
 		fmt.Println()
 		fmt.Println("Operand Install Report:")
 		fmt.Println("-----------------------------------------")
 		fmt.Printf("Report Date: %s\n", time.Now())
-		fmt.Printf("OpenShift Version: %s\n", ca.OcpVersion)
-		fmt.Printf("Package Name: %s\n", ca.Subscription.Package)
+		fmt.Printf("OpenShift Version: %s\n", ca.ocpVersion)
+		fmt.Printf("Package Name: %s\n", ca.subscription.Package)
 		fmt.Printf("Operand Kind: %s\n", operand.GetKind())
 		fmt.Printf("Operand Name: %s\n", operand.GetName())
 
-		if len(ca.Operands) > 0 {
+		if len(ca.operands) > 0 {
 			fmt.Println("Operand Creation: Succeeded")
 		} else {
 			fmt.Println("Operand Creation: Failed")
@@ -110,9 +110,9 @@ type OperandInstallRptOptionFile struct {
 	FilePath string
 }
 
-func (opt OperandInstallRptOptionFile) report(ca CapAudit) error {
+func (opt OperandInstallRptOptionFile) report(ca capAudit) error {
 
-	for _, cr := range ca.CustomResources {
+	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
 		file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -122,12 +122,12 @@ func (opt OperandInstallRptOptionFile) report(ca CapAudit) error {
 		}
 		defer file.Close()
 
-		if len(ca.Operands) > 0 {
+		if len(ca.operands) > 0 {
 
-			file.WriteString("{\"package\":\"" + ca.Subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "created" + "\"}\n")
+			file.WriteString("{\"package\":\"" + ca.subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "created" + "\"}\n")
 		} else {
 
-			file.WriteString("{\"package\":\"" + ca.Subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "failed" + "\"}\n")
+			file.WriteString("{\"package\":\"" + ca.subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "failed" + "\"}\n")
 		}
 	}
 

@@ -6,24 +6,24 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 )
 
-func (ca *CapAudit) OperatorCleanUp() error {
+func (ca *capAudit) OperatorCleanUp() error {
 
 	// delete subscription
-	err := ca.Client.DeleteSubscription(context.Background(), ca.Subscription.Name, ca.Namespace)
+	err := ca.client.DeleteSubscription(context.Background(), ca.subscription.Name, ca.namespace)
 	if err != nil {
 		logger.Debugf("Error while deleting Subscription: %w", err)
 		return err
 	}
 
 	// delete operator group
-	err = ca.Client.DeleteOperatorGroup(context.Background(), ca.OperatorGroupData.Name, ca.Namespace)
+	err = ca.client.DeleteOperatorGroup(context.Background(), ca.operatorGroupData.Name, ca.namespace)
 	if err != nil {
 		logger.Debugf("Error while deleting OperatorGroup: %w", err)
 		return err
 	}
 
 	// delete target namespaces
-	for _, ns := range ca.OperatorGroupData.TargetNamespaces {
+	for _, ns := range ca.operatorGroupData.TargetNamespaces {
 		err := operator.DeleteNamespace(context.Background(), ns)
 		if err != nil {
 			logger.Debugf("Error deleting target namespace %s", ns)
@@ -32,9 +32,9 @@ func (ca *CapAudit) OperatorCleanUp() error {
 	}
 
 	// delete operator's own namespace
-	err = operator.DeleteNamespace(context.Background(), ca.Namespace)
+	err = operator.DeleteNamespace(context.Background(), ca.namespace)
 	if err != nil {
-		logger.Debugf("Error deleting operator's own namespace %s", ca.Namespace)
+		logger.Debugf("Error deleting operator's own namespace %s", ca.namespace)
 		return err
 	}
 	return nil
