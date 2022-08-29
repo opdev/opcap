@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/opdev/opcap/internal/capability"
-	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -64,13 +63,16 @@ Flags:
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// Build auditor by catalog
-		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan, checkflags.FilterPackages)
-		if err != nil {
-			logger.Sugar.Fatal("Unable to build auditor")
+
+		capAuditor := &capability.CapAuditor{
+			AuditPlan:              checkflags.AuditPlan,
+			CatalogSource:          checkflags.CatalogSource,
+			CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
+			FilterPackages:         checkflags.FilterPackages,
 		}
+
 		// run all dynamically built audits in the auditor workqueue
-		auditor.RunAudits()
+		capAuditor.RunAudits()
 	},
 }
 

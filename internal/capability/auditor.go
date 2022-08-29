@@ -10,30 +10,29 @@ import (
 // It has methods to create a workqueue with all the package and audit requirements for a
 // particular audit run
 type Auditor interface {
-	BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string) error
 	RunAudits() error
 }
 
 // capAuditor implements Auditor
 type CapAuditor struct {
 
+	// AuditPlan holds the tests that should be run during an audit
+	AuditPlan []string
+
+	// CatalogSource may be built-in OLM or custom
+	CatalogSource string
+	// CatalogSourceNamespace will be openshift-marketplace or custom
+	CatalogSourceNamespace string
+
+	// FilterPackages is a subset of packages to be tested from a catalogSource
+	FilterPackages []string
+
 	// Workqueue holds capAudits in a buffered channel in order to execute them
 	WorkQueue chan capAudit
 }
 
-// BuildAuditorByCatalog creates a new Auditor with workqueue based on a selected catalog
-func BuildAuditorByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) (CapAuditor, error) {
-
-	var auditor CapAuditor
-	err := auditor.BuildWorkQueueByCatalog(catalogSource, catalogSourceNamespace, auditPlan, filter)
-	if err != nil {
-		logger.Fatalf("Unable to build workqueue err := %s", err.Error())
-	}
-	return auditor, nil
-}
-
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *CapAuditor) BuildWorkQueueByCatalog(catalogSource string, catalogSourceNamespace string, auditPlan []string, filter []string) error {
+func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 
 	c, err := operator.NewOpCapClient()
 	if err != nil {
@@ -43,9 +42,9 @@ func (capAuditor *CapAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
-	s, err := c.GetSubscriptionData(catalogSource, catalogSourceNamespace, filter)
+	s, err := c.GetSubscriptionData(capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.FilterPackages)
 	if err != nil {
-		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", catalogSource, err)
+		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", capAuditor.CatalogSource, err)
 		return err
 	}
 
@@ -56,7 +55,7 @@ func (capAuditor *CapAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 	// add capAudits to the workqueue
 	for _, subscription := range s {
 
-		capAudit, err := newCapAudit(c, subscription, auditPlan)
+		capAudit, err := newCapAudit(c, subscription, capAuditor.AuditPlan)
 		if err != nil {
 			logger.Debugf("Couldn't build capAudit for subscription %s", "Err:", err)
 			return err
@@ -71,6 +70,11 @@ func (capAuditor *CapAuditor) BuildWorkQueueByCatalog(catalogSource string, cata
 
 // RunAudits executes all selected functions in order for a given audit at a time
 func (capAuditor *CapAuditor) RunAudits() error {
+
+	err := capAuditor.buildWorkQueueByCatalog()
+	if err != nil {
+		logger.Fatalf("Unable to build workqueue err := %s", err.Error())
+	}
 
 	// read workqueue for audits
 	for audit := range capAuditor.WorkQueue {
