@@ -45,7 +45,7 @@ Flags:
 			return types.Error{Msg: "Unable to create OpCap client."}
 		}
 		var packageManifestList pkgserverv1.PackageManifestList
-		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags)
+		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.CatalogSource, checkflags.FilterPackages)
 		if err != nil {
 			return types.Error{Msg: "Unable to list PackageManifests.\n" + err.Error()}
 		}
@@ -65,7 +65,7 @@ Flags:
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// Build auditor by catalog
-		auditor, err := capability.BuildAuditorByCatalog(checkflags)
+		auditor, err := capability.BuildAuditorByCatalog(checkflags.CatalogSource, checkflags.CatalogSourceNamespace, checkflags.AuditPlan, checkflags.FilterPackages)
 		if err != nil {
 			logger.Sugar.Fatal("Unable to build auditor")
 		}
@@ -74,7 +74,15 @@ Flags:
 	},
 }
 
-var checkflags operator.OperatorCheckOptions
+type CheckCommandFlags struct {
+	AuditPlan              []string `json:"auditPlan"`
+	CatalogSource          string   `json:"catalogsource"`
+	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
+	ListPackages           bool     `json:"listPackages"`
+	FilterPackages         []string `json:"filterPackages"`
+}
+
+var checkflags CheckCommandFlags
 
 func init() {
 
@@ -90,5 +98,4 @@ func init() {
 	flags.StringSliceVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
 	flags.StringSliceVar(&checkflags.FilterPackages, "filter-packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
-	flags.BoolVar(&checkflags.AllInstallModes, "all-installmodes", false, "when set, all install modes supported by an operator will be tested")
 }
