@@ -70,7 +70,6 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 
 // RunAudits executes all selected functions in order for a given audit at a time
 func (capAuditor *CapAuditor) RunAudits() error {
-
 	err := capAuditor.buildWorkQueueByCatalog()
 	if err != nil {
 		logger.Fatalf("Unable to build workqueue err := %s", err.Error())

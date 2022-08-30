@@ -63,7 +63,6 @@ Flags:
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-
 		capAuditor := &capability.CapAuditor{
 			AuditPlan:              checkflags.AuditPlan,
 			CatalogSource:          checkflags.CatalogSource,
