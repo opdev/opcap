@@ -13,7 +13,10 @@ func (ca *capAudit) OperatorInstall() error {
 	logger.Debugw("installing package", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
 	// create operator's own namespace
-	operator.CreateNamespace(context.Background(), ca.namespace)
+	_, err := operator.CreateNamespace(context.Background(), ca.namespace)
+	if err != nil {
+		return err
+	}
 
 	// create remaining target namespaces watched by the operator
 	for _, ns := range ca.operatorGroupData.TargetNamespaces {
@@ -26,7 +29,7 @@ func (ca *capAudit) OperatorInstall() error {
 	ca.client.CreateOperatorGroup(context.Background(), ca.operatorGroupData, ca.namespace)
 
 	// create subscription for operator package/channel
-	_, err := ca.client.CreateSubscription(context.Background(), ca.subscription, ca.namespace)
+	_, err = ca.client.CreateSubscription(context.Background(), ca.subscription, ca.namespace)
 	if err != nil {
 		logger.Debugf("Error creating subscriptions: %w", err)
 		return err
