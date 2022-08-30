@@ -15,7 +15,8 @@ import (
 
 // OperandCleanup removes the operand from the OCP cluster in the ca.namespace
 func (ca *capAudit) OperandCleanUp() error {
-	logger.Debugw("cleaningUp operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
+	logger.Debugw("cleaningUp operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode",
+		ca.subscription.InstallModeType)
 
 	if len(ca.customResources) > 0 {
 		for _, cr := range ca.customResources {
