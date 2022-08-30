@@ -24,8 +24,8 @@ type CapAuditor struct {
 	// CatalogSourceNamespace will be openshift-marketplace or custom
 	CatalogSourceNamespace string
 
-	// FilterPackages is a subset of packages to be tested from a catalogSource
-	FilterPackages []string
+	// Packages is a subset of packages to be tested from a catalogSource
+	Packages []string
 
 	// Workqueue holds capAudits in a buffered channel in order to execute them
 	WorkQueue chan capAudit
@@ -42,7 +42,7 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
-	subscriptions, err := c.GetSubscriptionData(capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.FilterPackages)
+	subscriptions, err := c.GetSubscriptionData(capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.Packages)
 	if err != nil {
 		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", capAuditor.CatalogSource, err)
 		return err

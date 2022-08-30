@@ -44,7 +44,7 @@ Flags:
 			return types.Error{Msg: "Unable to create OpCap client."}
 		}
 		var packageManifestList pkgserverv1.PackageManifestList
-		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.CatalogSource, checkflags.FilterPackages)
+		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.CatalogSource, checkflags.Packages)
 		if err != nil {
 			return types.Error{Msg: "Unable to list PackageManifests.\n" + err.Error()}
 		}
@@ -68,7 +68,7 @@ Flags:
 			AuditPlan:              checkflags.AuditPlan,
 			CatalogSource:          checkflags.CatalogSource,
 			CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
-			FilterPackages:         checkflags.FilterPackages,
+			Packages:               checkflags.Packages,
 		}
 
 		// run all dynamically built audits in the auditor workqueue
@@ -81,7 +81,7 @@ type CheckCommandFlags struct {
 	CatalogSource          string   `json:"catalogsource"`
 	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
 	ListPackages           bool     `json:"listPackages"`
-	FilterPackages         []string `json:"filterPackages"`
+	Packages               []string `json:"packages"`
 }
 
 var checkflags CheckCommandFlags
@@ -99,5 +99,5 @@ func init() {
 		"specifies the namespace where the catalogsource exists")
 	flags.StringSliceVar(&checkflags.AuditPlan, "auditplan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
-	flags.StringSliceVar(&checkflags.FilterPackages, "filter-packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
+	flags.StringSliceVar(&checkflags.Packages, "packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
 }
