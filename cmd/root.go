@@ -28,6 +28,7 @@ func rootCmd() *cobra.Command {
 	cmd.AddCommand(uploadCmd())
 	cmd.AddCommand(versionCmd())
 	cmd.AddCommand(checkCmd())
+	cmd.AddCommand(packageCmd())
 
 	return &cmd
 }
@@ -36,6 +37,7 @@ func rootCmd() *cobra.Command {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	cmd := rootCmd()
+
 	err := cmd.ExecuteContext(context.Background())
 	if err != nil {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Opcap tool execution failed: %v\n", err)
