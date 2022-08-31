@@ -2,132 +2,88 @@ package capability
 
 import (
 	"fmt"
-	"os"
+	"io"
+
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func (ca capAudit) Report(opts ...ReportOption) error {
+func (ca capAudit) OperatorInstallTextReport(w io.Writer) error {
 
-	for _, opt := range opts {
-
-		err := opt.report(ca)
-		if err != nil {
-			logger.Debugf("Unable to generate report for %T", opt, "Error: %s", err)
-		}
-
-	}
-	return nil
-}
-
-type ReportOption interface {
-	report(ca capAudit) error
-}
-
-// Simple print option implmentation for operator install
-type OperatorInstallRptOptionPrint struct{}
-
-func (OperatorInstallRptOptionPrint) report(ca capAudit) error {
-
-	fmt.Println()
-	fmt.Println("Operator Install Report:")
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Report Date: %s\n", time.Now())
-	fmt.Printf("OpenShift Version: %s\n", ca.ocpVersion)
-	fmt.Printf("Package Name: %s\n", ca.subscription.Package)
-	fmt.Printf("Channel: %s\n", ca.subscription.Channel)
-	fmt.Printf("Catalog Source: %s\n", ca.subscription.CatalogSource)
-	fmt.Printf("Install Mode: %s\n", ca.subscription.InstallModeType)
+	fmt.Fprint(w, "\n")
+	fmt.Fprint(w, "Operator Install Report:\n")
+	fmt.Fprint(w, "-----------------------------------------\n")
+	fmt.Fprintf(w, "Report Date: %s\n", time.Now())
+	fmt.Fprintf(w, "OpenShift Version: %s\n", ca.ocpVersion)
+	fmt.Fprintf(w, "Package Name: %s\n", ca.subscription.Package)
+	fmt.Fprintf(w, "Channel: %s\n", ca.subscription.Channel)
+	fmt.Fprintf(w, "Catalog Source: %s\n", ca.subscription.CatalogSource)
+	fmt.Fprintf(w, "Install Mode: %s\n", ca.subscription.InstallModeType)
 
 	if !ca.csvTimeout {
-		fmt.Printf("Result: %s\n", ca.csv.Status.Phase)
+		fmt.Fprintf(w, "Result: %s\n", ca.csv.Status.Phase)
 	} else {
-		fmt.Println("Result: timeout")
+		fmt.Fprint(w, "Result: timeout\n")
 	}
 
-	fmt.Printf("Message: %s\n", ca.csv.Status.Message)
-	fmt.Printf("Reason: %s\n", ca.csv.Status.Reason)
-	fmt.Println("-----------------------------------------")
+	fmt.Fprintf(w, "Message: %s\n", ca.csv.Status.Message)
+	fmt.Fprintf(w, "Reason: %s\n", ca.csv.Status.Reason)
+	fmt.Fprint(w, "-----------------------------------------\n")
 
 	return nil
 }
 
-// Simple file option implementation for operator install
-type OperatorInstallRptOptionFile struct {
-	FilePath string
-}
-
-func (opt OperatorInstallRptOptionFile) report(ca capAudit) error {
-
-	file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		file.Close()
-		return err
-	}
-	defer file.Close()
+func (ca capAudit) OperatorInstallJsonReport(w io.Writer) error {
 
 	if !ca.csvTimeout {
-
-		file.WriteString("{\"level\":\"info\",\"message\":\"" + string(ca.csv.Status.Phase) + "\",\"package\":\"" + ca.subscription.Package + "\",\"channel\":\"" + ca.subscription.Channel + "\",\"installmode\":\"" + string(ca.subscription.InstallModeType) + "\"}\n")
+		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+string(ca.csv.Status.Phase)+"\",\"package\":\""+ca.subscription.Package+
+			"\",\"channel\":\""+ca.subscription.Channel+"\",\"installmode\":\""+string(ca.subscription.InstallModeType)+"\"}\n")
 	} else {
-
-		file.WriteString("{\"level\":\"info\",\"message\":\"" + "timeout" + "\",\"package\":\"" + ca.subscription.Package + "\",\"channel\":\"" + ca.subscription.Channel + "\",\"installmode\":\"" + string(ca.subscription.InstallModeType) + "\"}\n")
+		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+"timeout"+"\",\"package\":\""+ca.subscription.Package+"\",\"channel\":\""+
+			ca.subscription.Channel+"\",\"installmode\":\""+string(ca.subscription.InstallModeType)+"\"}\n")
 	}
 
 	return nil
 }
 
-// Simple print option implmentation for operand install
-type OperandInstallRptOptionPrint struct{}
-
-func (OperandInstallRptOptionPrint) report(ca capAudit) error {
+func (ca capAudit) OperandTextReport(w io.Writer) error {
 
 	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
-		fmt.Println()
-		fmt.Println("Operand Install Report:")
-		fmt.Println("-----------------------------------------")
-		fmt.Printf("Report Date: %s\n", time.Now())
-		fmt.Printf("OpenShift Version: %s\n", ca.ocpVersion)
-		fmt.Printf("Package Name: %s\n", ca.subscription.Package)
-		fmt.Printf("Operand Kind: %s\n", operand.GetKind())
-		fmt.Printf("Operand Name: %s\n", operand.GetName())
+		fmt.Fprint(w, "\n")
+		fmt.Fprintf(w, "Operand Install Report:\n")
+		fmt.Fprintf(w, "-----------------------------------------\n")
+		fmt.Fprintf(w, "Report Date: %s\n", time.Now())
+		fmt.Fprintf(w, "OpenShift Version: %s\n", ca.ocpVersion)
+		fmt.Fprintf(w, "Package Name: %s\n", ca.subscription.Package)
+		fmt.Fprintf(w, "Operand Kind: %s\n", operand.GetKind())
+		fmt.Fprintf(w, "Operand Name: %s\n", operand.GetName())
 
 		if len(ca.operands) > 0 {
-			fmt.Println("Operand Creation: Succeeded")
+			fmt.Fprint(w, "Operand Creation: Succeeded\n")
 		} else {
-			fmt.Println("Operand Creation: Failed")
+			fmt.Fprint(w, "Operand Creation: Failed\n")
 		}
-		fmt.Println("-----------------------------------------")
+		fmt.Fprint(w, "-----------------------------------------\n")
 	}
 	return nil
 }
 
-// Simple file option implementation for operand install
-type OperandInstallRptOptionFile struct {
-	FilePath string
-}
-
-func (opt OperandInstallRptOptionFile) report(ca capAudit) error {
+func (ca capAudit) OperandInstallJsonReport(w io.Writer) error {
 
 	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
-		file, err := os.OpenFile(opt.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			file.Close()
-			return err
-		}
-		defer file.Close()
-
 		if len(ca.operands) > 0 {
 
-			file.WriteString("{\"package\":\"" + ca.subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "created" + "\"}\n")
+			fmt.Fprintf(w, "{\"package\":\""+ca.subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
+				"\",\"message\":\""+"created"+"\"}\n")
 		} else {
 
-			file.WriteString("{\"package\":\"" + ca.subscription.Package + "\", \"Operand Kind\": \"" + operand.GetKind() + "\", \"Operand Name\": \"" + operand.GetName() + "\",\"message\":\"" + "failed" + "\"}\n")
+			fmt.Fprintf(w, "{\"package\":\""+ca.subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
+				"\",\"message\":\""+"failed"+"\"}\n")
 		}
 	}
 

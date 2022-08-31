@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"os"
 
 	log "github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
@@ -46,7 +47,16 @@ func (ca *capAudit) OperatorInstall() error {
 		}
 	}
 
-	ca.Report(OperatorInstallRptOptionFile{FilePath: "operator_install_report.json"}, OperatorInstallRptOptionPrint{})
+	file, err := os.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		file.Close()
+		return err
+	}
+	defer file.Close()
+
+	ca.OperatorInstallJsonReport(file)
+
+	ca.OperatorInstallTextReport(os.Stdout)
 
 	return nil
 }

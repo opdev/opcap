@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"os"
 	"strings"
 	"time"
 
@@ -105,7 +106,15 @@ func (ca *capAudit) OperandInstall() error {
 		logger.Debug("exiting OperandInstall since no ALM_Examples found in CSV")
 	}
 
-	ca.Report(OperandInstallRptOptionFile{FilePath: "operand_install_report.json"}, OperandInstallRptOptionPrint{})
+	file, err := os.OpenFile("operand_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		file.Close()
+		return err
+	}
+	defer file.Close()
+
+	ca.OperandInstallJsonReport(file)
+	ca.OperandTextReport(os.Stdout)
 
 	return nil
 }
