@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"os"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func (ca *CapAudit) getAlmExamples() error {
+func (ca *capAudit) getAlmExamples() error {
 	ctx := context.Background()
 
 	olmClientset, err := operator.NewOlmClientset()
@@ -26,7 +27,7 @@ func (ca *CapAudit) getAlmExamples() error {
 	opts := v1.ListOptions{}
 
 	// gets the list of CSVs present in a particular namespace
-	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.Namespace).List(ctx, opts)
+	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.namespace).List(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -43,69 +44,84 @@ func (ca *CapAudit) getAlmExamples() error {
 		return err
 	}
 
-	ca.CustomResources = almList
+	ca.customResources = almList
 
 	return nil
 }
 
 // OperandInstall installs the operand from the ALMExamples in the ca.namespace
-func (ca *CapAudit) OperandInstall() error {
-	logger.Debugw("installing operand for operator", "package", ca.Subscription.Package, "channel", ca.Subscription.Channel, "installmode", ca.Subscription.InstallModeType)
+func (ca *capAudit) OperandInstall() error {
+	logger.Debugw("installing operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
 	ca.getAlmExamples()
 
-	// TODO: we need a stratergy to select which CR to select from ALMExamplesList
-	if len(ca.CustomResources) > 0 {
-		for _, cr := range ca.CustomResources {
-			obj := &unstructured.Unstructured{Object: cr}
-			// using dynamic client to create Unstructured objests in k8s
-			client, err := operator.NewDynamicClient()
-			if err != nil {
-				return err
-			}
-
-			// set the namespace of CR to the namespace of the subscription
-			obj.SetNamespace(ca.Namespace)
-
-			var crdList apiextensionsv1.CustomResourceDefinitionList
-			err = ca.Client.ListCRDs(context.TODO(), &crdList)
-			if err != nil {
-				return err
-			}
-
-			var Resource string
-
-			for _, crd := range crdList.Items {
-				if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
-					Resource = crd.Spec.Names.Plural
-				}
-			}
-
-			gvr := schema.GroupVersionResource{
-				Group:    obj.GroupVersionKind().Group,
-				Version:  obj.GroupVersionKind().Version,
-				Resource: Resource,
-			}
-
-			csv, _ := ca.Client.GetCompletedCsvWithTimeout(ca.Namespace, time.Minute)
-			if strings.ToLower(string(csv.Status.Phase)) == "succeeded" {
-				// create the resource using the dynamic client and log the error if it occurs in stdout.json
-				unstructuredCR, err := client.Resource(gvr).Namespace(ca.Namespace).Create(context.TODO(), obj, v1.CreateOptions{})
-				if err != nil {
-
-					return err
-				} else {
-					ca.Operands = append(ca.Operands, *unstructuredCR)
-				}
-			} else {
-				logger.Debug("exiting OperandInstall since CSV has failed")
-			}
-		}
-	} else {
+	if len(ca.customResources) == 0 {
 		logger.Debug("exiting OperandInstall since no ALM_Examples found in CSV")
+		return nil
 	}
 
-	ca.Report(OperandInstallRptOptionFile{FilePath: "operand_install_report.json"}, OperandInstallRptOptionPrint{})
+	csv, _ := ca.client.GetCompletedCsvWithTimeout(ca.namespace, time.Minute)
+
+	if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
+		logger.Debug("exiting OperandInstall since CSV has failed")
+		return nil
+	}
+
+	for _, cr := range ca.customResources {
+		obj := &unstructured.Unstructured{Object: cr}
+		// using dynamic client to create Unstructured objects in k8s
+		client, err := operator.NewDynamicClient()
+		if err != nil {
+			return err
+		}
+
+		// set the namespace of CR to the namespace of the subscription
+		obj.SetNamespace(ca.namespace)
+
+		var crdList apiextensionsv1.CustomResourceDefinitionList
+		err = ca.client.ListCRDs(context.TODO(), &crdList)
+		if err != nil {
+			return err
+		}
+
+		var Resource string
+
+		for _, crd := range crdList.Items {
+			if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
+				Resource = crd.Spec.Names.Plural
+			}
+		}
+
+		gvr := schema.GroupVersionResource{
+			Group:    obj.GroupVersionKind().Group,
+			Version:  obj.GroupVersionKind().Version,
+			Resource: Resource,
+		}
+
+		csv, _ := ca.client.GetCompletedCsvWithTimeout(ca.namespace, time.Minute)
+
+		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
+			logger.Debug("exiting OperandInstall since CSV has failed")
+			return nil
+		}
+
+		// create the resource using the dynamic client and log the error if it occurs in stdout.json
+		unstructuredCR, err := client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+		ca.operands = append(ca.operands, *unstructuredCR)
+	}
+
+	file, err := os.OpenFile("operand_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		file.Close()
+		return err
+	}
+	defer file.Close()
+
+	ca.OperandInstallJsonReport(file)
+	ca.OperandTextReport(os.Stdout)
 
 	return nil
 }

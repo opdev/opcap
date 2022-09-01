@@ -34,31 +34,13 @@ type Client interface {
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
 	GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error)
 	GetOpenShiftVersion() (string, error)
-	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, opts OperatorCheckOptions) error
-	GetSubscriptionData(options OperatorCheckOptions) ([]SubscriptionData, error)
+	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error
+	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
 	ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error
 }
 
 type operatorClient struct {
 	Client runtimeClient.Client
-}
-
-type OperatorCheckOptions struct {
-	// AuditPlan is an ordered list of tests to be run
-	// during an operator audit
-	AuditPlan []string
-	// CatalogSource provides target catalog source
-	// from which to list package manifests
-	CatalogSource string
-	// CatalogSourceNamespace specifies the namespace of the
-	// catalog source to be used
-	CatalogSourceNamespace string
-	// ListPackages operation lists packages in the catalog source
-	ListPackages bool
-	// FilterPackages provides a list of packages to find
-	FilterPackages []string
-	// AllInstallModes is passed to test all install modes
-	AllInstallModes bool
 }
 
 func NewOpCapClient() (Client, error) {
