@@ -6,13 +6,6 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 )
 
-// Auditor interface represents the object running capability audits against operators
-// It has methods to create a workqueue with all the package and audit requirements for a
-// particular audit run
-type Auditor interface {
-	RunAudits() error
-}
-
 // capAuditor implements Auditor
 type CapAuditor struct {
 
