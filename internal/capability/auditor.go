@@ -20,7 +20,7 @@ type CapAuditor struct {
 	// Packages is a subset of packages to be tested from a catalogSource
 	Packages []string
 
-	// Workqueue holds capAudits in a buffered channel in order to execute them
+	// WorkQueue holds capAudits in a buffered channel in order to execute them
 	WorkQueue chan capAudit
 }
 
