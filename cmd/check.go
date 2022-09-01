@@ -57,7 +57,7 @@ Flags:
 
 		if checkflags.ListPackages {
 			headings := "Package Name\tCatalog Source\tCatalog Source Namespace"
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, headings)
 			for _, packageManifest := range packageManifestList.Items {
 				packageInfo := []string{packageManifest.Name, packageManifest.Status.CatalogSource, packageManifest.Status.CatalogSourceNamespace}
