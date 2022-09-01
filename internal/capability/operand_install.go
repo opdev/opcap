@@ -95,9 +95,8 @@ func (ca *capAudit) OperandInstall() error {
 				if err != nil {
 
 					return err
-				} else {
-					ca.operands = append(ca.operands, *unstructuredCR)
 				}
+				ca.operands = append(ca.operands, *unstructuredCR)
 			} else {
 				logger.Debug("exiting OperandInstall since CSV has failed")
 			}
