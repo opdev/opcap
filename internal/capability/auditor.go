@@ -65,7 +65,8 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 func (capAuditor *CapAuditor) RunAudits() error {
 	err := capAuditor.buildWorkQueueByCatalog()
 	if err != nil {
-		logger.Fatalf("Unable to build workqueue err := %s", err.Error())
+		logger.Debugf("Unable to build workqueue err := %s", err.Error())
+		return err
 	}
 
 	// read workqueue for audits
