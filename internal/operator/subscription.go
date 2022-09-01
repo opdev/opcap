@@ -36,26 +36,30 @@ func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceN
 	SubscriptionList := []SubscriptionData{}
 
 	for _, pkgm := range packageManifests.Items {
-		if pkgm.Status.CatalogSource == catalogSource {
-			for _, pkgch := range pkgm.Status.Channels {
-				if pkgch.IsDefaultChannel(pkgm) {
-					for _, installMode := range pkgch.CurrentCSVDesc.InstallModes {
-						if installMode.Supported {
-							s := SubscriptionData{
-								Name:                   strings.Join([]string{pkgch.Name, pkgm.Name, "subscription"}, "-"),
-								Channel:                pkgch.Name,
-								CatalogSource:          catalogSource,
-								CatalogSourceNamespace: catalogSourceNamespace,
-								Package:                pkgm.Name,
-								InstallModeType:        installMode.Type,
-								InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-							}
-
-							SubscriptionList = append(SubscriptionList, s)
-							break
-						}
-					}
+		if pkgm.Status.CatalogSource != catalogSource {
+			continue
+		}
+		for _, pkgch := range pkgm.Status.Channels {
+			if !pkgch.IsDefaultChannel(pkgm) {
+				continue
+			}
+			for _, installMode := range pkgch.CurrentCSVDesc.InstallModes {
+				if !installMode.Supported {
+					continue
 				}
+
+				s := SubscriptionData{
+					Name:                   strings.Join([]string{pkgch.Name, pkgm.Name, "subscription"}, "-"),
+					Channel:                pkgch.Name,
+					CatalogSource:          catalogSource,
+					CatalogSourceNamespace: catalogSourceNamespace,
+					Package:                pkgm.Name,
+					InstallModeType:        installMode.Type,
+					InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+				}
+
+				SubscriptionList = append(SubscriptionList, s)
+				break
 			}
 		}
 	}
@@ -160,7 +164,7 @@ func checkFilteredResults(pkgs []pkgserverv1.PackageManifest, filter []string) e
 			}
 		}
 		joinedMissingPackages := strings.Join(missingPackages, ", ")
-		return fmt.Errorf("Could not find the following requested package filters:\n%#v", joinedMissingPackages)
+		return fmt.Errorf("could not find the following requested package filters:\n%#v", joinedMissingPackages)
 	}
 	return nil
 }
