@@ -1,0 +1,21 @@
+presubmits:
+  - name: echo-test
+    spec:
+      containers:
+      - image: alpine
+        command: ["/bin/date"]
+
+postsubmits:
+  - name: echo-test
+    spec:
+      containers:
+      - image: alpine
+        command: ["/bin/date"]
+
+periodics:
+  - interval: 60m
+    name: echo-test
+    spec:
+      containers:
+      - image: alpine
+        command: ["/bin/date"]
