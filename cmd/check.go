@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"go/types"
 	"os"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/opdev/opcap/internal/capability"
 	"github.com/opdev/opcap/internal/operator"
@@ -54,9 +56,14 @@ Flags:
 		}
 
 		if checkflags.ListPackages {
+			headings := "Package Name\tCatalog Source\tCatalog Source Namespace"
+			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, headings)
 			for _, packageManifest := range packageManifestList.Items {
-				fmt.Println(packageManifest.Name)
+				packageInfo := []string{packageManifest.Name, packageManifest.Status.CatalogSource, packageManifest.Status.CatalogSourceNamespace}
+				fmt.Fprintln(w, strings.Join(packageInfo, "\t"))
 			}
+			w.Flush()
 			os.Exit(0)
 		}
 
