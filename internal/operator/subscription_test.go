@@ -1,7 +1,6 @@
 package operator
 
 import (
-	"context"
 	"testing"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
@@ -53,26 +52,6 @@ var manifests = []pkgserverv1.PackageManifest{
 			CatalogSource: "certified-operators",
 		},
 	},
-}
-
-func BenchmarkGetSubscriptionsData(b *testing.B) {
-	client, err := NewOpCapClient()
-	if err != nil {
-		b.Errorf("error creating client; %v\n", err)
-	}
-	manifests := &pkgserverv1.PackageManifestList{}
-
-	opts := OperatorCheckOptions{
-		FilterPackages: []string{"pachyderm-operator"},
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		if err := client.ListPackageManifests(context.Background(), manifests, opts); err != nil {
-			b.Errorf("error getting package manifests; %v\n", err)
-		}
-	}
 }
 
 func TestFilterPackageManifests(t *testing.T) {
