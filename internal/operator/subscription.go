@@ -36,9 +36,6 @@ func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceN
 	SubscriptionList := []SubscriptionData{}
 
 	for _, pkgm := range packageManifests.Items {
-		if pkgm.Status.CatalogSource != catalogSource {
-			continue
-		}
 		for _, pkgch := range pkgm.Status.Channels {
 			if !pkgch.IsDefaultChannel(pkgm) {
 				continue
