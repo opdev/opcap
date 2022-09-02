@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 )
 

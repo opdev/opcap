@@ -3,8 +3,9 @@ package operator
 import (
 	"context"
 
-	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
+	"github.com/opdev/opcap/internal/logger"
 
+	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
