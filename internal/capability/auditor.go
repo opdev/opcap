@@ -21,6 +21,9 @@ type CapAuditor struct {
 
 	// WorkQueue holds capAudits in a buffered channel in order to execute them
 	WorkQueue chan capAudit
+
+	// AllInstallModes will test all install modes supported by an operator
+	AllInstallModes bool
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
@@ -43,9 +46,25 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 	capAuditor.WorkQueue = make(chan capAudit, len(subscriptions))
 	defer close(capAuditor.WorkQueue)
 
-	// add capAudits to the workqueue
-	for _, subscription := range subscriptions {
+	// packagesToBeAudited is a subset of packages to be tested from a catalogSource
+	var packagesToBeAudited []operator.SubscriptionData
 
+	// get all install modes for all operators in the catalog
+	// and add them to the packagesToBeAudited list
+	if capAuditor.AllInstallModes {
+		packagesToBeAudited = subscriptions
+	} else {
+		packages := make(map[string]bool)
+		for _, subscription := range subscriptions {
+			if _, exists := packages[subscription.Package]; !exists {
+				packages[subscription.Package] = true
+				packagesToBeAudited = append(packagesToBeAudited, subscription)
+			}
+		}
+	}
+
+	// add capAudits to the workqueue
+	for _, subscription := range packagesToBeAudited {
 		capAudit, err := newCapAudit(c, subscription, capAuditor.AuditPlan)
 		if err != nil {
 			logger.Debugf("Couldn't build capAudit for subscription %s", "Err:", err)
