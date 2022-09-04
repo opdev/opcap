@@ -56,96 +56,11 @@ var uploadflags UploadCommandFlags
 
 // uploadCmd is used to upload objects to an S3 compatible backend using the MinIO client
 var uploadCmd = &cobra.Command{
-	Use:   "upload",
-	Short: "Upload audit logs to an S3 compatible storage service.",
-	Long:  `Upload audit logs to an S3 compatible storage service.`,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		opClient, err := operator.NewOpCapClient()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
-			os.Exit(1)
-		}
-
-		osversion, err = opClient.GetOpenShiftVersion()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
-			os.Exit(1)
-		}
-
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Convert uploadflags.UseSSL and Trace to bool
-		usessl, _ := strconv.ParseBool(uploadflags.UseSSL)
-		trace, _ := strconv.ParseBool(uploadflags.Trace)
-
-		// Create a minio client to interact with minio object store
-		minioClient, err := minio.New(uploadflags.Endpoint, &minio.Options{
-			Creds:  credentials.NewStaticV4(uploadflags.AccessKeyID, uploadflags.SecretAccessKey, ""),
-			Secure: usessl,
-		})
-		if err != nil {
-			return err
-		}
-
-		if trace {
-			minioClient.TraceOn(os.Stdout)
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		// check for bucket, create if it does not exist
-		now := time.Now()
-		if uploadflags.Bucket == "" {
-			uploadflags.Bucket = now.Format(YYYYMMDD)
-		}
-		prefix := now.Format(HHMMSS24h)
-
-		if ok, _ := minioClient.BucketExists(ctx, uploadflags.Bucket); !ok {
-			minioClient.MakeBucket(ctx, uploadflags.Bucket, minio.MakeBucketOptions{})
-		}
-
-		var report Report
-
-		report.OpenShiftVersion = osversion
-		report.Catalog = checkflags.CatalogSource
-		report.CatalogNamespace = checkflags.CatalogSourceNamespace
-
-		// for each line is stdout.json which is provided by opcap create an Audit object and add to the rawreport Audits field.
-		f, err := os.Open("operator_install_report.json")
-		if err != nil {
-			return err
-		}
-		s := bufio.NewScanner(f)
-		for s.Scan() {
-			var audit Audit
-			if err := json.Unmarshal(s.Bytes(), &audit); err != nil {
-				return err
-			}
-			if audit.Message == "Succeeded" || audit.Message == "failed" || audit.Message == "timeout" {
-				report.Audits = append(report.Audits, audit)
-			}
-		}
-		data, err := json.Marshal(report)
-		if err != nil {
-			return err
-		}
-
-		if err = ioutil.WriteFile("report.json", data, 0o644); err != nil {
-			return err
-		}
-
-		if uploadflags.Path == "" {
-			uploadflags.Path = osversion + "/" + prefix + "_report.json"
-		}
-		_, err = minioClient.FPutObject(ctx, uploadflags.Bucket, uploadflags.Path, "report.json", minio.PutObjectOptions{ContentType: "application/json"})
-		if err != nil {
-			return err
-		}
-
-		return nil
-	},
+	Use:     "upload",
+	Short:   "Upload audit logs to an S3 compatible storage service.",
+	Long:    `Upload audit logs to an S3 compatible storage service.`,
+	PreRunE: uploadPreRunE,
+	RunE:    uploadRunE,
 }
 
 func init() {
@@ -166,4 +81,93 @@ func init() {
 		"when used s3 backend is expected to be accessible via https; false by default")
 	flags.StringVar(&uploadflags.Trace, "trace", envy.Get("TRACE", "false"),
 		"enable tracing; false by default")
+}
+
+func uploadPreRunE(cmd *cobra.Command, args []string) error {
+	opClient, err := operator.NewOpCapClient()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
+		os.Exit(1)
+	}
+
+	osversion, err = opClient.GetOpenShiftVersion()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
+		os.Exit(1)
+	}
+
+	return nil
+}
+
+func uploadRunE(cmd *cobra.Command, args []string) error {
+	// Convert uploadflags.UseSSL and Trace to bool
+	usessl, _ := strconv.ParseBool(uploadflags.UseSSL)
+	trace, _ := strconv.ParseBool(uploadflags.Trace)
+
+	// Create a minio client to interact with minio object store
+	minioClient, err := minio.New(uploadflags.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(uploadflags.AccessKeyID, uploadflags.SecretAccessKey, ""),
+		Secure: usessl,
+	})
+	if err != nil {
+		return err
+	}
+
+	if trace {
+		minioClient.TraceOn(os.Stdout)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// check for bucket, create if it does not exist
+	now := time.Now()
+	if uploadflags.Bucket == "" {
+		uploadflags.Bucket = now.Format(YYYYMMDD)
+	}
+	prefix := now.Format(HHMMSS24h)
+
+	if ok, _ := minioClient.BucketExists(ctx, uploadflags.Bucket); !ok {
+		minioClient.MakeBucket(ctx, uploadflags.Bucket, minio.MakeBucketOptions{})
+	}
+
+	var report Report
+
+	report.OpenShiftVersion = osversion
+	report.Catalog = checkflags.CatalogSource
+	report.CatalogNamespace = checkflags.CatalogSourceNamespace
+
+	// for each line is stdout.json which is provided by opcap create an Audit object and add to the rawreport Audits field.
+	f, err := os.Open("operator_install_report.json")
+	if err != nil {
+		return err
+	}
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		var audit Audit
+		if err := json.Unmarshal(s.Bytes(), &audit); err != nil {
+			return err
+		}
+		if audit.Message == "Succeeded" || audit.Message == "failed" || audit.Message == "timeout" {
+			report.Audits = append(report.Audits, audit)
+		}
+	}
+	data, err := json.Marshal(report)
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile("report.json", data, 0o644); err != nil {
+		return err
+	}
+
+	if uploadflags.Path == "" {
+		uploadflags.Path = osversion + "/" + prefix + "_report.json"
+	}
+	_, err = minioClient.FPutObject(ctx, uploadflags.Bucket, uploadflags.Path, "report.json", minio.PutObjectOptions{ContentType: "application/json"})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
