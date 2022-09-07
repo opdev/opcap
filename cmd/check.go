@@ -93,8 +93,7 @@ type CheckCommandFlags struct {
 var checkflags CheckCommandFlags
 
 func init() {
-
-	var defaultAuditPlan = []string{"OperatorInstall", "OperatorCleanUp"}
+	defaultAuditPlan := []string{"OperatorInstall", "OperatorCleanUp"}
 
 	rootCmd.AddCommand(checkCmd)
 	flags := checkCmd.Flags()

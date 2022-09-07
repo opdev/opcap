@@ -12,7 +12,6 @@ import (
 
 // CapAudit is an implementation of the Audit interface
 type capAudit struct {
-
 	// client has access to all operator methods
 	client operator.Client
 
@@ -51,7 +50,6 @@ type capAudit struct {
 }
 
 func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (capAudit, error) {
-
 	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
@@ -74,7 +72,6 @@ func newCapAudit(c operator.Client, subscription operator.SubscriptionData, audi
 }
 
 func newOperatorGroupData(name string, targetNamespaces []string) operator.OperatorGroupData {
-
 	return operator.OperatorGroupData{
 		Name:             name,
 		TargetNamespaces: targetNamespaces,
@@ -82,7 +79,6 @@ func newOperatorGroupData(name string, targetNamespaces []string) operator.Opera
 }
 
 func getTargetNamespaces(s operator.SubscriptionData, namespace string) []string {
-
 	targetNs1 := strings.Join([]string{namespace, "targetns1"}, "-")
 	targetNs2 := strings.Join([]string{namespace, "targetns2"}, "-")
 
