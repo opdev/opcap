@@ -12,13 +12,13 @@ import (
 )
 
 // Gets completed CSVs, Succeeded or Failed, with timeout on delay duration
-func (c operatorClient) GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error) {
+func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error) {
 	// csv will catch CSVs from watch events
 	csv := &operatorv1alpha1.ClusterServiceVersion{}
 	var ok bool
 
 	// get watcher for csv
-	watcher, err := c.csvWatcher(namespace)
+	watcher, err := c.csvWatcher(ctx, namespace)
 	if err != nil {
 		return *csv, err
 	}
@@ -67,8 +67,7 @@ func (c operatorClient) GetCompletedCsvWithTimeout(namespace string, delay time.
 }
 
 // waits for CSV on namespace and gets a watcher for CSV events
-func (c operatorClient) csvWatcher(namespace string) (watch.Interface, error) {
-	ctx := context.Background()
+func (c operatorClient) csvWatcher(ctx context.Context, namespace string) (watch.Interface, error) {
 	var watcher watch.Interface
 
 	err := wait.ExponentialBackoff(wait.Backoff{Steps: 3, Duration: 2 * time.Second, Factor: 5, Cap: 90 * time.Second},

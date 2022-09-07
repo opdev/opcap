@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -25,9 +26,9 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	err := rootCmd.ExecuteContext(context.Background())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Opcap tool execution failed: ", err)
+		fmt.Fprintf(rootCmd.ErrOrStderr(), "Opcap tool execution failed: %v\n", err)
 		os.Exit(1)
 	}
 }

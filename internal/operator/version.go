@@ -8,7 +8,7 @@ import (
 
 // GetOpenShiftVersion uses the OpenShift Config clientset to get a ClusterVersion resource which has the
 // version of an OpenShift cluster
-func (c operatorClient) GetOpenShiftVersion() (string, error) {
+func (c operatorClient) GetOpenShiftVersion(ctx context.Context) (string, error) {
 	// version is the OpenShift version of the cluster
 	var version string
 
@@ -18,7 +18,7 @@ func (c operatorClient) GetOpenShiftVersion() (string, error) {
 		return "", err
 	}
 
-	cversions, err := configClient.ClusterVersions().List(context.TODO(), metav1.ListOptions{})
+	cversions, err := configClient.ClusterVersions().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		version = "0.0.0"
 		return version, err

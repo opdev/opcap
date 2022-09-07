@@ -16,9 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func (ca *capAudit) getAlmExamples() error {
-	ctx := context.Background()
-
+func (ca *capAudit) getAlmExamples(ctx context.Context) error {
 	olmClientset, err := operator.NewOlmClientset()
 	if err != nil {
 		return err
@@ -50,17 +48,17 @@ func (ca *capAudit) getAlmExamples() error {
 }
 
 // OperandInstall installs the operand from the ALMExamples in the ca.namespace
-func (ca *capAudit) OperandInstall() error {
+func (ca *capAudit) OperandInstall(ctx context.Context) error {
 	logger.Debugw("installing operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
-	ca.getAlmExamples()
+	ca.getAlmExamples(ctx)
 
 	if len(ca.customResources) == 0 {
 		logger.Debug("exiting OperandInstall since no ALM_Examples found in CSV")
 		return nil
 	}
 
-	csv, _ := ca.client.GetCompletedCsvWithTimeout(ca.namespace, time.Minute)
+	csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
 
 	if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
 		logger.Debug("exiting OperandInstall since CSV has failed")
@@ -79,7 +77,7 @@ func (ca *capAudit) OperandInstall() error {
 		obj.SetNamespace(ca.namespace)
 
 		var crdList apiextensionsv1.CustomResourceDefinitionList
-		err = ca.client.ListCRDs(context.TODO(), &crdList)
+		err = ca.client.ListCRDs(ctx, &crdList)
 		if err != nil {
 			return err
 		}
@@ -98,7 +96,7 @@ func (ca *capAudit) OperandInstall() error {
 			Resource: Resource,
 		}
 
-		csv, _ := ca.client.GetCompletedCsvWithTimeout(ca.namespace, time.Minute)
+		csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
 			logger.Debug("exiting OperandInstall since CSV has failed")
@@ -106,7 +104,7 @@ func (ca *capAudit) OperandInstall() error {
 		}
 
 		// create the resource using the dynamic client and log the error if it occurs in stdout.json
-		unstructuredCR, err := client.Resource(gvr).Namespace(ca.namespace).Create(context.TODO(), obj, v1.CreateOptions{})
+		unstructuredCR, err := client.Resource(gvr).Namespace(ca.namespace).Create(ctx, obj, v1.CreateOptions{})
 		if err != nil {
 			return err
 		}
