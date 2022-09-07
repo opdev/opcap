@@ -47,19 +47,17 @@ func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceN
 				if !installMode.Supported {
 					continue
 				}
-
-				s := SubscriptionData{
-					Name:                   strings.Join([]string{pkgch.Name, pkgm.Name, "subscription"}, "-"),
-					Channel:                pkgch.Name,
-					CatalogSource:          catalogSource,
-					CatalogSourceNamespace: catalogSourceNamespace,
-					Package:                pkgm.Name,
-					InstallModeType:        installMode.Type,
-					InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-				}
-
-				SubscriptionList = append(SubscriptionList, s)
-				break
+				SubscriptionList = append(SubscriptionList,
+					SubscriptionData{
+						Name:                   strings.Join([]string{pkgch.Name, pkgm.Name, strings.ToLower(string(installMode.Type)), "subscription"}, "-"),
+						Channel:                pkgch.Name,
+						CatalogSource:          catalogSource,
+						CatalogSourceNamespace: catalogSourceNamespace,
+						Package:                pkgm.Name,
+						InstallModeType:        installMode.Type,
+						InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+					},
+				)
 			}
 		}
 	}

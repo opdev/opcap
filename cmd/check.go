@@ -60,6 +60,7 @@ and/or users.`,
 			CatalogSource:          checkflags.CatalogSource,
 			CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
 			Packages:               checkflags.Packages,
+			AllInstallModes:        checkflags.AllInstallModes,
 		}
 
 		// run all dynamically built audits in the auditor workqueue
@@ -73,6 +74,7 @@ type CheckCommandFlags struct {
 	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
 	ListPackages           bool     `json:"listPackages"`
 	Packages               []string `json:"packages"`
+	AllInstallModes        bool     `json:"allInstallModes"`
 }
 
 var checkflags CheckCommandFlags
@@ -90,4 +92,5 @@ func init() {
 	flags.StringSliceVar(&checkflags.AuditPlan, "audit-plan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
 	flags.StringSliceVar(&checkflags.Packages, "packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
+	flags.BoolVar(&checkflags.AllInstallModes, "all-installmodes", false, "when set, all install modes supported by an operator will be tested")
 }
