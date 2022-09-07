@@ -1,5 +1,7 @@
 # OpenShift Operator Capabilities - opcap tool
 
+[![Coverage Status](https://coveralls.io/repos/github/opdev/opcap/badge.svg?branch=main)](https://coveralls.io/github/opdev/opcap?branch=main)
+
 opcap is a cli tool that interacts with all operators available on OpenShift's operator hub in a live cluster to assess how smart and cloud native they are. 
 
 ## The Problem opcap Solves
