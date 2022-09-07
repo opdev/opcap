@@ -90,7 +90,7 @@ func uploadPreRunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	osversion, err = opClient.GetOpenShiftVersion()
+	osversion, err = opClient.GetOpenShiftVersion(cmd.Context())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
 		os.Exit(1)
@@ -117,7 +117,7 @@ func uploadRunE(cmd *cobra.Command, args []string) error {
 		minioClient.TraceOn(os.Stdout)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
 	// check for bucket, create if it does not exist

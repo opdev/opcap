@@ -32,10 +32,10 @@ type Client interface {
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
-	GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error)
-	GetOpenShiftVersion() (string, error)
+	GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error)
+	GetOpenShiftVersion(ctx context.Context) (string, error)
 	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error
-	GetSubscriptionData(source string, namespace string, filter []string) ([]SubscriptionData, error)
+	GetSubscriptionData(ctx context.Context, source string, namespace string, filter []string) ([]SubscriptionData, error)
 	ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error
 }
 

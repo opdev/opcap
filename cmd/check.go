@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"go/types"
 	"os"
@@ -31,7 +30,7 @@ and/or users.`,
 			return types.Error{Msg: "Unable to create OpCap client."}
 		}
 		var packageManifestList pkgserverv1.PackageManifestList
-		err = psc.ListPackageManifests(context.TODO(), &packageManifestList, checkflags.CatalogSource, checkflags.Packages)
+		err = psc.ListPackageManifests(cmd.Context(), &packageManifestList, checkflags.CatalogSource, checkflags.Packages)
 		if err != nil {
 			return types.Error{Msg: "Unable to list PackageManifests.\n" + err.Error()}
 		}
@@ -64,7 +63,7 @@ and/or users.`,
 		}
 
 		// run all dynamically built audits in the auditor workqueue
-		capAuditor.RunAudits()
+		capAuditor.RunAudits(cmd.Context())
 	},
 }
 

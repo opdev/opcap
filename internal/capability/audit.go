@@ -1,6 +1,7 @@
 package capability
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -49,11 +50,11 @@ type capAudit struct {
 	operands []unstructured.Unstructured
 }
 
-func newCapAudit(c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (capAudit, error) {
+func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (capAudit, error) {
 	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
-	ocpVersion, err := c.GetOpenShiftVersion()
+	ocpVersion, err := c.GetOpenShiftVersion(ctx)
 	if err != nil {
 		logger.Debugw("Couldn't get OpenShift version for testing", "Err:", err)
 		return capAudit{}, err

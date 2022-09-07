@@ -25,9 +25,9 @@ type SubscriptionData struct {
 // SubscriptionList represent the set of operators
 // to be installed and tested
 // It's a unique list of package/channels for operator install
-func (c operatorClient) GetSubscriptionData(catalogSource string, catalogSourceNamespace string, filter []string) ([]SubscriptionData, error) {
+func (c operatorClient) GetSubscriptionData(ctx context.Context, catalogSource string, catalogSourceNamespace string, filter []string) ([]SubscriptionData, error) {
 	var packageManifests pkgserverv1.PackageManifestList
-	err := c.ListPackageManifests(context.Background(), &packageManifests, catalogSource, filter)
+	err := c.ListPackageManifests(ctx, &packageManifests, catalogSource, filter)
 	if err != nil {
 		logger.Errorf("Error while listing new PackageManifest Objects: %w", err)
 		return nil, err

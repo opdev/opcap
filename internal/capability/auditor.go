@@ -1,6 +1,7 @@
 package capability
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/opdev/opcap/internal/operator"
@@ -27,7 +28,7 @@ type CapAuditor struct {
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
+func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error {
 	c, err := operator.NewOpCapClient()
 	if err != nil {
 		// if it doesn't load the client nothing can be done
@@ -36,7 +37,7 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
-	subscriptions, err := c.GetSubscriptionData(capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.Packages)
+	subscriptions, err := c.GetSubscriptionData(ctx, capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.Packages)
 	if err != nil {
 		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", capAuditor.CatalogSource, err)
 		return err
@@ -65,7 +66,7 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 
 	// add capAudits to the workqueue
 	for _, subscription := range packagesToBeAudited {
-		capAudit, err := newCapAudit(c, subscription, capAuditor.AuditPlan)
+		capAudit, err := newCapAudit(ctx, c, subscription, capAuditor.AuditPlan)
 		if err != nil {
 			logger.Debugf("Couldn't build capAudit for subscription %s", "Err:", err)
 			return err
@@ -79,8 +80,8 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
 }
 
 // RunAudits executes all selected functions in order for a given audit at a time
-func (capAuditor *CapAuditor) RunAudits() error {
-	err := capAuditor.buildWorkQueueByCatalog()
+func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
+	err := capAuditor.buildWorkQueueByCatalog(ctx)
 	if err != nil {
 		logger.Debugf("Unable to build workqueue err := %s", err.Error())
 		return err

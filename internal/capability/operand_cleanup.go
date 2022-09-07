@@ -13,7 +13,7 @@ import (
 )
 
 // OperandCleanup removes the operand from the OCP cluster in the ca.namespace
-func (ca *capAudit) OperandCleanUp() error {
+func (ca *capAudit) OperandCleanUp(ctx context.Context) error {
 	logger.Debugw("cleaningUp operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode",
 		ca.subscription.InstallModeType)
 
@@ -28,7 +28,7 @@ func (ca *capAudit) OperandCleanUp() error {
 			}
 
 			var crdList apiextensionsv1.CustomResourceDefinitionList
-			err = ca.client.ListCRDs(context.TODO(), &crdList)
+			err = ca.client.ListCRDs(ctx, &crdList)
 			if err != nil {
 				return err
 			}
@@ -52,10 +52,10 @@ func (ca *capAudit) OperandCleanUp() error {
 			name := obj.Object["metadata"].(map[string]interface{})["name"].(string)
 
 			// check if CR exists, only then cleanup the operand
-			crInstance, _ := client.Resource(gvr).Namespace(ca.namespace).Get(context.TODO(), name, v1.GetOptions{})
+			crInstance, _ := client.Resource(gvr).Namespace(ca.namespace).Get(ctx, name, v1.GetOptions{})
 			if crInstance != nil {
 				// delete the resource using the dynamic client
-				err = client.Resource(gvr).Namespace(ca.namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
+				err = client.Resource(gvr).Namespace(ca.namespace).Delete(ctx, name, v1.DeleteOptions{})
 				if err != nil {
 					logger.Debugf("failed operandCleanUp: %s package: %s error: %s\n", Resource, ca.subscription.Package, err.Error())
 					return err
