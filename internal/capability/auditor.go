@@ -8,7 +8,6 @@ import (
 
 // capAuditor implements Auditor
 type CapAuditor struct {
-
 	// AuditPlan holds the tests that should be run during an audit
 	AuditPlan []string
 
@@ -26,7 +25,6 @@ type CapAuditor struct {
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
 func (capAuditor *CapAuditor) buildWorkQueueByCatalog() error {
-
 	c, err := operator.NewOpCapClient()
 	if err != nil {
 		// if it doesn't load the client nothing can be done
@@ -71,7 +69,6 @@ func (capAuditor *CapAuditor) RunAudits() error {
 
 	// read workqueue for audits
 	for audit := range capAuditor.WorkQueue {
-
 		// read a particular audit's auditPlan for functions
 		// to be executed against operator
 		for _, function := range audit.auditPlan {
@@ -80,7 +77,6 @@ func (capAuditor *CapAuditor) RunAudits() error {
 			m := reflect.ValueOf(&audit).MethodByName(function)
 			m.Call(nil)
 		}
-
 	}
 	return nil
 }

@@ -11,9 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 )
 
-//Gets completed CSVs, Succeeded or Failed, with timeout on delay duration
+// Gets completed CSVs, Succeeded or Failed, with timeout on delay duration
 func (c operatorClient) GetCompletedCsvWithTimeout(namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error) {
-
 	// csv will catch CSVs from watch events
 	csv := &operatorv1alpha1.ClusterServiceVersion{}
 	var ok bool
@@ -38,10 +37,9 @@ func (c operatorClient) GetCompletedCsvWithTimeout(namespace string, delay time.
 	defer ticker.Stop()
 
 	for range ticker.C {
-
 		select {
 
-		//case catches CSV events
+		// case catches CSV events
 		case event := <-eventChan:
 			csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
 			// fail on wrong objects
@@ -70,7 +68,6 @@ func (c operatorClient) GetCompletedCsvWithTimeout(namespace string, delay time.
 
 // waits for CSV on namespace and gets a watcher for CSV events
 func (c operatorClient) csvWatcher(namespace string) (watch.Interface, error) {
-
 	ctx := context.Background()
 	var watcher watch.Interface
 
@@ -92,7 +89,6 @@ func (c operatorClient) csvWatcher(namespace string) (watch.Interface, error) {
 
 			return true, nil
 		})
-
 	if err != nil {
 		logger.Error("Failed to create csv.")
 		return nil, err

@@ -13,11 +13,13 @@ func init() {
 // Those variables are populated at build time by ldflags.
 // If you're running from a local debugger they will show empty fields.
 
-var Version string
-var GoVersion string
-var BuildTime string
-var GitUser string
-var GitCommit string
+var (
+	Version   string
+	GoVersion string
+	BuildTime string
+	GitUser   string
+	GitCommit string
+)
 
 var versionCmd = &cobra.Command{
 	Use:   "version",

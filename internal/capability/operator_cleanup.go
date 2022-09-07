@@ -7,7 +7,6 @@ import (
 )
 
 func (ca *capAudit) OperatorCleanUp() error {
-
 	// delete subscription
 	if err := ca.client.DeleteSubscription(context.Background(), ca.subscription.Name, ca.namespace); err != nil {
 		logger.Debugf("Error while deleting Subscription: %w", err)

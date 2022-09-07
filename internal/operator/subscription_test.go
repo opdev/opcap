@@ -55,7 +55,7 @@ var manifests = []pkgserverv1.PackageManifest{
 }
 
 func TestFilterPackageManifests(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		catalog string
 		filters []string
 		expect  int

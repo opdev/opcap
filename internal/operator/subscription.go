@@ -113,7 +113,7 @@ func (c operatorClient) ListPackageManifests(ctx context.Context, list *pkgserve
 }
 
 func filterPackageManifests(manifests []pkgserverv1.PackageManifest, catalogSource string, filter []string) []pkgserverv1.PackageManifest {
-	var result = []pkgserverv1.PackageManifest{}
+	result := []pkgserverv1.PackageManifest{}
 
 	if len(filter) == 0 && catalogSource == "" {
 		return manifests

@@ -3,14 +3,12 @@ package capability
 import (
 	"fmt"
 	"io"
-
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func (ca capAudit) OperatorInstallTextReport(w io.Writer) error {
-
 	fmt.Fprint(w, "\n")
 	fmt.Fprint(w, "Operator Install Report:\n")
 	fmt.Fprint(w, "-----------------------------------------\n")
@@ -35,7 +33,6 @@ func (ca capAudit) OperatorInstallTextReport(w io.Writer) error {
 }
 
 func (ca capAudit) OperatorInstallJsonReport(w io.Writer) error {
-
 	if !ca.csvTimeout {
 		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+string(ca.csv.Status.Phase)+"\",\"package\":\""+ca.subscription.Package+
 			"\",\"channel\":\""+ca.subscription.Channel+"\",\"installmode\":\""+string(ca.subscription.InstallModeType)+"\"}\n")
@@ -48,7 +45,6 @@ func (ca capAudit) OperatorInstallJsonReport(w io.Writer) error {
 }
 
 func (ca capAudit) OperandTextReport(w io.Writer) error {
-
 	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
@@ -72,16 +68,13 @@ func (ca capAudit) OperandTextReport(w io.Writer) error {
 }
 
 func (ca capAudit) OperandInstallJsonReport(w io.Writer) error {
-
 	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
 		if len(ca.operands) > 0 {
-
 			fmt.Fprintf(w, "{\"package\":\""+ca.subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
 				"\",\"message\":\""+"created"+"\"}\n")
 		} else {
-
 			fmt.Fprintf(w, "{\"package\":\""+ca.subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
 				"\",\"message\":\""+"failed"+"\"}\n")
 		}

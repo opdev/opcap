@@ -47,7 +47,7 @@ func (ca *capAudit) OperatorInstall() error {
 		}
 	}
 
-	file, err := os.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		file.Close()
 		return err
