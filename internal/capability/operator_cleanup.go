@@ -3,6 +3,7 @@ package capability
 import (
 	"context"
 
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 )
 

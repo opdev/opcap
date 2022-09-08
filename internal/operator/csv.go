@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/opdev/opcap/internal/logger"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -89,7 +90,7 @@ func (c operatorClient) csvWatcher(ctx context.Context, namespace string) (watch
 			return true, nil
 		})
 	if err != nil {
-		logger.Error("Failed to create csv.")
+		logger.Errorf("Failed to create csv.")
 		return nil, err
 	}
 

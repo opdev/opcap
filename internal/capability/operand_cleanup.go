@@ -3,6 +3,7 @@ package capability
 import (
 	"context"
 
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
