@@ -52,7 +52,7 @@ type capAudit struct {
 }
 
 func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (capAudit, error) {
-	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-")}, "-")
+	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-"), strings.ToLower(string(subscription.InstallModeType))}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
 	ocpVersion, err := c.GetOpenShiftVersion(ctx)

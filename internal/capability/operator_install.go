@@ -5,20 +5,19 @@ import (
 	"os"
 
 	"github.com/opdev/opcap/internal/logger"
-	"github.com/opdev/opcap/internal/operator"
 )
 
 func (ca *capAudit) OperatorInstall(ctx context.Context) error {
 	logger.Debugw("installing package", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 	// create operator's own namespace
-	if _, err := operator.CreateNamespace(ctx, ca.namespace); err != nil {
+	if _, err := ca.client.CreateNamespace(ctx, ca.namespace); err != nil {
 		return err
 	}
 
 	// create remaining target namespaces watched by the operator
 	for _, ns := range ca.operatorGroupData.TargetNamespaces {
 		if ns != ca.namespace {
-			operator.CreateNamespace(ctx, ns)
+			ca.client.CreateNamespace(ctx, ns)
 		}
 	}
 
