@@ -92,10 +92,12 @@ func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
 		// read a particular audit's auditPlan for functions
 		// to be executed against operator
 		for _, function := range audit.auditPlan {
-
 			// run function/method by name
+			// NOTE: The signature for this method MUST be:
+			// func Fn(context.Context) error
 			m := reflect.ValueOf(&audit).MethodByName(function)
-			m.Call(nil)
+			in := []reflect.Value{reflect.ValueOf(ctx)}
+			m.Call(in)
 		}
 	}
 	return nil
