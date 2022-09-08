@@ -70,7 +70,7 @@ That will print to the screen a report that can be saved by redirection and also
 In order to test operands, i.e., the CRs or applications with the operators we need to modify the audit plan like below:
 
 ```
-./bin/opcap check --auditplan=OperatorInstall,OperandInstall,OperandCleanUp,OperatorCleanUp
+./bin/opcap check --audit-plan=OperatorInstall,OperandInstall,OperandCleanUp,OperatorCleanUp
 ```
 
 And that's what you should see on the screen. Both operator and operand tested for basic install.

@@ -7,8 +7,8 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Pull Request Process
 
-0. Fork the repo to your personal github workspace, create a new brach for the feature, bug,         documentation etc. you intend to work on and when ready create a Pull Request from that branch to opcap's main branch. Don't forget to add `-s` to your `git commit` to make sure all your commits are properly signed with your user information and emails.
-1. Ensure any install or build dependencies are removed such as files or logs that were not included on the gitignore file. It's often to check the files being staged for commit with `git status` to prevent staging files that are not part of the code. You can discard undesired changes with `git restore`command. Check git context help on that.
+0. Fork the repo to your personal github workspace, create a new branch for the feature, bug, documentation etc. you intend to work on and when ready create a Pull Request from that branch to opcap's main branch. Don't forget to add `-s` to your `git commit` to make sure all your commits are properly signed with your user information and emails.
+1. Ensure any install or build dependencies are removed such as files or logs that were not included on the gitignore file. It's often useful to check the files being staged for commit with `git status` to prevent staging files that are not part of the code. You can discard undesired changes with `git restore` command. Check git context help on that.
 2. Update the README.md with details of changes to the interface, this includes new environment 
    variables, exposed ports, useful file locations and container parameters.
 3. Your pull request will be merged automatically with an APPROVED and a LGTM labels from two other developers. If you don't want to have it merged automatically please put the label `do-not-merge/hold`.
