@@ -1,4 +1,4 @@
-name: CI Test
+name: run-ci-tests
 
 on:
   pull_request:
@@ -7,32 +7,32 @@ on:
     - release-*
 
 jobs:
-  build:
+  runtests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Go
+    - name: setup-go
       uses: actions/setup-go@v2
       with:
         go-version: 1.18
 
-    - name: Tidy
+    - name: tidy
       run: make tidy
 
-    - name: Vet
+    - name: vet
       run: make vet
 
-    - name: Format
+    - name: format
       run: make fmt
 
-    - name: Test
+    - name: test
       run: make cover
 
-    - name: Convert coverage.out to coverage.lcov
+    - name: convert-cov-output
       uses: jandelgado/gcov2lcov-action@v1.0.9
     
-    - name: Coveralls
+    - name: coveralls
       uses: coverallsapp/github-action@v1.1.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
