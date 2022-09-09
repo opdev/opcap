@@ -27,6 +27,7 @@ type UploadCommandFlags struct {
 	SecretAccessKey string `json:"secretaccesskey"`
 	UseSSL          string `json:"usessl"`
 	Trace           string `json:"trace"`
+	LogLevel        string `json:"loglevel"`
 }
 
 type Report struct {
@@ -80,6 +81,8 @@ func init() {
 		"when used s3 backend is expected to be accessible via https; false by default")
 	flags.StringVar(&uploadflags.Trace, "trace", envy.Get("TRACE", "false"),
 		"enable tracing; false by default")
+	flags.StringVar(&uploadflags.LogLevel, "log-level", "",
+		"specifies the one of the log levels in order of decreasing verbosity: debug, error, info, warn")
 }
 
 func uploadPreRunE(cmd *cobra.Command, args []string) error {

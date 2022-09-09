@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,17 +51,19 @@ func (ca *capAudit) getAlmExamples(ctx context.Context) error {
 func (ca *capAudit) OperandInstall(ctx context.Context) error {
 	logger.Debugw("installing operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
-	ca.getAlmExamples(ctx)
+	if err := ca.getAlmExamples(ctx); err != nil {
+		logger.Errorf("Failed getting ALM Examples")
+	}
 
 	if len(ca.customResources) == 0 {
-		logger.Debug("exiting OperandInstall since no ALM_Examples found in CSV")
+		logger.Debugf("exiting OperandInstall since no ALM_Examples found in CSV")
 		return nil
 	}
 
 	csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
 
 	if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
-		logger.Debug("exiting OperandInstall since CSV has failed")
+		logger.Debugf("exiting OperandInstall since CSV has failed")
 		return nil
 	}
 
@@ -99,7 +101,7 @@ func (ca *capAudit) OperandInstall(ctx context.Context) error {
 		csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
-			logger.Debug("exiting OperandInstall since CSV has failed")
+			logger.Debugf("exiting OperandInstall since CSV has failed")
 			return nil
 		}
 
@@ -118,8 +120,15 @@ func (ca *capAudit) OperandInstall(ctx context.Context) error {
 	}
 	defer file.Close()
 
-	ca.OperandInstallJsonReport(file)
-	ca.OperandTextReport(os.Stdout)
+	if err := ca.OperandInstallJsonReport(file); err != nil {
+		logger.Debugf("Error during the OperandInstall Report: %w", err)
+		return err
+	}
+
+	if err := ca.OperandTextReport(os.Stdout); err != nil {
+		logger.Debugf("Error during the OperandInstall Text Report: %w", err)
+		return err
+	}
 
 	return nil
 }

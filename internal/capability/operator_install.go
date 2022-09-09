@@ -4,15 +4,12 @@ import (
 	"context"
 	"os"
 
-	log "github.com/opdev/opcap/internal/logger"
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 )
 
-var logger = log.Sugar
-
 func (ca *capAudit) OperatorInstall(ctx context.Context) error {
 	logger.Debugw("installing package", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
-
 	// create operator's own namespace
 	if _, err := operator.CreateNamespace(ctx, ca.namespace); err != nil {
 		return err
@@ -54,9 +51,15 @@ func (ca *capAudit) OperatorInstall(ctx context.Context) error {
 	}
 	defer file.Close()
 
-	ca.OperatorInstallJsonReport(file)
+	if err := ca.OperatorInstallJsonReport(file); err != nil {
+		logger.Debugf("Error during the OperatorInstall Report: %w", err)
+		return err
+	}
 
-	ca.OperatorInstallTextReport(os.Stdout)
+	if err := ca.OperatorInstallTextReport(os.Stdout); err != nil {
+		logger.Debugf("Error during the OperatorInstall Text Report: %w", err)
+		return err
+	}
 
 	return nil
 }
