@@ -22,7 +22,7 @@ It started as a tool, used by the Operator Enablement and Tooling team at Red Ha
 
 The tool is currently under development but already tests operator installation as well as all the APIs, AKA CRDs, provided with them on initial deployment.
 
-The roadmap includes climbing the maturity level testing up to auto-pilot without limiting the capabilities to this model in order to allow flexible badges that represent more granular features or features that may be important and are not included in the current model like security for example. Check out our general [operator maturity design document](/docs/maturity.md) for more detailed concepts.
+The roadmap includes climbing the maturity level testing up to auto-pilot without limiting the capabilities to this model in order to allow flexible badges that represent more granular features or features that may be important and are not included in the current model like security for example. Check out our general [operator maturity design document](/docs/proposals/maturity.md) for more detailed concepts.
 
 ## Who Is It For?
 

@@ -25,7 +25,7 @@ That field would be replaced by a badge in a piece of metadata that is not acces
 
 # Level 1 - Basic Install
 
-> PICTURE HERE !!!
+<img src='../img/opcap-level1.png'></img>
 
 ## CR Only Interaction to run operands
 
@@ -95,8 +95,7 @@ As suggested by Melvin Hillsman level1 shouldn't be a badge. Others in the team,
 
 # Level 2 - Seamless Upgrades
 
-> PICTURE HERE !!!
-
+<img src='../img/opcap-level2.png'></img>
 ## Operand Upgrade Strategies:
 
 From Operator Framework's definitions:
@@ -148,3 +147,96 @@ How about standardizing the roll back feature for failed upgrades?
 
 
 # Level 3 - Full Lifecycle
+
+<img src='../img/opcap-level3.png'></img>
+
+Proposal: change "Full Lifecycle" for something related to business continuity, disaster recovery and operational resiliency. Full Lifecycle doesn't immediately tell what it is.
+
+ This includes liveness and readiness probes, multiple replicas, rolling deployment strategies, pod disruption budgets, CPU and memory requests and limits.
+
+Operator provides the ability to create backups of the Operand
+Operator is able to restore a backup of an Operand
+
+The two above need to have a standard recipe to do backup/restore tests.
+
+Operator orchestrates complex re-configuration flows on the Operand
+
+I'm not sure this should belong to a level criteria. But there is no border limit between complex and simple here. It seems that any operand reconfiguration would be valid for this case as long as it's related to what we understand as a level 3 capability.
+
+Operator implements fail-over and fail-back of clustered Operands
+Operator supports add/removing members to a clustered Operand
+
+Those two options above belong to a specific category of operand: the clustered ones. If the operand is clustered we need to ask if they have those features. If yes, both should provide a standard way for testing. That would include failover and fail backs with health checks and also including and removing members without disrupting operands operation.
+
+Operator enables application-aware scaling of the Operand
+
+"Application-aware" must be well defined. Is it telemetry based auto scaling, will there be fixed thresholds? Will the operator learn baselines?  
+
+Feature list:
+
+Backups
+Restores
+Reconfiguration coordination
+Clustered operand awareness (quorum, failover, fail back, add, remove clustered members)
+Liveness and Readiness probes on the operand (with well known fail causes declared and listed)
+Rolling deployment strategy
+PodDisruptionBudgets created by the operator for the operand
+Operand's CPU requests and limits and possibly memory too
+
+# Level 4 - Deep Insights
+
+<img src='../img/opcap-level4.png'></img>
+
+
+Health metrics endpoint
+Operator watching operand for creating and exposing alerts
+SOPs (Standard Operating Procedures) or runbooks for each alert
+Critical Alerts created for service down and warning for the others
+Custom kubernetes events
+Application Performance metrics
+RED method applied
+
+## Abnormality Detection
+
+Operator determines deviations from a standard performance profile
+
+This item actually is part of Level 5 in operator framework's documentation. But in my humble opinion, this is actually part of Level 4. Detecting abnormalities is a deep insight. Fixing it automatically is auto-pilot.
+
+I would advocate for a learning operator that can actually state the baseline behavior for all selected metrics. So defining what a baseline is and what statistical method to be used is the first step. With that we can determine profiles. Once those are in place and implemented they can be checked against with current values and determine deviations. Even what is considered a deviation needs discussion.
+
+From the testing perspective the key is: how will those performance profiles/baselines and deviation be exposed by the operator?
+
+# Level 5 - Autopilot
+
+<img src='../img/opcap-level5.png'></img>
+
+The Operator should understand the application-level performance indicators and determine when it’s healthy and performing well. 
+
+How? We need to provide precise step by step on how to achieve this. That will impact all the other levels that also make use of that.
+
+## Auto-scaling
+
+Operator scales the Operand up under increased load based on Operand metric
+Operator scales the Operand down below a certain load based on Operand metric
+
+Testing the feature requires an "overload recipe" that can be run independently. This would need to be standardized as well.
+
+## Auto-Healing
+
+Operator can automatically heal unhealthy Operands based on Operand metrics/alerts/logs
+Operator can prevent the Operand from transitioning into an unhealthy state based on Operand metrics
+
+How can we make this more precise? It seems that some mandatory metrics must be implemented in order to have this feature. Which ones? This will inform heavily the work on level 4.
+
+## Auto-tuning
+
+Operator is able to automatically tune the Operand to a certain workload pattern
+
+What is this "certain workload pattern"? How to read it? And how to know the operator has tuned it? It seems to be like a map element with:
+
+	Metric set with thresholds: (metric, threshold, value) - Metrics or whatever workload pattern means needs to be exposed in a precise and deterministic way.
+	Related configurations: (var:value, var: value etc.) -  If it's part of the level 5 feature the configuration must be exposed for testing.
+
+Operator dynamically shifts workloads onto best suited nodes
+
+What are "best suited nodes"? Wouldn't the Kubernetes scheduler do this job? Are we talking about telemetry aware scheduling? Isn't that already a KEP?
