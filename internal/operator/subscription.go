@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
-
+	"github.com/opdev/opcap/internal/logger"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
