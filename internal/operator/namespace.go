@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/opdev/opcap/internal/logger"
 
@@ -19,8 +20,7 @@ func (o *operatorClient) CreateNamespace(ctx context.Context, name string) (*cor
 		},
 	}
 	if err := o.Client.Create(ctx, &nsSpec, &runtimeClient.CreateOptions{}); err != nil {
-		logger.Errorf("error while creating Namespace %s: %s", name, err.Error())
-		return nil, err
+		return nil, fmt.Errorf("could not create Namespace: %s: %v", name, err)
 	}
 	logger.Debugf("Namespace Created: %s", name)
 	return &nsSpec, nil
@@ -35,8 +35,7 @@ func (o *operatorClient) DeleteNamespace(ctx context.Context, name string) error
 		},
 	}
 	if err := o.Client.Delete(ctx, &nsSpec, &runtimeClient.DeleteOptions{}); err != nil {
-		logger.Errorf("error while deleting Namespace %s: %s", name, err.Error())
-		return err
+		return fmt.Errorf("could not delete namespace: %s: %v", name, err)
 	}
 	logger.Debugf("Namespace Deleted: %s", name)
 	return nil

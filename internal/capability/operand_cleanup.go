@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
@@ -58,8 +59,7 @@ func (ca *capAudit) OperandCleanUp(ctx context.Context) error {
 				// delete the resource using the dynamic client
 				err = client.Resource(gvr).Namespace(ca.namespace).Delete(ctx, name, v1.DeleteOptions{})
 				if err != nil {
-					logger.Debugf("failed operandCleanUp: %s package: %s error: %s\n", Resource, ca.subscription.Package, err.Error())
-					return err
+					return fmt.Errorf("failed operatorCleanUp: %s: package: %s: %v", Resource, ca.subscription.Package, err)
 				}
 			}
 		}

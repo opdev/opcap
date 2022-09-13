@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/opdev/opcap/internal/logger"
 
@@ -27,8 +28,7 @@ func (o *operatorClient) CreateOperatorGroup(ctx context.Context, data OperatorG
 	}
 	err := o.Client.Create(ctx, operatorGroup)
 	if err != nil {
-		logger.Errorf("error while creating operatorgroup %s: %w", data.Name, err)
-		return nil, err
+		return nil, fmt.Errorf("could not create operatorgroup: %s: %v", data.Name, err)
 	}
 
 	logger.Debugw("operatorgroup created", "operatorgroup", data.Name, "namespace", namespace)
@@ -45,8 +45,7 @@ func (o *operatorClient) DeleteOperatorGroup(ctx context.Context, name string, n
 	}
 	err := o.Client.Delete(ctx, &operatorGroup)
 	if err != nil {
-		logger.Errorf("error while deleting OperatorGroup %s in namespace %s: %w", name, namespace, err)
-		return err
+		return fmt.Errorf("could not delete operatorgroup: %s: namespace: %s: %v", name, namespace, err)
 	}
 
 	logger.Debugw("operatorgroup deleted", "operatorgroup", name, "namespace", namespace)

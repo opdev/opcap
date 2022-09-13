@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 )
 
@@ -35,14 +34,13 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error
 	if err != nil {
 		// if it doesn't load the client nothing can be done
 		// return the error
-		return fmt.Errorf("error while creating OpCapClient: %v", err)
+		return fmt.Errorf("could not create OpCapClient: %v", err)
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog
 	subscriptions, err := c.GetSubscriptionData(ctx, capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.Packages)
 	if err != nil {
-		logger.Errorf("Error while getting bundles from CatalogSource %s: %w", capAuditor.CatalogSource, err)
-		return err
+		return fmt.Errorf("could not get bundles from CatalogSource: %s: %v", capAuditor.CatalogSource, err)
 	}
 
 	// build workqueue as buffered channel based subscriptionData list size
@@ -70,12 +68,11 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error
 	for _, subscription := range packagesToBeAudited {
 		capAudit, err := newCapAudit(ctx, c, subscription, capAuditor.AuditPlan)
 		if err != nil {
-			logger.Debugf("Couldn't build capAudit for subscription %s", "Err:", err)
-			return err
+			return fmt.Errorf("could not build configuration for subscription: %s: %v", subscription.Name, err)
 		}
 
 		// load workqueue with capAudit
-		capAuditor.WorkQueue <- capAudit
+		capAuditor.WorkQueue <- *capAudit
 	}
 
 	return nil
@@ -85,8 +82,7 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error
 func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
 	err := capAuditor.buildWorkQueueByCatalog(ctx)
 	if err != nil {
-		logger.Debugf("Unable to build workqueue err := %s", err.Error())
-		return err
+		return fmt.Errorf("unable to build workqueue: %v", err)
 	}
 
 	// read workqueue for audits

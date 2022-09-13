@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/opdev/opcap/internal/logger"
@@ -26,8 +27,7 @@ func (ca *capAudit) OperatorInstall(ctx context.Context) error {
 
 	// create subscription for operator package/channel
 	if _, err := ca.client.CreateSubscription(ctx, ca.subscription, ca.namespace); err != nil {
-		logger.Debugf("Error creating subscriptions: %w", err)
-		return err
+		return fmt.Errorf("could not create subscription: %v", err)
 	}
 
 	// Get a Succeeded or Failed CSV with one minute timeout
@@ -51,13 +51,11 @@ func (ca *capAudit) OperatorInstall(ctx context.Context) error {
 	defer file.Close()
 
 	if err := ca.OperatorInstallJsonReport(file); err != nil {
-		logger.Debugf("Error during the OperatorInstall Report: %w", err)
-		return err
+		return fmt.Errorf("could not generate OperatorInstall JSON report: %v", err)
 	}
 
 	if err := ca.OperatorInstallTextReport(os.Stdout); err != nil {
-		logger.Debugf("Error during the OperatorInstall Text Report: %w", err)
-		return err
+		return fmt.Errorf("could not generate OperatorInstall Text report: %v", err)
 	}
 
 	return nil
