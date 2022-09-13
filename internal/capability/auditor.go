@@ -3,8 +3,8 @@ package capability
 import (
 	"context"
 	"fmt"
-	"reflect"
 
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 )
 
@@ -93,9 +93,21 @@ func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
 			// run function/method by name
 			// NOTE: The signature for this method MUST be:
 			// func Fn(context.Context) error
-			m := reflect.ValueOf(&audit).MethodByName(function)
-			in := []reflect.Value{reflect.ValueOf(ctx)}
-			m.Call(in)
+			auditFn := newAudit(ctx, function,
+				withClient(audit.client),
+				withNamespace(audit.namespace),
+				withOperatorGroupData(&audit.operatorGroupData),
+				withSubscription(&audit.subscription),
+				withTimeout(int(audit.csvWaitTime)),
+			)
+			if auditFn == nil {
+				logger.Errorf("invalid audit plan specified: %s", function)
+				continue
+			}
+			err := auditFn(ctx)
+			if err != nil {
+				logger.Errorf("error in audit: %v", err)
+			}
 		}
 	}
 	return nil

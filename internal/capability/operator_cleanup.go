@@ -3,29 +3,47 @@ package capability
 import (
 	"context"
 	"fmt"
+
+	"github.com/opdev/opcap/internal/logger"
 )
 
-func (ca *capAudit) OperatorCleanUp(ctx context.Context) error {
-	// delete subscription
-	if err := ca.client.DeleteSubscription(ctx, ca.subscription.Name, ca.namespace); err != nil {
-		return fmt.Errorf("could not delete subscription: %s: %v", ca.subscription.Name, err)
-	}
-
-	// delete operator group
-	if err := ca.client.DeleteOperatorGroup(ctx, ca.operatorGroupData.Name, ca.namespace); err != nil {
-		return fmt.Errorf("could not delete OperatorGroup: %s: %v", ca.operatorGroupData.Name, err)
-	}
-
-	// delete target namespaces
-	for _, ns := range ca.operatorGroupData.TargetNamespaces {
-		if err := ca.client.DeleteNamespace(ctx, ns); err != nil {
-			return fmt.Errorf("could not delete target namespace: %s: %v", ns, err)
+func operatorCleanUp(ctx context.Context, opts ...auditOption) auditFn {
+	var options options
+	for _, opt := range opts {
+		err := opt(&options)
+		if err != nil {
+			return func(_ context.Context) error {
+				return fmt.Errorf("option failed: %v", err)
+			}
 		}
 	}
 
-	// delete operator's own namespace
-	if err := ca.client.DeleteNamespace(ctx, ca.namespace); err != nil {
-		return fmt.Errorf("could not delete opeator's own namespace: %s: %v", ca.namespace, err)
+	return func(ctx context.Context) error {
+		// delete subscription
+		if err := options.client.DeleteSubscription(ctx, options.Subscription.Name, options.namespace); err != nil {
+			logger.Debugf("Error while deleting Subscription: %w", err)
+			return err
+		}
+
+		// delete operator group
+		if err := options.client.DeleteOperatorGroup(ctx, options.operatorGroupData.Name, options.namespace); err != nil {
+			logger.Debugf("Error while deleting OperatorGroup: %w", err)
+			return err
+		}
+
+		// delete target namespaces
+		for _, ns := range options.operatorGroupData.TargetNamespaces {
+			if err := options.client.DeleteNamespace(ctx, ns); err != nil {
+				logger.Debugf("Error deleting target namespace %s", ns)
+				return err
+			}
+		}
+
+		// delete operator's own namespace
+		if err := options.client.DeleteNamespace(ctx, options.namespace); err != nil {
+			logger.Debugf("Error deleting operator's own namespace %s", options.namespace)
+			return err
+		}
+		return nil
 	}
-	return nil
 }

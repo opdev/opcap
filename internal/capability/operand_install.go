@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func (ca *capAudit) getAlmExamples(ctx context.Context) error {
+func extractAlmExamples(ctx context.Context, options *options) error {
 	olmClientset, err := operator.NewOlmClientset()
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func (ca *capAudit) getAlmExamples(ctx context.Context) error {
 	opts := v1.ListOptions{}
 
 	// gets the list of CSVs present in a particular namespace
-	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(ca.namespace).List(ctx, opts)
+	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(options.namespace).List(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -43,88 +43,103 @@ func (ca *capAudit) getAlmExamples(ctx context.Context) error {
 		return err
 	}
 
-	ca.customResources = almList
+	options.customResources = almList
 
 	return nil
 }
 
 // OperandInstall installs the operand from the ALMExamples in the ca.namespace
-func (ca *capAudit) OperandInstall(ctx context.Context) error {
-	logger.Debugw("installing operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
-
-	if err := ca.getAlmExamples(ctx); err != nil {
-		return fmt.Errorf("could not get ALM examples: %v", err)
-	}
-
-	if len(ca.customResources) == 0 {
-		return fmt.Errorf("exiting OperandInstall since no ALM examples found in CSV")
-	}
-
-	csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
-
-	if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
-		return fmt.Errorf("exiting OperandInstall since CSV install has failed")
-	}
-
-	for _, cr := range ca.customResources {
-		obj := &unstructured.Unstructured{Object: cr}
-		// using dynamic client to create Unstructured objects in k8s
-		client, err := operator.NewDynamicClient()
+func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
+	var options options
+	for _, opt := range opts {
+		err := opt(&options)
 		if err != nil {
-			return err
-		}
-
-		// set the namespace of CR to the namespace of the subscription
-		obj.SetNamespace(ca.namespace)
-
-		var crdList apiextensionsv1.CustomResourceDefinitionList
-		err = ca.client.ListCRDs(ctx, &crdList)
-		if err != nil {
-			return err
-		}
-
-		var Resource string
-
-		for _, crd := range crdList.Items {
-			if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
-				Resource = crd.Spec.Names.Plural
+			return func(_ context.Context) error {
+				return fmt.Errorf("option failed: %v", err)
 			}
 		}
+	}
 
-		gvr := schema.GroupVersionResource{
-			Group:    obj.GroupVersionKind().Group,
-			Version:  obj.GroupVersionKind().Version,
-			Resource: Resource,
+	return func(ctx context.Context) error {
+		logger.Debugw("installing operand for operator", "package", options.Subscription.Package, "channel", options.Subscription.Channel, "installmode", options.Subscription.InstallModeType)
+
+		if err := extractAlmExamples(ctx, &options); err != nil {
+			logger.Errorf("Failed getting ALM Examples")
 		}
 
-		csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
+		if len(options.customResources) == 0 {
+			logger.Debugf("exiting OperandInstall since no ALM_Examples found in CSV")
+			return nil
+		}
+
+		csv, _ := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute)
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
 			return fmt.Errorf("exiting OperandInstall since CSV install has failed")
 		}
 
-		// create the resource using the dynamic client and log the error if it occurs in stdout.json
-		unstructuredCR, err := client.Resource(gvr).Namespace(ca.namespace).Create(ctx, obj, v1.CreateOptions{})
+		for _, cr := range options.customResources {
+			obj := &unstructured.Unstructured{Object: cr}
+			// using dynamic client to create Unstructured objects in k8s
+			client, err := operator.NewDynamicClient()
+			if err != nil {
+				return err
+			}
+
+			// set the namespace of CR to the namespace of the subscription
+			obj.SetNamespace(options.namespace)
+
+			var crdList apiextensionsv1.CustomResourceDefinitionList
+			err = options.client.ListCRDs(ctx, &crdList)
+			if err != nil {
+				return err
+			}
+
+			var Resource string
+
+			for _, crd := range crdList.Items {
+				if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
+					Resource = crd.Spec.Names.Plural
+				}
+			}
+
+			gvr := schema.GroupVersionResource{
+				Group:    obj.GroupVersionKind().Group,
+				Version:  obj.GroupVersionKind().Version,
+				Resource: Resource,
+			}
+
+			csv, _ := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute)
+
+			if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
+				logger.Debugf("exiting OperandInstall since CSV has failed")
+				return nil
+			}
+
+			// create the resource using the dynamic client and log the error if it occurs in stdout.json
+			unstructuredCR, err := client.Resource(gvr).Namespace(options.namespace).Create(ctx, obj, v1.CreateOptions{})
+			if err != nil {
+				return err
+			}
+			options.operands = append(options.operands, *unstructuredCR)
+		}
+
+		file, err := os.OpenFile("operand_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}
-		ca.operands = append(ca.operands, *unstructuredCR)
-	}
+		defer file.Close()
 
-	file, err := os.OpenFile("operand_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		file.Close()
-		return err
-	}
-	defer file.Close()
+		if err := operandInstallJsonReport(file, options); err != nil {
+			logger.Debugf("Error during the OperandInstall Report: %w", err)
+			return err
+		}
 
-	if err := ca.OperandInstallJsonReport(file); err != nil {
-		return fmt.Errorf("could not generate OperandInstall JSON report: %v", err)
-	}
+		if err := operandTextReport(os.Stdout, options); err != nil {
+			logger.Debugf("Error during the OperandInstall Text Report: %w", err)
+			return err
+		}
 
-	if err := ca.OperandTextReport(os.Stdout); err != nil {
-		return fmt.Errorf("could not generate OperandInstall Text report: %v", err)
+		return nil
 	}
-
-	return nil
 }
