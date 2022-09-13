@@ -26,6 +26,8 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	rootCmd.AddCommand(versionCmd())
+
 	err := rootCmd.ExecuteContext(context.Background())
 	if err != nil {
 		fmt.Fprintf(rootCmd.ErrOrStderr(), "Opcap tool execution failed: %v\n", err)
