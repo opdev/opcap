@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/opdev/opcap/internal/logger"
@@ -33,8 +34,8 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error
 	c, err := operator.NewOpCapClient()
 	if err != nil {
 		// if it doesn't load the client nothing can be done
-		// log and panic
-		logger.Panic("Error while creating OpCapClient: %w", err)
+		// return the error
+		return fmt.Errorf("error while creating OpCapClient: %v", err)
 	}
 
 	// Getting subscription data form the package manifests available in the selected catalog

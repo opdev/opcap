@@ -55,17 +55,16 @@ const (
 var uploadflags UploadCommandFlags
 
 // uploadCmd is used to upload objects to an S3 compatible backend using the MinIO client
-var uploadCmd = &cobra.Command{
-	Use:     "upload",
-	Short:   "Upload audit logs to an S3 compatible storage service.",
-	Long:    `Upload audit logs to an S3 compatible storage service.`,
-	PreRunE: uploadPreRunE,
-	RunE:    uploadRunE,
-}
+func uploadCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "upload",
+		Short:   "Upload audit logs to an S3 compatible storage service.",
+		Long:    `Upload audit logs to an S3 compatible storage service.`,
+		PreRunE: uploadPreRunE,
+		RunE:    uploadRunE,
+	}
 
-func init() {
-	rootCmd.AddCommand(uploadCmd)
-	flags := uploadCmd.Flags()
+	flags := cmd.Flags()
 
 	flags.StringVar(&uploadflags.Bucket, "bucket", envy.Get("S3_BUCKET", ""),
 		"s3 bucket where result will be stored")
@@ -81,21 +80,20 @@ func init() {
 		"when used s3 backend is expected to be accessible via https; false by default")
 	flags.StringVar(&uploadflags.Trace, "trace", envy.Get("TRACE", "false"),
 		"enable tracing; false by default")
-	flags.StringVar(&uploadflags.LogLevel, "log-level", "",
-		"specifies the one of the log levels in order of decreasing verbosity: debug, error, info, warn")
+
+	return cmd
 }
 
 func uploadPreRunE(cmd *cobra.Command, args []string) error {
+	cmd.SilenceUsage = true
 	opClient, err := operator.NewOpCapClient()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to initialize OpenShift client: ", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to initialize OpenShift client: %v", err)
 	}
 
 	osversion, err = opClient.GetOpenShiftVersion(cmd.Context())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to connect to OpenShift: ", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to connect to OpenShift: %v", err)
 	}
 
 	return nil
