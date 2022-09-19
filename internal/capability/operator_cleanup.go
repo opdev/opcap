@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/opdev/opcap/internal/logger"
-	"github.com/opdev/opcap/internal/operator"
 )
 
 func (ca *capAudit) OperatorCleanUp(ctx context.Context) error {
@@ -22,14 +21,14 @@ func (ca *capAudit) OperatorCleanUp(ctx context.Context) error {
 
 	// delete target namespaces
 	for _, ns := range ca.operatorGroupData.TargetNamespaces {
-		if err := operator.DeleteNamespace(ctx, ns); err != nil {
+		if err := ca.client.DeleteNamespace(ctx, ns); err != nil {
 			logger.Debugf("Error deleting target namespace %s", ns)
 			return err
 		}
 	}
 
 	// delete operator's own namespace
-	if err := operator.DeleteNamespace(ctx, ca.namespace); err != nil {
+	if err := ca.client.DeleteNamespace(ctx, ca.namespace); err != nil {
 		logger.Debugf("Error deleting operator's own namespace %s", ca.namespace)
 		return err
 	}

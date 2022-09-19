@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/opdev/opcap/internal/logger"
@@ -19,12 +20,13 @@ import (
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Client interface {
+	CreateNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
+	DeleteNamespace(ctx context.Context, name string) error
 	CreateOperatorGroup(ctx context.Context, data OperatorGroupData, namespace string) (*operatorv1.OperatorGroup, error)
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
@@ -56,6 +58,10 @@ func NewOpCapClient() (Client, error) {
 	}
 
 	if err := apiextensionsv1.AddToScheme(scheme); err != nil {
+		return nil, err
+	}
+
+	if err := corev1.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
@@ -113,16 +119,6 @@ func NewDynamicClient() (dynamic.Interface, error) {
 	}
 
 	return dynamic.NewForConfig(kubeconfig)
-}
-
-// NewKubernetesClient returns a kubernetes clientset
-func NewKubernetesClient() (*kubernetes.Clientset, error) {
-	kubeconfig, err := kubeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("could not get kubeconfig: %v", err)
-	}
-
-	return kubernetes.NewForConfig(kubeconfig)
 }
 
 func NewConfigClient() (*configv1.ConfigV1Client, error) {
