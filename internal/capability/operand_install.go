@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -52,19 +53,17 @@ func (ca *capAudit) OperandInstall(ctx context.Context) error {
 	logger.Debugw("installing operand for operator", "package", ca.subscription.Package, "channel", ca.subscription.Channel, "installmode", ca.subscription.InstallModeType)
 
 	if err := ca.getAlmExamples(ctx); err != nil {
-		logger.Errorf("Failed getting ALM Examples")
+		return fmt.Errorf("could not get ALM examples: %v", err)
 	}
 
 	if len(ca.customResources) == 0 {
-		logger.Debugf("exiting OperandInstall since no ALM_Examples found in CSV")
-		return nil
+		return fmt.Errorf("exiting OperandInstall since no ALM examples found in CSV")
 	}
 
 	csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
 
 	if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
-		logger.Debugf("exiting OperandInstall since CSV has failed")
-		return nil
+		return fmt.Errorf("exiting OperandInstall since CSV install has failed")
 	}
 
 	for _, cr := range ca.customResources {
@@ -101,8 +100,7 @@ func (ca *capAudit) OperandInstall(ctx context.Context) error {
 		csv, _ := ca.client.GetCompletedCsvWithTimeout(ctx, ca.namespace, time.Minute)
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
-			logger.Debugf("exiting OperandInstall since CSV has failed")
-			return nil
+			return fmt.Errorf("exiting OperandInstall since CSV install has failed")
 		}
 
 		// create the resource using the dynamic client and log the error if it occurs in stdout.json
@@ -121,13 +119,11 @@ func (ca *capAudit) OperandInstall(ctx context.Context) error {
 	defer file.Close()
 
 	if err := ca.OperandInstallJsonReport(file); err != nil {
-		logger.Debugf("Error during the OperandInstall Report: %w", err)
-		return err
+		return fmt.Errorf("could not generate OperandInstall JSON report: %v", err)
 	}
 
 	if err := ca.OperandTextReport(os.Stdout); err != nil {
-		logger.Debugf("Error during the OperandInstall Text Report: %w", err)
-		return err
+		return fmt.Errorf("could not generate OperandInstall Text report: %v", err)
 	}
 
 	return nil

@@ -9,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/opdev/opcap/internal/logger"
 	configv1 "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -72,8 +71,7 @@ func NewOpCapClient() (Client, error) {
 
 	client, err := runtimeClient.New(kubeconfig, runtimeClient.Options{Scheme: scheme})
 	if err != nil {
-		logger.Errorf("could not get subscription client")
-		return nil, err
+		return nil, fmt.Errorf("could not get subscription client: %v", err)
 	}
 
 	var operatorClient Client = &operatorClient{

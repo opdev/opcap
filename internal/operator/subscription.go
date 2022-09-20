@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/opdev/opcap/internal/logger"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -29,8 +28,7 @@ func (c operatorClient) GetSubscriptionData(ctx context.Context, catalogSource s
 	var packageManifests pkgserverv1.PackageManifestList
 	err := c.ListPackageManifests(ctx, &packageManifests, catalogSource, filter)
 	if err != nil {
-		logger.Errorf("Error while listing new PackageManifest Objects: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("could not list PackageManifest objects: %v", err)
 	}
 
 	SubscriptionList := []SubscriptionData{}

@@ -2,10 +2,10 @@ package capability
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -51,17 +51,16 @@ type capAudit struct {
 	operands []unstructured.Unstructured
 }
 
-func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (capAudit, error) {
+func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (*capAudit, error) {
 	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-"), strings.ToLower(string(subscription.InstallModeType))}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
 	ocpVersion, err := c.GetOpenShiftVersion(ctx)
 	if err != nil {
-		logger.Debugw("Couldn't get OpenShift version for testing", "Err:", err)
-		return capAudit{}, err
+		return nil, fmt.Errorf("could not get OpenShift version for testing: %v", err)
 	}
 
-	return capAudit{
+	return &capAudit{
 		client:            c,
 		ocpVersion:        ocpVersion,
 		namespace:         ns,

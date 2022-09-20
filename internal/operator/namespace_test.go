@@ -29,7 +29,7 @@ var _ = Describe("Namespace", func() {
 			By("creating it again should error", func() {
 				ns, err := operatorClient.CreateNamespace(context.TODO(), "testns")
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError("namespaces \"testns\" already exists"))
+				Expect(err).To(MatchError("could not create Namespace: testns: namespaces \"testns\" already exists"))
 				Expect(ns).To(BeNil())
 			})
 			By("deleting that Namespace", func() {
