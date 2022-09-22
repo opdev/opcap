@@ -9,6 +9,7 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
@@ -97,4 +98,97 @@ func getTargetNamespaces(s operator.SubscriptionData, namespace string) []string
 		return []string{targetNs1, targetNs2}
 	}
 	return []string{}
+}
+
+// auditOption is the function type for passing an option to an audit
+type auditOption func(options *options) error
+
+// WithSubscription adds a subscription object to the audit
+func withSubscription(subscription *operator.SubscriptionData) auditOption {
+	return func(options *options) error {
+		if subscription == nil {
+			return fmt.Errorf("subscription data cannot be nil")
+		}
+		options.Subscription = subscription
+		return nil
+	}
+}
+
+// WithOperatorGroupData adds an operatorgroupdata objec to the audit
+func withOperatorGroupData(operatorGroupData *operator.OperatorGroupData) auditOption {
+	return func(options *options) error {
+		if operatorGroupData == nil {
+			return fmt.Errorf("operatorgroupdata cannot be nil")
+		}
+		options.operatorGroupData = operatorGroupData
+		return nil
+	}
+}
+
+// WithNamespace adds a namespace for the audit
+func withNamespace(namespace string) auditOption {
+	return func(options *options) error {
+		if namespace == "" {
+			return fmt.Errorf("namespace cannot be empty")
+		}
+		options.namespace = namespace
+		return nil
+	}
+}
+
+// WithClient adds a client to the audit
+func withClient(client operator.Client) auditOption {
+	return func(options *options) error {
+		if client == nil {
+			return fmt.Errorf("client cannot be nil")
+		}
+		options.client = client
+		return nil
+	}
+}
+
+// WithTimeout adds a timeout duration to the audit
+func withTimeout(csvWaitTime int) auditOption {
+	return func(options *options) error {
+		options.csvWaitTime = time.Duration(csvWaitTime)
+		return nil
+	}
+}
+
+// WithOcpVersion adds the OCP version to the audit
+func withOcpVersion(ocpVersion string) auditOption {
+	return func(options *options) error {
+		options.OcpVersion = ocpVersion
+		return nil
+	}
+}
+
+type options struct {
+	Subscription      *operator.SubscriptionData
+	operatorGroupData *operator.OperatorGroupData
+	namespace         string
+	client            operator.Client
+	CsvTimeout        bool
+	csvWaitTime       time.Duration
+	Csv               v1alpha1.ClusterServiceVersion
+	OcpVersion        string
+	customResources   []map[string]interface{}
+	operands          []unstructured.Unstructured
+}
+
+type auditFn func(context.Context) error
+
+// New returns a function corresponding to a passed in audit plan
+func newAudit(ctx context.Context, auditType string, opts ...auditOption) auditFn {
+	switch strings.ToLower(auditType) {
+	case "operatorinstall":
+		return operatorInstall(ctx, opts...)
+	case "operatorcleanup":
+		return operatorCleanUp(ctx, opts...)
+	case "operandinstall":
+		return operandInstall(ctx, opts...)
+	case "operandcleanup":
+		return operandCleanUp(ctx, opts...)
+	}
+	return nil
 }

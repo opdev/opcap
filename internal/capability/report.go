@@ -8,43 +8,43 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func (ca capAudit) OperatorInstallTextReport(w io.Writer) error {
+func operatorInstallTextReport(w io.Writer, ca options) error {
 	fmt.Fprint(w, "\n")
 	fmt.Fprint(w, "Operator Install Report:\n")
 	fmt.Fprint(w, "-----------------------------------------\n")
 	fmt.Fprintf(w, "Report Date: %s\n", time.Now())
-	fmt.Fprintf(w, "OpenShift Version: %s\n", ca.ocpVersion)
-	fmt.Fprintf(w, "Package Name: %s\n", ca.subscription.Package)
-	fmt.Fprintf(w, "Channel: %s\n", ca.subscription.Channel)
-	fmt.Fprintf(w, "Catalog Source: %s\n", ca.subscription.CatalogSource)
-	fmt.Fprintf(w, "Install Mode: %s\n", ca.subscription.InstallModeType)
+	fmt.Fprintf(w, "OpenShift Version: %s\n", ca.OcpVersion)
+	fmt.Fprintf(w, "Package Name: %s\n", ca.Subscription.Package)
+	fmt.Fprintf(w, "Channel: %s\n", ca.Subscription.Channel)
+	fmt.Fprintf(w, "Catalog Source: %s\n", ca.Subscription.CatalogSource)
+	fmt.Fprintf(w, "Install Mode: %s\n", ca.Subscription.InstallModeType)
 
-	if !ca.csvTimeout {
-		fmt.Fprintf(w, "Result: %s\n", ca.csv.Status.Phase)
+	if !ca.CsvTimeout {
+		fmt.Fprintf(w, "Result: %s\n", ca.Csv.Status.Phase)
 	} else {
 		fmt.Fprint(w, "Result: timeout\n")
 	}
 
-	fmt.Fprintf(w, "Message: %s\n", ca.csv.Status.Message)
-	fmt.Fprintf(w, "Reason: %s\n", ca.csv.Status.Reason)
+	fmt.Fprintf(w, "Message: %s\n", ca.Csv.Status.Message)
+	fmt.Fprintf(w, "Reason: %s\n", ca.Csv.Status.Reason)
 	fmt.Fprint(w, "-----------------------------------------\n")
 
 	return nil
 }
 
-func (ca capAudit) OperatorInstallJsonReport(w io.Writer) error {
-	if !ca.csvTimeout {
-		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+string(ca.csv.Status.Phase)+"\",\"package\":\""+ca.subscription.Package+
-			"\",\"channel\":\""+ca.subscription.Channel+"\",\"installmode\":\""+string(ca.subscription.InstallModeType)+"\"}\n")
+func operatorInstallJsonReport(w io.Writer, ca options) error {
+	if !ca.CsvTimeout {
+		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+string(ca.Csv.Status.Phase)+"\",\"package\":\""+ca.Subscription.Package+
+			"\",\"channel\":\""+ca.Subscription.Channel+"\",\"installmode\":\""+string(ca.Subscription.InstallModeType)+"\"}\n")
 	} else {
-		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+"timeout"+"\",\"package\":\""+ca.subscription.Package+"\",\"channel\":\""+
-			ca.subscription.Channel+"\",\"installmode\":\""+string(ca.subscription.InstallModeType)+"\"}\n")
+		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+"timeout"+"\",\"package\":\""+ca.Subscription.Package+"\",\"channel\":\""+
+			ca.Subscription.Channel+"\",\"installmode\":\""+string(ca.Subscription.InstallModeType)+"\"}\n")
 	}
 
 	return nil
 }
 
-func (ca capAudit) OperandTextReport(w io.Writer) error {
+func operandTextReport(w io.Writer, ca options) error {
 	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
@@ -52,8 +52,8 @@ func (ca capAudit) OperandTextReport(w io.Writer) error {
 		fmt.Fprintf(w, "Operand Install Report:\n")
 		fmt.Fprintf(w, "-----------------------------------------\n")
 		fmt.Fprintf(w, "Report Date: %s\n", time.Now())
-		fmt.Fprintf(w, "OpenShift Version: %s\n", ca.ocpVersion)
-		fmt.Fprintf(w, "Package Name: %s\n", ca.subscription.Package)
+		fmt.Fprintf(w, "OpenShift Version: %s\n", ca.OcpVersion)
+		fmt.Fprintf(w, "Package Name: %s\n", ca.Subscription.Package)
 		fmt.Fprintf(w, "Operand Kind: %s\n", operand.GetKind())
 		fmt.Fprintf(w, "Operand Name: %s\n", operand.GetName())
 
@@ -67,15 +67,15 @@ func (ca capAudit) OperandTextReport(w io.Writer) error {
 	return nil
 }
 
-func (ca capAudit) OperandInstallJsonReport(w io.Writer) error {
+func operandInstallJsonReport(w io.Writer, ca options) error {
 	for _, cr := range ca.customResources {
 		operand := &unstructured.Unstructured{Object: cr}
 
 		if len(ca.operands) > 0 {
-			fmt.Fprintf(w, "{\"package\":\""+ca.subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
+			fmt.Fprintf(w, "{\"package\":\""+ca.Subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
 				"\",\"message\":\""+"created"+"\"}\n")
 		} else {
-			fmt.Fprintf(w, "{\"package\":\""+ca.subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
+			fmt.Fprintf(w, "{\"package\":\""+ca.Subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
 				"\",\"message\":\""+"failed"+"\"}\n")
 		}
 	}
