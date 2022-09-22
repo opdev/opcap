@@ -11,7 +11,6 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
-
 	"github.com/spf13/cobra"
 )
 
@@ -88,7 +87,6 @@ and/or users.`,
 	flags.StringVar(&checkflags.CatalogSourceNamespace, "catalogsourcenamespace", "openshift-marketplace",
 		"specifies the namespace where the catalogsource exists")
 	flags.StringSliceVar(&checkflags.AuditPlan, "audit-plan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
-	flags.BoolVar(&checkflags.ListPackages, "list-packages", false, "list packages in the catalog")
 	flags.StringSliceVar(&checkflags.Packages, "packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
 	flags.BoolVar(&checkflags.AllInstallModes, "all-installmodes", false, "when set, all install modes supported by an operator will be tested")
 
