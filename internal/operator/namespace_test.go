@@ -19,39 +19,22 @@ var _ = Describe("Namespace", func() {
 	var operatorClient operatorClient = operatorClient{
 		Client: client,
 	}
-
-	Context("CreateNamespace", func() {
-		When("creating a namespace", func() {
-			ns, err := operatorClient.CreateNamespace(context.TODO(), "testns")
-			It("should succeed", func() {
+	Context("Namespaces", func() {
+		It("should exercise Namespaces", func() {
+			By("creating a Namespace", func() {
+				ns, err := operatorClient.CreateNamespace(context.TODO(), "testns")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(ns).ToNot(BeNil())
 			})
-		})
-		When("creating a namespace that already exists", func() {
-			JustBeforeEach(func() {
+			By("creating it again should error", func() {
 				ns, err := operatorClient.CreateNamespace(context.TODO(), "testns")
-				It("should error", func() {
-					Expect(err).To(HaveOccurred())
-					Expect(err).To(MatchError("could not create namespace: testns: namespaces \"testns\" already exists"))
-					Expect(ns).To(BeNil())
-				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("could not create Namespace: testns: namespaces \"testns\" already exists"))
+				Expect(ns).To(BeNil())
 			})
-		})
-	})
-	Context("DeleteNamespace", func() {
-		When("deleting the existing namespace", func() {
-			err := operatorClient.DeleteNamespace(context.TODO(), "testns")
-			It("should succeed", func() {
-				Expect(err).ToNot(HaveOccurred())
-			})
-		})
-		When("deleting a namespace that does not exist", func() {
-			JustBeforeEach(func() {
+			By("deleting that Namespace", func() {
 				err := operatorClient.DeleteNamespace(context.TODO(), "testns")
-				It("should return error", func() {
-					Expect(err).To(MatchError("could not delete namespace: testns: namespaces \"testns\" not found"))
-				})
+				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 	})
