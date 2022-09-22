@@ -43,7 +43,7 @@ func extractAlmExamples(ctx context.Context, options *options) error {
 		return err
 	}
 
-	options.customResources = almList
+	options.customResources = append(options.customResources, almList...)
 
 	return nil
 }

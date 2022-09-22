@@ -21,6 +21,7 @@ type CheckCommandFlags struct {
 	ListPackages           bool     `json:"listPackages"`
 	Packages               []string `json:"packages"`
 	AllInstallModes        bool     `json:"allInstallModes"`
+	ExtraCRDirectory       string   `json:"extraCRDirectory"`
 }
 
 var checkflags CheckCommandFlags
@@ -73,6 +74,12 @@ and/or users.`,
 				AllInstallModes:        checkflags.AllInstallModes,
 			}
 
+			if checkflags.ExtraCRDirectory != "" {
+				if err := capAuditor.ExtraCRDirectory(checkflags.ExtraCRDirectory); err != nil {
+					return err
+				}
+			}
+
 			// run all dynamically built audits in the auditor workqueue
 			if err := capAuditor.RunAudits(cmd.Context()); err != nil {
 				return err
@@ -93,6 +100,8 @@ and/or users.`,
 	flags.StringSliceVar(&checkflags.AuditPlan, "audit-plan", defaultAuditPlan, "audit plan is the ordered list of operator test functions to be called during a capability audit.")
 	flags.StringSliceVar(&checkflags.Packages, "packages", []string{}, "a list of package(s) which limits audits and/or other flag(s) output")
 	flags.BoolVar(&checkflags.AllInstallModes, "all-installmodes", false, "when set, all install modes supported by an operator will be tested")
+	flags.StringVar(&checkflags.ExtraCRDirectory, "extra-cr-directory", "",
+		"directory containing the additional Custom Resources to be deployed by the OperandInstall audit. The manifest files should be located in subdirectories named after the packages they are corresponding to.")
 
 	return cmd
 }

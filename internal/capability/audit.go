@@ -52,7 +52,7 @@ type capAudit struct {
 	operands []unstructured.Unstructured
 }
 
-func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string) (*capAudit, error) {
+func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string, extraCustomResources []map[string]interface{}) (*capAudit, error) {
 	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-"), strings.ToLower(string(subscription.InstallModeType))}, "-")
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
@@ -70,6 +70,7 @@ func newCapAudit(ctx context.Context, c operator.Client, subscription operator.S
 		csvWaitTime:       time.Minute,
 		csvTimeout:        false,
 		auditPlan:         auditPlan,
+		customResources:   extraCustomResources,
 	}, nil
 }
 
@@ -159,6 +160,14 @@ func withTimeout(csvWaitTime int) auditOption {
 func withOcpVersion(ocpVersion string) auditOption {
 	return func(options *options) error {
 		options.OcpVersion = ocpVersion
+		return nil
+	}
+}
+
+// withCustomResources adds existing Custom Resources to the audit
+func withCustomResources(customResources []map[string]interface{}) auditOption {
+	return func(options *options) error {
+		options.customResources = customResources
 		return nil
 	}
 }
