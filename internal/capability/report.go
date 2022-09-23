@@ -1,84 +1,131 @@
 package capability
 
 import (
-	"fmt"
 	"io"
+	"text/template"
 	"time"
 
+	"github.com/opdev/opcap/internal/operator"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func operatorInstallTextReport(w io.Writer, ca options) error {
-	fmt.Fprint(w, "\n")
-	fmt.Fprint(w, "Operator Install Report:\n")
-	fmt.Fprint(w, "-----------------------------------------\n")
-	fmt.Fprintf(w, "Report Date: %s\n", time.Now())
-	fmt.Fprintf(w, "OpenShift Version: %s\n", ca.OcpVersion)
-	fmt.Fprintf(w, "Package Name: %s\n", ca.Subscription.Package)
-	fmt.Fprintf(w, "Channel: %s\n", ca.Subscription.Channel)
-	fmt.Fprintf(w, "Catalog Source: %s\n", ca.Subscription.CatalogSource)
-	fmt.Fprintf(w, "Install Mode: %s\n", ca.Subscription.InstallModeType)
+const (
+	operatorTextReportTemplate = `
+Operator Install Report
+-----------------------------------------
+Report Date: {{ now }}
+OpenShift Version: {{ .OcpVersion }}
+Package Name: {{ .Subscription.Package }}
+Channel: {{ .Subscription.Channel }}
+Catalog Source: {{ .Subscription.CatalogSource }}
+Install Mode: {{ .Subscription.InstallModeType }}
+Result: {{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}
+Message: {{ .Csv.Status.Message }}
+Reason: {{ .Csv.Status.Reason }}
+-----------------------------------------
+`
+	operatorJsonReportTemplate = `{"level":"info","message":"{{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}","package":"{{ .Subscription.Package }}","channel":"{{ .Subscription.Channel }}","installmode":"{{ .Subscription.InstallModeType }}"}`
 
-	if !ca.CsvTimeout {
-		fmt.Fprintf(w, "Result: %s\n", ca.Csv.Status.Phase)
-	} else {
-		fmt.Fprint(w, "Result: timeout\n")
+	operandTextReportTemplate = `{{ with $dot := . }}
+{{ range $index, $value := .CustomResources }}
+
+Operand Install Report
+-----------------------------------------
+Report Date: {{ now }}
+OpenShift Version: {{ $dot.OcpVersion }}
+Package Name: {{ $dot.Subscription.Package }}
+Operand Kind: {{ kind $value }}
+Operand Name: {{ name $value }}
+Operand Creation: {{ if gt $dot.OperandCount 0 }}Succeeded{{ else }}Failed{{ end }}
+-----------------------------------------
+{{ else }}
+No custom resources
+{{ end }}
+{{ end }}
+`
+
+	operandJsonReportTemplate = `{{with $dot := .}}{{range $index, $value := .CustomResources }}
+{"package":"{{ $dot.Subscription.Package }}","Operand Kind":"{{ kind $value }}","Operand Name":"{{ name $value }}","message":"{{ if gt $dot.OperandCount 0 }}created{{ else }}failed{{ end }}"}
+{{ end }}{{ end }}`
+)
+
+type operatorTemplateData struct {
+	OcpVersion   string
+	Subscription operator.SubscriptionData
+	Csv          operatorv1alpha1.ClusterServiceVersion
+	CsvTimeout   bool
+}
+
+type operandTemplateData struct {
+	CustomResources []map[string]interface{}
+	OcpVersion      string
+	Subscription    operator.SubscriptionData
+	Csv             operatorv1alpha1.ClusterServiceVersion
+	OperandCount    int
+}
+
+func processTemplate(w io.Writer, tmpl string, data interface{}) error {
+	report, err := template.New("report").
+		Funcs(template.FuncMap{
+			"now":  time.Now,
+			"kind": unstructuredKind,
+			"name": unstructuredName,
+		}).
+		Parse(tmpl)
+	if err != nil {
+		return err
 	}
-
-	fmt.Fprintf(w, "Message: %s\n", ca.Csv.Status.Message)
-	fmt.Fprintf(w, "Reason: %s\n", ca.Csv.Status.Reason)
-	fmt.Fprint(w, "-----------------------------------------\n")
-
+	if err := report.Execute(w, data); err != nil {
+		return err
+	}
 	return nil
 }
 
 func operatorInstallJsonReport(w io.Writer, ca options) error {
-	if !ca.CsvTimeout {
-		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+string(ca.Csv.Status.Phase)+"\",\"package\":\""+ca.Subscription.Package+
-			"\",\"channel\":\""+ca.Subscription.Channel+"\",\"installmode\":\""+string(ca.Subscription.InstallModeType)+"\"}\n")
-	} else {
-		fmt.Fprintf(w, "{\"level\":\"info\",\"message\":\""+"timeout"+"\",\"package\":\""+ca.Subscription.Package+"\",\"channel\":\""+
-			ca.Subscription.Channel+"\",\"installmode\":\""+string(ca.Subscription.InstallModeType)+"\"}\n")
-	}
-
-	return nil
+	return processTemplate(w, operatorJsonReportTemplate, operatorTemplateData{
+		OcpVersion:   ca.OcpVersion,
+		Subscription: *ca.Subscription,
+		Csv:          ca.Csv,
+		CsvTimeout:   ca.CsvTimeout,
+	})
 }
 
-func operandTextReport(w io.Writer, ca options) error {
-	for _, cr := range ca.customResources {
-		operand := &unstructured.Unstructured{Object: cr}
+func operatorInstallTextReport(w io.Writer, ca options) error {
+	return processTemplate(w, operatorTextReportTemplate, operatorTemplateData{
+		OcpVersion:   ca.OcpVersion,
+		Subscription: *ca.Subscription,
+		Csv:          ca.Csv,
+		CsvTimeout:   ca.CsvTimeout,
+	})
+}
 
-		fmt.Fprint(w, "\n")
-		fmt.Fprintf(w, "Operand Install Report:\n")
-		fmt.Fprintf(w, "-----------------------------------------\n")
-		fmt.Fprintf(w, "Report Date: %s\n", time.Now())
-		fmt.Fprintf(w, "OpenShift Version: %s\n", ca.OcpVersion)
-		fmt.Fprintf(w, "Package Name: %s\n", ca.Subscription.Package)
-		fmt.Fprintf(w, "Operand Kind: %s\n", operand.GetKind())
-		fmt.Fprintf(w, "Operand Name: %s\n", operand.GetName())
-
-		if len(ca.operands) > 0 {
-			fmt.Fprint(w, "Operand Creation: Succeeded\n")
-		} else {
-			fmt.Fprint(w, "Operand Creation: Failed\n")
-		}
-		fmt.Fprint(w, "-----------------------------------------\n")
-	}
-	return nil
+func operandInstallTextReport(w io.Writer, ca options) error {
+	return processTemplate(w, operandTextReportTemplate, operandTemplateData{
+		CustomResources: ca.customResources,
+		OcpVersion:      ca.OcpVersion,
+		Subscription:    *ca.Subscription,
+		Csv:             ca.Csv,
+		OperandCount:    len(ca.operands),
+	})
 }
 
 func operandInstallJsonReport(w io.Writer, ca options) error {
-	for _, cr := range ca.customResources {
-		operand := &unstructured.Unstructured{Object: cr}
+	return processTemplate(w, operandJsonReportTemplate, operandTemplateData{
+		CustomResources: ca.customResources,
+		OcpVersion:      ca.OcpVersion,
+		Subscription:    *ca.Subscription,
+		Csv:             ca.Csv,
+		OperandCount:    len(ca.operands),
+	})
+}
 
-		if len(ca.operands) > 0 {
-			fmt.Fprintf(w, "{\"package\":\""+ca.Subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
-				"\",\"message\":\""+"created"+"\"}\n")
-		} else {
-			fmt.Fprintf(w, "{\"package\":\""+ca.Subscription.Package+"\", \"Operand Kind\": \""+operand.GetKind()+"\", \"Operand Name\": \""+operand.GetName()+
-				"\",\"message\":\""+"failed"+"\"}\n")
-		}
-	}
+func unstructuredKind(cr map[string]interface{}) string {
+	operand := &unstructured.Unstructured{Object: cr}
+	return operand.GetKind()
+}
 
-	return nil
+func unstructuredName(cr map[string]interface{}) string {
+	operand := &unstructured.Unstructured{Object: cr}
+	return operand.GetName()
 }

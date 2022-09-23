@@ -131,13 +131,11 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 		defer file.Close()
 
 		if err := operandInstallJsonReport(file, options); err != nil {
-			logger.Debugf("Error during the OperandInstall Report: %w", err)
-			return err
+			return fmt.Errorf("could not generate operand install JSON report: %v", err)
 		}
 
-		if err := operandTextReport(os.Stdout, options); err != nil {
-			logger.Debugf("Error during the OperandInstall Text Report: %w", err)
-			return err
+		if err := operandInstallTextReport(os.Stdout, options); err != nil {
+			return fmt.Errorf("could not generate operand install text report: %v", err)
 		}
 
 		return nil
