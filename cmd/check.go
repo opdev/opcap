@@ -64,7 +64,7 @@ and/or users.`,
 
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			capAuditor := &capability.CapAuditor{
 				AuditPlan:              checkflags.AuditPlan,
 				CatalogSource:          checkflags.CatalogSource,
@@ -74,7 +74,11 @@ and/or users.`,
 			}
 
 			// run all dynamically built audits in the auditor workqueue
-			capAuditor.RunAudits(cmd.Context())
+			if err := capAuditor.RunAudits(cmd.Context()); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
