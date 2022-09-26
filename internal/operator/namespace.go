@@ -20,7 +20,7 @@ func (o *operatorClient) CreateNamespace(ctx context.Context, name string) (*cor
 		},
 	}
 	if err := o.Client.Create(ctx, &nsSpec, &runtimeClient.CreateOptions{}); err != nil {
-		return nil, fmt.Errorf("could not create Namespace: %s: %v", name, err)
+		return nil, fmt.Errorf("could not create namespace: %s: %v", name, err)
 	}
 	logger.Debugf("Namespace Created: %s", name)
 	return &nsSpec, nil
