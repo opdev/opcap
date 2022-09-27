@@ -62,10 +62,13 @@ func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
 		}
 		defer file.Close()
 
-		// TODO: What to do with reports?
-		_ = operatorInstallJsonReport(file, options)
+		if err := operatorInstallJsonReport(file, options); err != nil {
+			return fmt.Errorf("could not generate operator install JSON report: %v", err)
+		}
 
-		_ = operatorInstallTextReport(os.Stdout, options)
+		if err := operatorInstallTextReport(os.Stdout, options); err != nil {
+			return fmt.Errorf("could not generate operator install text report: %v", err)
+		}
 
 		return nil
 	}
