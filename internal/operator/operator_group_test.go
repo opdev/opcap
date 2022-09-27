@@ -5,7 +5,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/opdev/opcap/internal/logger"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -16,7 +15,6 @@ var _ = Describe("OperatorGroup", func() {
 	var operatorGroupData OperatorGroupData
 
 	BeforeEach(func() {
-		logger.InitLogger("debug")
 		scheme := runtime.NewScheme()
 		operatorv1.AddToScheme(scheme)
 		client := fake.NewClientBuilder().WithScheme(scheme).Build()
