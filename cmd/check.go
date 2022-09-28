@@ -1,16 +1,8 @@
 package cmd
 
 import (
-	"fmt"
-	"go/types"
-	"os"
-	"strings"
-	"text/tabwriter"
-
 	"github.com/opdev/opcap/internal/capability"
-	"github.com/opdev/opcap/internal/operator"
 
-	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +10,6 @@ type CheckCommandFlags struct {
 	AuditPlan              []string `json:"auditPlan"`
 	CatalogSource          string   `json:"catalogsource"`
 	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
-	ListPackages           bool     `json:"listPackages"`
 	Packages               []string `json:"packages"`
 	AllInstallModes        bool     `json:"allInstallModes"`
 	ExtraCRDirectory       string   `json:"extraCRDirectory"`
@@ -36,35 +27,6 @@ requirements for Operator Capabilities Level to attest operator
 advanced features by running custom resources provided by CSVs
 and/or users.`,
 		Example: "opcap check --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			psc, err := operator.NewOpCapClient()
-			if err != nil {
-				return types.Error{Msg: "Unable to create OpCap client."}
-			}
-			var packageManifestList pkgserverv1.PackageManifestList
-			err = psc.ListPackageManifests(cmd.Context(), &packageManifestList, checkflags.CatalogSource, checkflags.Packages)
-			if err != nil {
-				return types.Error{Msg: "Unable to list PackageManifests.\n" + err.Error()}
-			}
-
-			if len(packageManifestList.Items) == 0 {
-				return types.Error{Msg: "No PackageManifests returned from PackageServer."}
-			}
-
-			if checkflags.ListPackages {
-				headings := "Package Name\tCatalog Source\tCatalog Source Namespace"
-				w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-				fmt.Fprintln(w, headings)
-				for _, packageManifest := range packageManifestList.Items {
-					packageInfo := []string{packageManifest.Name, packageManifest.Status.CatalogSource, packageManifest.Status.CatalogSourceNamespace}
-					fmt.Fprintln(w, strings.Join(packageInfo, "\t"))
-				}
-				w.Flush()
-				os.Exit(0)
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			capAuditor := &capability.CapAuditor{
 				AuditPlan:              checkflags.AuditPlan,
