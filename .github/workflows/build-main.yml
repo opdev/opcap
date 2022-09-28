@@ -1,13 +1,12 @@
-name: CI Test
+name: Build Main
 
 on:
-  pull_request:
-    branches:
-    - main
-    - release-*
+  push:
+    branches: [ main, ghactions ]
 
 jobs:
-  build:
+  build-main:
+    name: Build coverage on main
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,15 +15,6 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.18
-
-    - name: Tidy
-      run: make tidy
-
-    - name: Vet
-      run: make vet
-
-    - name: Format
-      run: make fmt
 
     - name: Test
       run: make cover
