@@ -8,33 +8,24 @@ import (
 	"time"
 
 	"github.com/opdev/opcap/internal/logger"
-	"github.com/opdev/opcap/internal/operator"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func extractAlmExamples(ctx context.Context, options *options) error {
-	olmClientset, err := operator.NewOlmClientset()
-	if err != nil {
-		return err
-	}
-
-	opts := v1.ListOptions{}
-
 	// gets the list of CSVs present in a particular namespace
-	CSVList, err := olmClientset.OperatorsV1alpha1().ClusterServiceVersions(options.namespace).List(ctx, opts)
+	csvList, err := options.client.ListClusterServiceVersions(ctx, options.namespace)
 	if err != nil {
 		return err
 	}
-
 	almExamples := ""
+
 	// map of string interface which consist of ALM examples from the CSVList
-	if len(CSVList.Items) > 0 {
-		almExamples = CSVList.Items[0].ObjectMeta.Annotations["alm-examples"]
+	if len(csvList.Items) > 0 {
+		almExamples = csvList.Items[0].ObjectMeta.Annotations["alm-examples"]
 	}
 	var almList []map[string]interface{}
 
@@ -72,21 +63,17 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 			return nil
 		}
 
-		csv, _ := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute)
+		csv, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute)
+		if err != nil {
+			return fmt.Errorf("could not get CSV: %v", err)
+		}
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
 			return fmt.Errorf("exiting OperandInstall since CSV install has failed")
 		}
 
-		// using dynamic client to create Unstructured objects in k8s
-		client, err := operator.NewDynamicClient()
-		if err != nil {
-			return fmt.Errorf("could not create dynamic client: %v", err)
-		}
-
 		var crdList apiextensionsv1.CustomResourceDefinitionList
-		err = options.client.ListCRDs(ctx, &crdList)
-		if err != nil {
+		if err := options.client.ListCRDs(ctx, &crdList); err != nil {
 			return fmt.Errorf("could not list CRDs: %v", err)
 		}
 
@@ -112,7 +99,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 			}
 
 			// create the resource using the dynamic client and log the error if it occurs in stdout.json
-			unstructuredCR, err := client.Resource(gvr).Namespace(options.namespace).Create(ctx, obj, v1.CreateOptions{})
+			unstructuredCR, err := options.client.CreateUnstructured(ctx, options.namespace, obj, gvr)
 			if err != nil {
 				// If there is an error, log and continue
 				logger.Errorw("could not create resource", "error", err, "namespace", options.namespace, "resource", gvr)

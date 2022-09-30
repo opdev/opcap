@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/opdev/opcap/internal/capability"
+	"github.com/opdev/opcap/internal/operator"
 
 	"github.com/spf13/cobra"
 )
@@ -28,12 +31,23 @@ advanced features by running custom resources provided by CSVs
 and/or users.`,
 		Example: "opcap check --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			kubeconfig, err := kubeConfig()
+			if err != nil {
+				return fmt.Errorf("could not get kubeconfig: %v", err)
+			}
+
+			client, err := operator.NewOpCapClient(kubeconfig)
+			if err != nil {
+				return fmt.Errorf("could not create client: %v", err)
+			}
+
 			capAuditor := &capability.CapAuditor{
 				AuditPlan:              checkflags.AuditPlan,
 				CatalogSource:          checkflags.CatalogSource,
 				CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
 				Packages:               checkflags.Packages,
 				AllInstallModes:        checkflags.AllInstallModes,
+				OpCapClient:            client,
 			}
 
 			if checkflags.ExtraCRDirectory != "" {

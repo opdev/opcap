@@ -2,25 +2,24 @@ package operator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	configv1 "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
+	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	olmclient "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Client interface {
@@ -30,43 +29,56 @@ type Client interface {
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
-	GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error)
+	GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (*operatorv1alpha1.ClusterServiceVersion, error)
 	GetOpenShiftVersion(ctx context.Context) (string, error)
 	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error
 	GetSubscriptionData(ctx context.Context, source string, namespace string, filter []string) ([]SubscriptionData, error)
 	ListCRDs(ctx context.Context, list *apiextensionsv1.CustomResourceDefinitionList) error
+	CreateUnstructured(ctx context.Context, namespace string, obj *unstructured.Unstructured, gvr schema.GroupVersionResource) (*unstructured.Unstructured, error)
+	GetUnstructured(ctx context.Context, namespace, name string, gvr schema.GroupVersionResource) (*unstructured.Unstructured, error)
+	DeleteUnstructured(ctx context.Context, namespace, name string, gvr schema.GroupVersionResource) error
+	ListClusterServiceVersions(ctx context.Context, namespace string) (*operatorv1alpha1.ClusterServiceVersionList, error)
 }
 
 type operatorClient struct {
-	Client runtimeClient.Client
+	Client        runtimeClient.Client
+	OlmClient     olmclient.Interface
+	DynamicClient dynamic.Interface
 }
 
-func NewOpCapClient() (Client, error) {
-	scheme := runtime.NewScheme()
-
+func addSchemes(scheme *runtime.Scheme) error {
 	if err := operatorv1.AddToScheme(scheme); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := operatorv1alpha1.AddToScheme(scheme); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := pkgserverv1.AddToScheme(scheme); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := apiextensionsv1.AddToScheme(scheme); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := corev1.AddToScheme(scheme); err != nil {
-		return nil, err
+		return err
 	}
 
-	kubeconfig, err := kubeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("could not get kubeconfig: %v", err)
+	if err := configv1.AddToScheme(scheme); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NewOpCapClient(kubeconfig *rest.Config) (Client, error) {
+	scheme := runtime.NewScheme()
+
+	if err := addSchemes(scheme); err != nil {
+		return nil, fmt.Errorf("could not add schemes to client: %v", err)
 	}
 
 	client, err := runtimeClient.New(kubeconfig, runtimeClient.Options{Scheme: scheme})
@@ -74,56 +86,29 @@ func NewOpCapClient() (Client, error) {
 		return nil, fmt.Errorf("could not get subscription client: %v", err)
 	}
 
+	olmClient, err := newOlmClientset(kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create OLM clientset: %v", err)
+	}
+
+	dynamicClient, err := newDynamicClient(kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create dynamic client: %v", err)
+	}
+
 	var operatorClient Client = &operatorClient{
-		Client: client,
+		Client:        client,
+		OlmClient:     olmClient,
+		DynamicClient: dynamicClient,
 	}
 	return operatorClient, nil
 }
 
-// kubeConfig return kubernetes cluster config
-func kubeConfig() (*rest.Config, error) {
-	config, err := ctrl.GetConfig()
-	if err != nil {
-		// returned when there is no kubeconfig
-		if errors.Is(err, clientcmd.ErrEmptyConfig) {
-			return nil, fmt.Errorf("please provide kubeconfig before retrying: %v", err)
-		}
-
-		// returned when the kubeconfig has no servers
-		if errors.Is(err, clientcmd.ErrEmptyCluster) {
-			return nil, fmt.Errorf("malformed kubeconfig. Please check before retrying: %v", err)
-		}
-
-		// any other errors getting kubeconfig would be caught here
-		return nil, fmt.Errorf("error getting kubeocnfig. Please check before retrying: %v", err)
-	}
-	return config, nil
-}
-
-func NewOlmClientset() (*olmclient.Clientset, error) {
-	kubeconfig, err := kubeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("could not get kubeconfig: %v", err)
-	}
-
+func newOlmClientset(kubeconfig *rest.Config) (*olmclient.Clientset, error) {
 	return olmclient.NewForConfig(kubeconfig)
 }
 
 // NewDynamicClient creates a new dynamic client or returns an error.
-func NewDynamicClient() (dynamic.Interface, error) {
-	kubeconfig, err := kubeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("could not get kubeconfig: %v", err)
-	}
-
+func newDynamicClient(kubeconfig *rest.Config) (dynamic.Interface, error) {
 	return dynamic.NewForConfig(kubeconfig)
-}
-
-func NewConfigClient() (*configv1.ConfigV1Client, error) {
-	// create openshift config clientset
-	kubeconfig, err := kubeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("could not get kubeconfig: %v", err)
-	}
-	return configv1.NewForConfig(kubeconfig)
 }

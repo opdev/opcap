@@ -35,6 +35,9 @@ type CapAuditor struct {
 	// extraCustomResources associates packages to a list of Custom Resources (in addition to ALMExamples)
 	// to be audited by the OperandInstall AuditPlan.
 	extraCustomResources map[string]interface{}
+
+	// OpCapClient is the main OpenShift client interface
+	OpCapClient operator.Client
 }
 
 // ExtraCRDirectory scans the provided directory and populates the extraCustomResources field.
@@ -118,14 +121,7 @@ func (capAuditor *CapAuditor) ExtraCRDirectory(extraCRDirectory string) error {
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error {
-	c, err := operator.NewOpCapClient()
-	if err != nil {
-		// if it doesn't load the client nothing can be done
-		// return the error
-		return fmt.Errorf("could not create OpCapClient: %v", err)
-	}
-
+func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context, c operator.Client) error {
 	// Getting subscription data form the package manifests available in the selected catalog
 	subscriptions, err := c.GetSubscriptionData(ctx, capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.Packages)
 	if err != nil {
@@ -176,7 +172,7 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context) error
 
 // RunAudits executes all selected functions in order for a given audit at a time
 func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
-	err := capAuditor.buildWorkQueueByCatalog(ctx)
+	err := capAuditor.buildWorkQueueByCatalog(ctx, capAuditor.OpCapClient)
 	if err != nil {
 		return fmt.Errorf("unable to build workqueue: %v", err)
 	}

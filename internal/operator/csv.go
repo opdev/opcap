@@ -7,12 +7,13 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 )
 
+var TimeoutError error = fmt.Errorf("operator install timeout")
+
 // Gets completed CSVs, Succeeded or Failed, with timeout on delay duration
-func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (operatorv1alpha1.ClusterServiceVersion, error) {
+func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (*operatorv1alpha1.ClusterServiceVersion, error) {
 	// csv will catch CSVs from watch events
 	csv := &operatorv1alpha1.ClusterServiceVersion{}
 	var ok bool
@@ -20,7 +21,7 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 	// get watcher for csv
 	watcher, err := c.csvWatcher(ctx, namespace)
 	if err != nil {
-		return *csv, err
+		return nil, err
 	}
 
 	// eventChan receives all events from CSVs on the selected namespace
@@ -38,24 +39,22 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 
 	for range ticker.C {
 		select {
-
 		// case catches CSV events
 		case event := <-eventChan:
 			csv, ok = event.Object.(*operatorv1alpha1.ClusterServiceVersion)
 			// fail on wrong objects
 			if !ok {
-				return *csv, fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
+				return nil, fmt.Errorf("received unexpected object type from watch: object-type %T", event.Object)
 			}
 			// check for succeed or failed
 			if csv.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded ||
 				csv.Status.Phase == operatorv1alpha1.CSVPhaseFailed {
-
-				return *csv, nil
+				return csv, nil
 			}
 
 		// if it takes more than delay return with error
 		case <-timeout:
-			return *csv, fmt.Errorf("operator install timeout")
+			return nil, TimeoutError
 
 		default:
 			continue
@@ -63,31 +62,12 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 		}
 	}
 
-	return operatorv1alpha1.ClusterServiceVersion{}, fmt.Errorf("unexpected error while waiting for csv")
+	return nil, fmt.Errorf("unexpected error while waiting for csv")
 }
 
 // waits for CSV on namespace and gets a watcher for CSV events
 func (c operatorClient) csvWatcher(ctx context.Context, namespace string) (watch.Interface, error) {
-	var watcher watch.Interface
-
-	err := wait.ExponentialBackoff(wait.Backoff{Steps: 3, Duration: 2 * time.Second, Factor: 5, Cap: 90 * time.Second},
-		func() (bool, error) {
-			var err error
-
-			olmClientset, err := NewOlmClientset()
-			if err != nil {
-				return false, err
-			}
-
-			opts := v1.ListOptions{}
-
-			watcher, err = olmClientset.OperatorsV1alpha1().ClusterServiceVersions(namespace).Watch(ctx, opts)
-			if err != nil {
-				return false, err
-			}
-
-			return true, nil
-		})
+	watcher, err := c.OlmClient.OperatorsV1alpha1().ClusterServiceVersions(namespace).Watch(ctx, v1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not create csv: %v", err)
 	}

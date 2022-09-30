@@ -3,7 +3,8 @@ package operator
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/openshift/api/config/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // GetOpenShiftVersion uses the OpenShift Config clientset to get a ClusterVersion resource which has the
@@ -12,14 +13,8 @@ func (c operatorClient) GetOpenShiftVersion(ctx context.Context) (string, error)
 	// version is the OpenShift version of the cluster
 	var version string
 
-	// OpenShift Config client used to talk with the OpenShift API
-	configClient, err := NewConfigClient()
-	if err != nil {
-		return "", err
-	}
-
-	cversions, err := configClient.ClusterVersions().List(ctx, metav1.ListOptions{})
-	if err != nil {
+	var cversions v1.ClusterVersionList
+	if err := c.Client.List(ctx, &cversions, &client.ListOptions{}); err != nil {
 		version = "0.0.0"
 		return version, err
 	}

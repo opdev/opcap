@@ -2,10 +2,13 @@ package capability
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/opdev/opcap/internal/logger"
+	"github.com/opdev/opcap/internal/operator"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
@@ -44,16 +47,18 @@ func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
 		}
 
 		// Get a Succeeded or Failed CSV with one minute timeout
-		var err error
-		options.Csv, err = options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime)
-
+		resultCSV, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime)
 		if err != nil {
 			// If error is timeout than don't log phase but timeout
-			if err.Error() == "operator install timeout" {
+			if errors.Is(err, operator.TimeoutError) {
 				options.CsvTimeout = true
 			} else {
 				return err
 			}
+		}
+		options.Csv = *resultCSV
+		if resultCSV == nil {
+			options.Csv = operatorv1alpha1.ClusterServiceVersion{}
 		}
 
 		file, err := os.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)

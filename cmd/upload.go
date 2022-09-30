@@ -86,7 +86,11 @@ func uploadCmd() *cobra.Command {
 
 func uploadPreRunE(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
-	opClient, err := operator.NewOpCapClient()
+	kubeconfig, err := kubeConfig()
+	if err != nil {
+		return fmt.Errorf("could not get kubeconfig: %v", err)
+	}
+	opClient, err := operator.NewOpCapClient(kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to initialize OpenShift client: %v", err)
 	}

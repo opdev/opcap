@@ -2,11 +2,15 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 var logLevel string
@@ -43,4 +47,24 @@ func Execute() {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Opcap tool execution failed: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// kubeConfig return kubernetes cluster config
+func kubeConfig() (*rest.Config, error) {
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		// returned when there is no kubeconfig
+		if errors.Is(err, clientcmd.ErrEmptyConfig) {
+			return nil, fmt.Errorf("please provide kubeconfig before retrying: %v", err)
+		}
+
+		// returned when the kubeconfig has no servers
+		if errors.Is(err, clientcmd.ErrEmptyCluster) {
+			return nil, fmt.Errorf("malformed kubeconfig. Please check before retrying: %v", err)
+		}
+
+		// any other errors getting kubeconfig would be caught here
+		return nil, fmt.Errorf("error getting kubeocnfig. Please check before retrying: %v", err)
+	}
+	return config, nil
 }
