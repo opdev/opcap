@@ -61,3 +61,8 @@ func Debugf(message string, fields ...interface{}) {
 func Errorf(message string, fields ...interface{}) {
 	sugarLogger.Errorf(message, fields...)
 }
+
+// Errorw exports sugared LogLevel Error
+func Errorw(message string, fields ...interface{}) {
+	sugarLogger.Errorw(message, fields...)
+}

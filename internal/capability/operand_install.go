@@ -78,28 +78,30 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 			return fmt.Errorf("exiting OperandInstall since CSV install has failed")
 		}
 
+		// using dynamic client to create Unstructured objects in k8s
+		client, err := operator.NewDynamicClient()
+		if err != nil {
+			return fmt.Errorf("could not create dynamic client: %v", err)
+		}
+
+		var crdList apiextensionsv1.CustomResourceDefinitionList
+		err = options.client.ListCRDs(ctx, &crdList)
+		if err != nil {
+			return fmt.Errorf("could not list CRDs: %v", err)
+		}
+
 		for _, cr := range options.customResources {
 			obj := &unstructured.Unstructured{Object: cr}
-			// using dynamic client to create Unstructured objects in k8s
-			client, err := operator.NewDynamicClient()
-			if err != nil {
-				return err
-			}
 
 			// set the namespace of CR to the namespace of the subscription
 			obj.SetNamespace(options.namespace)
-
-			var crdList apiextensionsv1.CustomResourceDefinitionList
-			err = options.client.ListCRDs(ctx, &crdList)
-			if err != nil {
-				return err
-			}
 
 			var Resource string
 
 			for _, crd := range crdList.Items {
 				if crd.Spec.Group == obj.GroupVersionKind().Group && crd.Spec.Names.Kind == obj.GroupVersionKind().Kind {
 					Resource = crd.Spec.Names.Plural
+					break
 				}
 			}
 
@@ -109,17 +111,12 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 				Resource: Resource,
 			}
 
-			csv, _ := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute)
-
-			if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
-				logger.Debugf("exiting OperandInstall since CSV has failed")
-				return nil
-			}
-
 			// create the resource using the dynamic client and log the error if it occurs in stdout.json
 			unstructuredCR, err := client.Resource(gvr).Namespace(options.namespace).Create(ctx, obj, v1.CreateOptions{})
 			if err != nil {
-				return err
+				// If there is an error, log and continue
+				logger.Errorw("could not create resource", "error", err, "namespace", options.namespace, "resource", gvr)
+				continue
 			}
 			options.operands = append(options.operands, *unstructuredCR)
 		}
