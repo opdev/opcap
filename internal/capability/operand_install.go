@@ -41,14 +41,16 @@ func extractAlmExamples(ctx context.Context, options *options) error {
 }
 
 // OperandInstall installs the operand from the ALMExamples in the ca.namespace
-func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
+func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCleanupFn) {
 	var options options
 	for _, opt := range opts {
 		err := opt(&options)
 		if err != nil {
 			return func(_ context.Context) error {
-				return fmt.Errorf("option failed: %v", err)
-			}
+					return fmt.Errorf("option failed: %v", err)
+				}, func(_ context.Context) error {
+					return nil
+				}
 		}
 	}
 
@@ -125,5 +127,5 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 		}
 
 		return nil
-	}
+	}, operandCleanup(ctx, opts...)
 }

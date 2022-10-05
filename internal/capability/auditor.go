@@ -2,6 +2,7 @@ package capability
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -53,7 +54,7 @@ type CapAuditor struct {
 //	   ├── manifest_file1.json
 //
 //     └── manifest_file2.yaml
-func (capAuditor *CapAuditor) ExtraCRDirectory(extraCRDirectory string) error {
+func (ca *CapAuditor) ExtraCRDirectory(extraCRDirectory string) error {
 	logger.Debugw("scaning for extra Custom Resources", "extra CR directory", extraCRDirectory)
 	extraCustomResources := map[string]interface{}{} // maps packages to a list of CR
 
@@ -117,29 +118,29 @@ func (capAuditor *CapAuditor) ExtraCRDirectory(extraCRDirectory string) error {
 		return fmt.Errorf("could not read directory %s: %v", extraCRDirectory, err)
 	}
 
-	capAuditor.extraCustomResources = extraCustomResources
+	ca.extraCustomResources = extraCustomResources
 
 	return nil
 }
 
 // BuildWorkQueueByCatalog fills in the auditor workqueue with all package information found in a specific catalog
-func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context, c operator.Client) error {
+func (ca *CapAuditor) buildWorkQueueByCatalog(ctx context.Context, c operator.Client) error {
 	// Getting subscription data form the package manifests available in the selected catalog
-	subscriptions, err := c.GetSubscriptionData(ctx, capAuditor.CatalogSource, capAuditor.CatalogSourceNamespace, capAuditor.Packages)
+	subscriptions, err := c.GetSubscriptionData(ctx, ca.CatalogSource, ca.CatalogSourceNamespace, ca.Packages)
 	if err != nil {
-		return fmt.Errorf("could not get bundles from CatalogSource: %s: %v", capAuditor.CatalogSource, err)
+		return fmt.Errorf("could not get bundles from CatalogSource: %s: %v", ca.CatalogSource, err)
 	}
 
 	// build workqueue as buffered channel based subscriptionData list size
-	capAuditor.WorkQueue = make(chan capAudit, len(subscriptions))
-	defer close(capAuditor.WorkQueue)
+	ca.WorkQueue = make(chan capAudit, len(subscriptions))
+	defer close(ca.WorkQueue)
 
 	// packagesToBeAudited is a subset of packages to be tested from a catalogSource
 	var packagesToBeAudited []operator.SubscriptionData
 
 	// get all install modes for all operators in the catalog
 	// and add them to the packagesToBeAudited list
-	if capAuditor.AllInstallModes {
+	if ca.AllInstallModes {
 		packagesToBeAudited = subscriptions
 	} else {
 		packages := make(map[string]bool)
@@ -155,39 +156,59 @@ func (capAuditor *CapAuditor) buildWorkQueueByCatalog(ctx context.Context, c ope
 	for _, subscription := range packagesToBeAudited {
 		// Get extra Custom Resources for this subscription, if any
 		mapExtraCustomResources := []map[string]interface{}{}
-		extraCustomResources, ok := capAuditor.extraCustomResources[subscription.Package]
+		extraCustomResources, ok := ca.extraCustomResources[subscription.Package]
 		if ok {
 			mapExtraCustomResources = extraCustomResources.([]map[string]interface{})
 		}
 
-		capAudit, err := newCapAudit(ctx, c, subscription, capAuditor.AuditPlan, mapExtraCustomResources)
+		capAudit, err := newCapAudit(ctx, c, subscription, ca.AuditPlan, mapExtraCustomResources)
 		if err != nil {
 			return fmt.Errorf("could not build configuration for subscription: %s: %v", subscription.Name, err)
 		}
 
 		// load workqueue with capAudit
-		capAuditor.WorkQueue <- *capAudit
+		ca.WorkQueue <- *capAudit
 	}
 
 	return nil
 }
 
+func (ca *CapAuditor) cleanup(ctx context.Context, stack *Stack[auditCleanupFn]) {
+	if stack == nil {
+		return
+	}
+	for !stack.Empty() {
+		logger.Debugw("cleaning up...")
+		cleaner, err := stack.Pop()
+		if errors.Is(err, StackEmptyError) {
+			break
+		}
+		if err := cleaner(ctx); err != nil {
+			logger.Errorf("cleanup failed: %v", err)
+		}
+	}
+	return
+}
+
 // RunAudits executes all selected functions in order for a given audit at a time
-func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
-	err := capAuditor.buildWorkQueueByCatalog(ctx, capAuditor.OpCapClient)
+func (ca *CapAuditor) RunAudits(ctx context.Context) error {
+	cleanups := Stack[auditCleanupFn]{}
+	defer ca.cleanup(ctx, &cleanups)
+
+	err := ca.buildWorkQueueByCatalog(ctx, ca.OpCapClient)
 	if err != nil {
 		return fmt.Errorf("unable to build workqueue: %v", err)
 	}
 
 	// read workqueue for audits
-	for audit := range capAuditor.WorkQueue {
+	for audit := range ca.WorkQueue {
 		// read a particular audit's auditPlan for functions
 		// to be executed against operator
 		for _, function := range audit.auditPlan {
 			// run function/method by name
 			// NOTE: The signature for this method MUST be:
 			// func Fn(context.Context) error
-			auditFn := newAudit(ctx, function,
+			auditFn, auditCleanupFn := newAudit(ctx, function,
 				withClient(audit.client),
 				withNamespace(audit.namespace),
 				withOperatorGroupData(&audit.operatorGroupData),
@@ -199,6 +220,7 @@ func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
 				logger.Errorf("invalid audit plan specified: %s", function)
 				continue
 			}
+			cleanups.Push(auditCleanupFn)
 			err := auditFn(ctx)
 			if err != nil {
 				logger.Errorf("error in audit: %v", err)

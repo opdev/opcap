@@ -7,7 +7,7 @@ import (
 	"github.com/opdev/opcap/internal/logger"
 )
 
-func operatorCleanUp(ctx context.Context, opts ...auditOption) auditFn {
+func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 	var options options
 	for _, opt := range opts {
 		err := opt(&options)

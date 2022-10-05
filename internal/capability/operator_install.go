@@ -10,14 +10,17 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 )
 
-func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
+func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCleanupFn) {
 	var options options
 	for _, opt := range opts {
 		err := opt(&options)
 		if err != nil {
 			return func(_ context.Context) error {
-				return fmt.Errorf("option failed: %v", err)
-			}
+					return fmt.Errorf("option failed: %v", err)
+				},
+				func(_ context.Context) error {
+					return nil
+				}
 		}
 	}
 
@@ -72,5 +75,5 @@ func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
 		}
 
 		return nil
-	}
+	}, operatorCleanup(ctx, opts...)
 }
