@@ -14,7 +14,6 @@ require (
 	github.com/gobuffalo/envy v1.10.1
 	github.com/minio/minio-go/v7 v7.0.27
 	github.com/onsi/ginkgo/v2 v2.1.6
-	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/operator-framework/api v0.17.0
 	github.com/operator-framework/operator-lifecycle-manager v0.19.1
 	k8s.io/api v0.24.0
@@ -30,7 +29,7 @@ require (
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/openshift/api v0.0.0-20200331152225-585af27e34fd // indirect
+	github.com/openshift/api v0.0.0-20200331152225-585af27e34fd
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
@@ -94,6 +93,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	k8s.io/apiserver v0.24.0 // indirect
 	k8s.io/component-base v0.24.0 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect

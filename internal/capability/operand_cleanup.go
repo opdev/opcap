@@ -5,11 +5,9 @@ import (
 	"fmt"
 
 	"github.com/opdev/opcap/internal/logger"
-	"github.com/opdev/opcap/internal/operator"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -31,20 +29,12 @@ func operandCleanUp(ctx context.Context, opts ...auditOption) auditFn {
 			options.Subscription.InstallModeType)
 
 		if len(options.customResources) > 0 {
+			var crdList apiextensionsv1.CustomResourceDefinitionList
+			if err := options.client.ListCRDs(ctx, &crdList); err != nil {
+				return err
+			}
 			for _, cr := range options.customResources {
 				obj := &unstructured.Unstructured{Object: cr}
-
-				// using dynamic client to create Unstructured objests in k8s
-				client, err := operator.NewDynamicClient()
-				if err != nil {
-					return err
-				}
-
-				var crdList apiextensionsv1.CustomResourceDefinitionList
-				err = options.client.ListCRDs(ctx, &crdList)
-				if err != nil {
-					return err
-				}
 
 				var Resource string
 
@@ -65,11 +55,10 @@ func operandCleanUp(ctx context.Context, opts ...auditOption) auditFn {
 				name := obj.Object["metadata"].(map[string]interface{})["name"].(string)
 
 				// check if CR exists, only then cleanup the operand
-				crInstance, _ := client.Resource(gvr).Namespace(options.namespace).Get(ctx, name, v1.GetOptions{})
+				crInstance, _ := options.client.GetUnstructured(ctx, options.namespace, name, gvr)
 				if crInstance != nil {
 					// delete the resource using the dynamic client
-					err = client.Resource(gvr).Namespace(options.namespace).Delete(ctx, name, v1.DeleteOptions{})
-					if err != nil {
+					if err := options.client.DeleteUnstructured(ctx, options.namespace, name, gvr); err != nil {
 						logger.Debugf("failed operandCleanUp: %s package: %s error: %s\n", Resource, options.Subscription.Package, err.Error())
 						return err
 					}
