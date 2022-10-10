@@ -22,10 +22,11 @@ func extractAlmExamples(ctx context.Context, options *options) error {
 		return err
 	}
 	almExamples := ""
-
-	// map of string interface which consist of ALM examples from the CSVList
-	if len(csvList.Items) > 0 {
-		almExamples = csvList.Items[0].ObjectMeta.Annotations["alm-examples"]
+	for _, csvVal := range csvList.Items {
+		if strings.HasPrefix(csvVal.ObjectMeta.Name, options.operatorGroupData.Name) {
+			// map of string interface which consist of ALM examples from the CSVList
+			almExamples = csvVal.ObjectMeta.Annotations["alm-examples"]
+		}
 	}
 	var almList []map[string]interface{}
 
