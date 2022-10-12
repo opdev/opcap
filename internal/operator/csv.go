@@ -6,8 +6,8 @@ import (
 	"time"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var TimeoutError error = fmt.Errorf("operator install timeout")
@@ -67,7 +67,7 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 
 // waits for CSV on namespace and gets a watcher for CSV events
 func (c operatorClient) csvWatcher(ctx context.Context, namespace string) (watch.Interface, error) {
-	watcher, err := c.OlmClient.OperatorsV1alpha1().ClusterServiceVersions(namespace).Watch(ctx, v1.ListOptions{})
+	watcher, err := c.Client.Watch(ctx, &operatorv1alpha1.ClusterServiceVersionList{}, &client.ListOptions{Namespace: namespace})
 	if err != nil {
 		return nil, fmt.Errorf("could not create csv: %v", err)
 	}
