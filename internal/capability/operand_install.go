@@ -68,6 +68,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) auditFn {
 		if err != nil {
 			return fmt.Errorf("could not get CSV: %v", err)
 		}
+		options.Csv = csv
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
 			return fmt.Errorf("exiting OperandInstall since CSV install has failed")

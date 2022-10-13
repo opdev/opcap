@@ -179,7 +179,7 @@ type options struct {
 	client            operator.Client
 	CsvTimeout        bool
 	csvWaitTime       time.Duration
-	Csv               v1alpha1.ClusterServiceVersion
+	Csv               *v1alpha1.ClusterServiceVersion
 	OcpVersion        string
 	customResources   []map[string]interface{}
 	operands          []unstructured.Unstructured

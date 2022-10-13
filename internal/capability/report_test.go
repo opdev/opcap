@@ -41,7 +41,7 @@ var _ = Describe("Report", func() {
 				operatorGroupData: &operator.OperatorGroupData{},
 				namespace:         "testns",
 				CsvTimeout:        false,
-				Csv: v1alpha1.ClusterServiceVersion{
+				Csv: &v1alpha1.ClusterServiceVersion{
 					Status: v1alpha1.ClusterServiceVersionStatus{
 						Phase:   v1alpha1.CSVPhaseSucceeded,
 						Message: "message",

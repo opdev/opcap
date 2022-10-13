@@ -20,9 +20,10 @@ Package Name: {{ .Subscription.Package }}
 Channel: {{ .Subscription.Channel }}
 Catalog Source: {{ .Subscription.CatalogSource }}
 Install Mode: {{ .Subscription.InstallModeType }}
-Result: {{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}
+Result: {{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}
 Message: {{ .Csv.Status.Message }}
 Reason: {{ .Csv.Status.Reason }}
+{{ end }}
 -----------------------------------------
 `
 	operatorJsonReportTemplate = `{"level":"info","message":"{{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}","package":"{{ .Subscription.Package }}","channel":"{{ .Subscription.Channel }}","installmode":"{{ .Subscription.InstallModeType }}"}`
@@ -53,7 +54,7 @@ No custom resources
 type operatorTemplateData struct {
 	OcpVersion   string
 	Subscription operator.SubscriptionData
-	Csv          operatorv1alpha1.ClusterServiceVersion
+	Csv          *operatorv1alpha1.ClusterServiceVersion
 	CsvTimeout   bool
 }
 
@@ -61,7 +62,7 @@ type operandTemplateData struct {
 	CustomResources []map[string]interface{}
 	OcpVersion      string
 	Subscription    operator.SubscriptionData
-	Csv             operatorv1alpha1.ClusterServiceVersion
+	Csv             *operatorv1alpha1.ClusterServiceVersion
 	OperandCount    int
 }
 

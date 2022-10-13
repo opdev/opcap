@@ -49,7 +49,9 @@ type CapAuditor struct {
 // │   ├── manifest_file1.json
 // │   └── manifest_file2.yaml
 // └── package_name2
-//     ├── manifest_file1.json
+//
+//	   ├── manifest_file1.json
+//
 //     └── manifest_file2.yaml
 func (capAuditor *CapAuditor) ExtraCRDirectory(extraCRDirectory string) error {
 	logger.Debugw("scaning for extra Custom Resources", "extra CR directory", extraCRDirectory)
@@ -200,6 +202,7 @@ func (capAuditor *CapAuditor) RunAudits(ctx context.Context) error {
 			err := auditFn(ctx)
 			if err != nil {
 				logger.Errorf("error in audit: %v", err)
+				break
 			}
 		}
 	}

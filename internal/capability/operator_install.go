@@ -8,7 +8,6 @@ import (
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
@@ -56,10 +55,7 @@ func operatorInstall(ctx context.Context, opts ...auditOption) auditFn {
 				return err
 			}
 		}
-		options.Csv = *resultCSV
-		if resultCSV == nil {
-			options.Csv = operatorv1alpha1.ClusterServiceVersion{}
-		}
+		options.Csv = resultCSV
 
 		file, err := os.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
