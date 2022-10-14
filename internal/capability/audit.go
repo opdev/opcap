@@ -52,8 +52,18 @@ type capAudit struct {
 	operands []unstructured.Unstructured
 }
 
+func generateNamespace(packageName string, installMode string) string {
+	installModeString := string(installMode)
+	namespaceLength := 63 - len("opcap-") - len(installModeString) - 1
+	return strings.Join([]string{
+		"opcap",
+		packageName[:namespaceLength],
+		installModeString,
+	}, "-")
+}
+
 func newCapAudit(ctx context.Context, c operator.Client, subscription operator.SubscriptionData, auditPlan []string, extraCustomResources []map[string]interface{}) (*capAudit, error) {
-	ns := strings.Join([]string{"opcap", strings.ReplaceAll(subscription.Package, ".", "-"), strings.ToLower(string(subscription.InstallModeType))}, "-")
+	ns := generateNamespace(strings.ReplaceAll(subscription.Package, ".", "-"), strings.ToLower(string(subscription.InstallModeType)))
 	operatorGroupName := strings.Join([]string{subscription.Name, subscription.Channel, "group"}, "-")
 
 	ocpVersion, err := c.GetOpenShiftVersion(ctx)
