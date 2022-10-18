@@ -13,7 +13,7 @@ import (
 )
 
 // OperandCleanup removes the operand from the OCP cluster in the ca.namespace
-func operandCleanUp(ctx context.Context, opts ...auditOption) auditFn {
+func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 	var options options
 	for _, opt := range opts {
 		err := opt(&options)

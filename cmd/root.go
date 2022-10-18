@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/spf13/cobra"
@@ -39,14 +38,15 @@ func rootCmd() *cobra.Command {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute(ctx context.Context) error {
 	cmd := rootCmd()
 
-	err := cmd.ExecuteContext(context.Background())
+	err := cmd.ExecuteContext(ctx)
 	if err != nil {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Opcap tool execution failed: %v\n", err)
-		os.Exit(1)
+		return ctx.Err()
 	}
+	return nil
 }
 
 // kubeConfig return kubernetes cluster config

@@ -9,7 +9,6 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
@@ -182,32 +181,13 @@ func withCustomResources(customResources []map[string]interface{}) auditOption {
 	}
 }
 
-type options struct {
-	Subscription      *operator.SubscriptionData
-	operatorGroupData *operator.OperatorGroupData
-	namespace         string
-	client            operator.Client
-	CsvTimeout        bool
-	csvWaitTime       time.Duration
-	Csv               *v1alpha1.ClusterServiceVersion
-	OcpVersion        string
-	customResources   []map[string]interface{}
-	operands          []unstructured.Unstructured
-}
-
-type auditFn func(context.Context) error
-
 // New returns a function corresponding to a passed in audit plan
-func newAudit(ctx context.Context, auditType string, opts ...auditOption) auditFn {
+func newAudit(ctx context.Context, auditType string, opts ...auditOption) (auditFn, auditCleanupFn) {
 	switch strings.ToLower(auditType) {
 	case "operatorinstall":
 		return operatorInstall(ctx, opts...)
-	case "operatorcleanup":
-		return operatorCleanUp(ctx, opts...)
 	case "operandinstall":
 		return operandInstall(ctx, opts...)
-	case "operandcleanup":
-		return operandCleanUp(ctx, opts...)
 	}
-	return nil
+	return nil, nil
 }
