@@ -8,9 +8,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	olmfake "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -37,15 +37,8 @@ var _ = Describe("CSV", func() {
 			WithScheme(scheme).
 			Build()
 
-		objs := []runtime.Object{
-			&csv,
-		}
-
-		fakeOlmClient := olmfake.NewSimpleClientset(objs...)
-
 		client = operatorClient{
-			Client:    fakeClient,
-			OlmClient: fakeOlmClient,
+			Client: fakeClient,
 		}
 	})
 	When("testing for a CSV", func() {
@@ -63,11 +56,12 @@ var _ = Describe("CSV", func() {
 				time.Sleep(time.Millisecond)
 				updatedCsv := csv.DeepCopy()
 				updatedCsv.Status.Phase = operatorv1alpha1.CSVPhaseSucceeded
-				Expect(client.OlmClient.OperatorsV1alpha1().ClusterServiceVersions("testns").UpdateStatus(
+				Expect(client.Client.Status().Update(
 					context.Background(),
 					updatedCsv,
-					metav1.UpdateOptions{},
-				)).ToNot(BeNil())
+					&runtimeClient.UpdateOptions{},
+				)).To(BeNil())
+				Expect(updatedCsv).ToNot(BeNil())
 
 				Eventually(done, time.Second*60).Should(BeClosed())
 				Expect(err).ToNot(HaveOccurred())
