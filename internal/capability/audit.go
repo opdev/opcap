@@ -53,10 +53,16 @@ type capAudit struct {
 
 func generateNamespace(packageName string, installMode string) string {
 	installModeString := string(installMode)
-	namespaceLength := 63 - len("opcap-") - len(installModeString) - 1
+
+	packageNameMaxLength := 63 - len("opcap-") - len(installModeString) - 1
+
+	if len(packageName) > packageNameMaxLength {
+		packageName = packageName[:packageNameMaxLength]
+	}
+
 	return strings.Join([]string{
 		"opcap",
-		packageName[:namespaceLength],
+		packageName,
 		installModeString,
 	}, "-")
 }
