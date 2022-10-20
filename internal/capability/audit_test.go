@@ -22,8 +22,7 @@ var _ = Describe("Audit tests", func() {
 					APIVersion: "config.openshift.io/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "version",
-					Namespace: "testns",
+					Name: "version",
 				},
 				Spec: configv1.ClusterVersionSpec{},
 				Status: configv1.ClusterVersionStatus{
@@ -36,13 +35,6 @@ var _ = Describe("Audit tests", func() {
 					},
 				},
 			}
-			verlist := configv1.ClusterVersionList{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ClusterVersion",
-					APIVersion: "config.openshift.io/v1",
-				},
-				Items: []configv1.ClusterVersion{ver},
-			}
 			sub := operator.SubscriptionData{
 				Package:         "thisisareallylongnamethatwillneedtobetrimmedandwillotherwisecauseanerror",
 				InstallModeType: v1alpha1.InstallModeTypeAllNamespaces,
@@ -50,7 +42,7 @@ var _ = Describe("Audit tests", func() {
 				Channel:         "testchannel",
 			}
 			expectedNamespace := "opcap-thisisareallylongnamethatwillneedtobetrimme-allnamespaces"
-			client := operator.NewFakeOpClient([]runtime.Object{&verlist}...)
+			client := operator.NewFakeOpClient([]runtime.Object{&ver}...)
 			audit, err := newCapAudit(context.Background(), client, sub, []string{}, []map[string]interface{}{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(audit.namespace).To(Equal(expectedNamespace))
