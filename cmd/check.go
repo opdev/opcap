@@ -1,16 +1,19 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"io"
 
 	"github.com/opdev/opcap/internal/capability"
 	"github.com/opdev/opcap/internal/operator"
+	"k8s.io/client-go/rest"
 
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
-type CheckCommandFlags struct {
+type checkCommandFlags struct {
 	AuditPlan              []string `json:"auditPlan"`
 	CatalogSource          string   `json:"catalogsource"`
 	CatalogSourceNamespace string   `json:"catalogsourcenamespace"`
@@ -19,7 +22,7 @@ type CheckCommandFlags struct {
 	ExtraCRDirectory       string   `json:"extraCRDirectory"`
 }
 
-var checkflags CheckCommandFlags
+var checkflags checkCommandFlags
 
 // TODO: provide godoc compatible comment for checkCmd
 func checkCmd() *cobra.Command {
@@ -31,41 +34,7 @@ requirements for Operator Capabilities Level to attest operator
 advanced features by running custom resources provided by CSVs
 and/or users.`,
 		Example: "opcap check --catalogsource=certified-operators --catalogsourcenamespace=openshift-marketplace",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			kubeconfig, err := kubeConfig()
-			if err != nil {
-				return fmt.Errorf("could not get kubeconfig: %v", err)
-			}
-
-			client, err := operator.NewOpCapClient(kubeconfig)
-			if err != nil {
-				return fmt.Errorf("could not create client: %v", err)
-			}
-
-			capAuditor := &capability.CapAuditor{
-				AuditPlan:              checkflags.AuditPlan,
-				CatalogSource:          checkflags.CatalogSource,
-				CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
-				Packages:               checkflags.Packages,
-				AllInstallModes:        checkflags.AllInstallModes,
-				OpCapClient:            client,
-			}
-
-			if checkflags.ExtraCRDirectory != "" {
-				if err := capAuditor.ExtraCRDirectory(checkflags.ExtraCRDirectory); err != nil {
-					return err
-				}
-			}
-
-			fs := afero.NewOsFs()
-
-			// run all dynamically built audits in the auditor workqueue
-			if err := capAuditor.RunAudits(cmd.Context(), fs, cmd.OutOrStdout()); err != nil {
-				return err
-			}
-
-			return nil
-		},
+		RunE:    checkRunE,
 	}
 
 	defaultAuditPlan := []string{"OperatorInstall", "OperatorCleanUp"}
@@ -83,4 +52,44 @@ and/or users.`,
 		"directory containing the additional Custom Resources to be deployed by the OperandInstall audit. The manifest files should be located in subdirectories named after the packages they are corresponding to.")
 
 	return cmd
+}
+
+func checkRunE(cmd *cobra.Command, args []string) error {
+	kubeconfig, err := kubeConfig()
+	if err != nil {
+		return fmt.Errorf("could not get kubeconfig: %v", err)
+	}
+
+	client, err := operator.NewOpCapClient(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("could not create client: %v", err)
+	}
+
+	fs := afero.NewOsFs()
+
+	return runAudits(cmd.Context(), kubeconfig, client, fs, cmd.OutOrStdout())
+}
+
+func runAudits(ctx context.Context, kubeconfig *rest.Config, client operator.Client, fs afero.Fs, reportWriter io.Writer) error {
+	capAuditor := &capability.CapAuditor{
+		AuditPlan:              checkflags.AuditPlan,
+		CatalogSource:          checkflags.CatalogSource,
+		CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
+		Packages:               checkflags.Packages,
+		AllInstallModes:        checkflags.AllInstallModes,
+		OpCapClient:            client,
+	}
+
+	if checkflags.ExtraCRDirectory != "" {
+		if err := capAuditor.ExtraCRDirectory(checkflags.ExtraCRDirectory); err != nil {
+			return err
+		}
+	}
+
+	// run all dynamically built audits in the auditor workqueue
+	if err := capAuditor.RunAudits(ctx, fs, reportWriter); err != nil {
+		return err
+	}
+
+	return nil
 }
