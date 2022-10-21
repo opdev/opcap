@@ -227,6 +227,9 @@ func (ca *CapAuditor) RunAudits(ctx context.Context) error {
 				break
 			}
 		}
+
+		// Perform the cleanups now for this audit
+		ca.cleanup(ctx, &cleanups)
 	}
 	return nil
 }
