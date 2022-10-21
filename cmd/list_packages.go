@@ -49,6 +49,7 @@ func listPackagesRunE(cmd *cobra.Command, args []string) error {
 
 	c, err := client.New(k8sconfig, client.Options{Scheme: scheme})
 	if err != nil {
+		return err
 	}
 
 	return listPackages(cmd.Context(), cmd.OutOrStdout(), c)
