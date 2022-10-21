@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/opdev/opcap/internal/logger"
+	"github.com/opdev/opcap/internal/report"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -53,7 +54,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 	}
 
 	return func(ctx context.Context) error {
-		logger.Debugw("installing operand for operator", "package", options.Subscription.Package, "channel", options.Subscription.Channel, "installmode", options.Subscription.InstallModeType)
+		logger.Debugw("installing operand for operator", "package", options.subscription.Package, "channel", options.subscription.Channel, "installmode", options.subscription.InstallModeType)
 
 		if err := extractAlmExamples(ctx, &options); err != nil {
 			logger.Errorf("could not get ALM Examples: %v", err)
@@ -68,7 +69,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 		if err != nil {
 			return fmt.Errorf("could not get CSV: %v", err)
 		}
-		options.Csv = csv
+		options.csv = csv
 
 		if strings.ToLower(string(csv.Status.Phase)) != "succeeded" {
 			return fmt.Errorf("exiting OperandInstall since CSV install has failed")
@@ -96,11 +97,25 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 		}
 		defer file.Close()
 
-		if err := operandInstallJsonReport(file, options); err != nil {
+		err = report.OperandInstallJsonReport(file, report.TemplateData{
+			CustomResources: options.customResources,
+			OcpVersion:      options.ocpVersion,
+			Subscription:    *options.subscription,
+			Csv:             options.csv,
+			OperandCount:    len(options.operands),
+		})
+		if err != nil {
 			return fmt.Errorf("could not generate operand install JSON report: %v", err)
 		}
 
-		if err := operandInstallTextReport(os.Stdout, options); err != nil {
+		err = report.OperandInstallTextReport(os.Stdout, report.TemplateData{
+			CustomResources: options.customResources,
+			OcpVersion:      options.ocpVersion,
+			Subscription:    *options.subscription,
+			Csv:             options.csv,
+			OperandCount:    len(options.operands),
+		})
+		if err != nil {
 			return fmt.Errorf("could not generate operand install text report: %v", err)
 		}
 

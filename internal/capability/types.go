@@ -11,14 +11,14 @@ import (
 )
 
 type options struct {
-	Subscription      *operator.SubscriptionData
+	subscription      *operator.SubscriptionData
 	operatorGroupData *operator.OperatorGroupData
 	namespace         string
 	client            operator.Client
-	CsvTimeout        bool
+	csvTimeout        bool
 	csvWaitTime       time.Duration
-	Csv               *v1alpha1.ClusterServiceVersion
-	OcpVersion        string
+	csv               *v1alpha1.ClusterServiceVersion
+	ocpVersion        string
 	customResources   []map[string]interface{}
 	operands          []unstructured.Unstructured
 }

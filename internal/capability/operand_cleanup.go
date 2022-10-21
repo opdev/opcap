@@ -23,8 +23,8 @@ func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 	}
 
 	return func(ctx context.Context) error {
-		logger.Debugw("cleaningUp operand for operator", "package", options.Subscription.Package, "channel", options.Subscription.Channel, "installmode",
-			options.Subscription.InstallModeType)
+		logger.Debugw("cleaningUp operand for operator", "package", options.subscription.Package, "channel", options.subscription.Channel, "installmode",
+			options.subscription.InstallModeType)
 
 		if len(options.customResources) > 0 {
 			for _, cr := range options.customResources {
@@ -42,7 +42,7 @@ func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 				if !apierrors.IsNotFound(err) && obj != nil {
 					// delete the resource using the dynamic client
 					if err := options.client.DeleteUnstructured(ctx, obj); err != nil {
-						logger.Debugf("failed operandCleanUp: package: %s error: %s\n", options.Subscription.Package, err.Error())
+						logger.Debugf("failed operandCleanUp: package: %s error: %s\n", options.subscription.Package, err.Error())
 						return err
 					}
 				}
