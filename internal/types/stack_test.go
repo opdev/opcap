@@ -1,4 +1,4 @@
-package capability
+package types
 
 import (
 	. "github.com/onsi/ginkgo/v2"

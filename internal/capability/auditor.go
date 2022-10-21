@@ -11,6 +11,7 @@ import (
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
+	"github.com/opdev/opcap/internal/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -173,14 +174,14 @@ func (ca *CapAuditor) buildWorkQueueByCatalog(ctx context.Context, c operator.Cl
 	return nil
 }
 
-func (ca *CapAuditor) cleanup(ctx context.Context, stack *Stack[auditCleanupFn]) {
+func (ca *CapAuditor) cleanup(ctx context.Context, stack *types.Stack[auditCleanupFn]) {
 	if stack == nil {
 		return
 	}
 	for !stack.Empty() {
 		logger.Debugw("cleaning up...")
 		cleaner, err := stack.Pop()
-		if errors.Is(err, StackEmptyError) {
+		if errors.Is(err, types.StackEmptyError) {
 			break
 		}
 		if err := cleaner(ctx); err != nil {
@@ -192,7 +193,7 @@ func (ca *CapAuditor) cleanup(ctx context.Context, stack *Stack[auditCleanupFn])
 
 // RunAudits executes all selected functions in order for a given audit at a time
 func (ca *CapAuditor) RunAudits(ctx context.Context) error {
-	cleanups := Stack[auditCleanupFn]{}
+	cleanups := types.Stack[auditCleanupFn]{}
 	defer ca.cleanup(ctx, &cleanups)
 
 	err := ca.buildWorkQueueByCatalog(ctx, ca.OpCapClient)
