@@ -36,7 +36,7 @@ var _ = Describe("PackageList Cmd", func() {
 				}
 				fakeClientBuilder := fake.NewClientBuilder().WithScheme(scheme)
 				fakeClient := fakeClientBuilder.WithObjects([]client.Object{packageManifest}...).Build()
-				output, err := executeCommand(packageListCmd(fakeClient), []string{"--catalogsource=test-catalogsource"}...)
+				output, err := executeCommand(listPackagesCmd(fakeClient), []string{"--catalogsource=test-catalogsource"}...)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(MatchRegexp("test\\s+test-catalogsource\\s+test-catalogsourcename"))
 			})
@@ -46,7 +46,7 @@ var _ = Describe("PackageList Cmd", func() {
 				By("removing the scheme", func() {
 					builder := fake.NewClientBuilder()
 					fakeClient := builder.WithLists().Build()
-					_, err := executeCommand(packageListCmd(fakeClient))
+					_, err := executeCommand(listPackagesCmd(fakeClient))
 					Expect(err).To(HaveOccurred())
 				})
 			})

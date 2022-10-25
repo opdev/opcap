@@ -16,9 +16,9 @@ var packageListFlags struct {
 	Packages      []string
 }
 
-func packageListCmd(client client.Client) *cobra.Command {
+func listPackagesCmd(client client.Client) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "list",
+		Use:   "packages",
 		Short: "List the package manifests for a given CatalogSource and Namespace",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			packageManifestList, err := packages.List(cmd.Context(), client, packageListFlags.CatalogSource, packageListFlags.Packages)

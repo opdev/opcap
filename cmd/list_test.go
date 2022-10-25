@@ -14,7 +14,7 @@ var _ = Describe("Package CMD", func() {
 	})
 	When("Initializing the command", func() {
 		It("should fail", func() {
-			cmd := packageCmd()
+			cmd := listCmd()
 			// If PreRunE && Run are not nil, there was a failure
 			Expect(cmd.PreRunE).ToNot(BeNil())
 			Expect(cmd.Run).ToNot(BeNil())
@@ -22,7 +22,7 @@ var _ = Describe("Package CMD", func() {
 	})
 	When("Executing the command", func() {
 		It("should fail", func() {
-			out, err := executeCommand(packageCmd())
+			out, err := executeCommand(listCmd())
 			Expect(err).To(HaveOccurred())
 			Expect(out).To(ContainSubstring("unable to establish kubeconfig"))
 		})

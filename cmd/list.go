@@ -19,14 +19,14 @@ func errorPreRunE(message string, err error) func(cmd *cobra.Command, args []str
 	}
 }
 
-func packageCmd() *cobra.Command {
+func listCmd() *cobra.Command {
 	// Run is empty. Otherwise, on an error, it would not be marked
 	// as Runnable, which would not print out the usage/help.
 	// TODO: Can we add the subcommand before the client is established?
 	cmd := cobra.Command{
-		Use:   "package",
-		Short: "Package commands",
-		Long:  "Commands that will operate on package manifests",
+		Use:   "list",
+		Short: "List commands",
+		Long:  "Commands that will list various object",
 		Run:   func(cmd *cobra.Command, args []string) {},
 	}
 
@@ -48,7 +48,7 @@ func packageCmd() *cobra.Command {
 		return &cmd
 	}
 
-	cmd.AddCommand(packageListCmd(c))
+	cmd.AddCommand(listPackagesCmd(c))
 
 	// We have the subcommand now, so make Run nil to trigger the usage/help
 	// properly when no other subcommands are present on the CLI.
