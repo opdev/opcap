@@ -60,7 +60,7 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 		}
 		options.Csv = resultCSV
 
-		file, err := os.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		file, err := options.fs.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}

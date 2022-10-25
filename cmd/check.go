@@ -6,6 +6,7 @@ import (
 	"github.com/opdev/opcap/internal/capability"
 	"github.com/opdev/opcap/internal/operator"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -56,8 +57,10 @@ and/or users.`,
 				}
 			}
 
+			fs := afero.NewOsFs()
+
 			// run all dynamically built audits in the auditor workqueue
-			if err := capAuditor.RunAudits(cmd.Context()); err != nil {
+			if err := capAuditor.RunAudits(cmd.Context(), fs); err != nil {
 				return err
 			}
 

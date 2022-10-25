@@ -104,6 +104,7 @@ require (
 
 require (
 	github.com/onsi/gomega v1.20.2
+	github.com/spf13/afero v1.6.0
 	go.uber.org/zap v1.23.0
 	k8s.io/apiextensions-apiserver v0.24.0
 )
