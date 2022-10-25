@@ -3,6 +3,7 @@ package capability
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -192,6 +193,17 @@ func withCustomResources(customResources []map[string]interface{}) auditOption {
 func withFilesystem(fs afero.Fs) auditOption {
 	return func(options *options) error {
 		options.fs = fs
+		return nil
+	}
+}
+
+// withReportWriter adds an io.Writer to be used for outputing the test reports
+func withReportWriter(w io.Writer) auditOption {
+	return func(options *options) error {
+		if w == nil {
+			return fmt.Errorf("report writer cannot be nil")
+		}
+		options.reportWriter = w
 		return nil
 	}
 }

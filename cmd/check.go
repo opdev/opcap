@@ -60,7 +60,7 @@ and/or users.`,
 			fs := afero.NewOsFs()
 
 			// run all dynamically built audits in the auditor workqueue
-			if err := capAuditor.RunAudits(cmd.Context(), fs); err != nil {
+			if err := capAuditor.RunAudits(cmd.Context(), fs, cmd.OutOrStdout()); err != nil {
 				return err
 			}
 

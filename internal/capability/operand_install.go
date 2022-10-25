@@ -108,7 +108,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 			return fmt.Errorf("could not generate operand install JSON report: %v", err)
 		}
 
-		err = report.OperandInstallTextReport(os.Stdout, report.TemplateData{
+		err = report.OperandInstallTextReport(options.reportWriter, report.TemplateData{
 			CustomResources: options.customResources,
 			OcpVersion:      options.ocpVersion,
 			Subscription:    *options.subscription,
