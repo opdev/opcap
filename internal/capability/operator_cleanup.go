@@ -8,7 +8,7 @@ import (
 )
 
 func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
-	var options options
+	var options auditOptions
 	for _, opt := range opts {
 		err := opt(&options)
 		if err != nil {

@@ -12,7 +12,7 @@ import (
 
 // OperandCleanup removes the operand from the OCP cluster in the ca.namespace
 func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
-	var options options
+	var options auditOptions
 	for _, opt := range opts {
 		err := opt(&options)
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/opdev/opcap/internal/capability"
 	"github.com/opdev/opcap/internal/operator"
@@ -37,7 +38,7 @@ and/or users.`,
 		RunE:    checkRunE,
 	}
 
-	defaultAuditPlan := []string{"OperatorInstall", "OperatorCleanUp"}
+	defaultAuditPlan := []string{"OperatorInstall"}
 
 	flags := cmd.Flags()
 
@@ -71,23 +72,19 @@ func checkRunE(cmd *cobra.Command, args []string) error {
 }
 
 func runAudits(ctx context.Context, kubeconfig *rest.Config, client operator.Client, fs afero.Fs, reportWriter io.Writer) error {
-	capAuditor := &capability.CapAuditor{
-		AuditPlan:              checkflags.AuditPlan,
-		CatalogSource:          checkflags.CatalogSource,
-		CatalogSourceNamespace: checkflags.CatalogSourceNamespace,
-		Packages:               checkflags.Packages,
-		AllInstallModes:        checkflags.AllInstallModes,
-		OpCapClient:            client,
-	}
-
-	if checkflags.ExtraCRDirectory != "" {
-		if err := capAuditor.ExtraCRDirectory(checkflags.ExtraCRDirectory); err != nil {
-			return err
-		}
-	}
-
 	// run all dynamically built audits in the auditor workqueue
-	if err := capAuditor.RunAudits(ctx, fs, reportWriter); err != nil {
+	if err := capability.RunAudits(ctx,
+		capability.WithAuditPlan(checkflags.AuditPlan),
+		capability.WithCatalogSource(checkflags.CatalogSource),
+		capability.WithCatalogSourceNamespace(checkflags.CatalogSourceNamespace),
+		capability.WithPackages(checkflags.Packages),
+		capability.WithAllInstallModes(checkflags.AllInstallModes),
+		capability.WithClient(client),
+		capability.WithExtraCRDirectory(checkflags.ExtraCRDirectory),
+		capability.WithFilesystem(fs),
+		capability.WithTimeout(time.Minute),
+		capability.WithReportWriter(reportWriter),
+	); err != nil {
 		return err
 	}
 
