@@ -11,6 +11,7 @@ import (
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
+	"github.com/spf13/afero"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -191,7 +192,7 @@ func (ca *CapAuditor) cleanup(ctx context.Context, stack *Stack[auditCleanupFn])
 }
 
 // RunAudits executes all selected functions in order for a given audit at a time
-func (ca *CapAuditor) RunAudits(ctx context.Context) error {
+func (ca *CapAuditor) RunAudits(ctx context.Context, fs afero.Fs) error {
 	cleanups := Stack[auditCleanupFn]{}
 	defer ca.cleanup(ctx, &cleanups)
 
@@ -215,6 +216,7 @@ func (ca *CapAuditor) RunAudits(ctx context.Context) error {
 				withSubscription(&audit.subscription),
 				withTimeout(int(audit.csvWaitTime)),
 				withCustomResources(audit.customResources),
+				withFilesystem(fs),
 			)
 			if auditFn == nil {
 				logger.Errorf("invalid audit plan specified: %s", function)

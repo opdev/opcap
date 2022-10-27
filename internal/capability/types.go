@@ -7,6 +7,7 @@ import (
 
 	"github.com/opdev/opcap/internal/operator"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/spf13/afero"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -21,6 +22,7 @@ type options struct {
 	OcpVersion        string
 	customResources   []map[string]interface{}
 	operands          []unstructured.Unstructured
+	fs                afero.Fs
 }
 
 type (

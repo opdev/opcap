@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/opdev/opcap/internal/operator"
+	"github.com/spf13/afero"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -183,6 +184,14 @@ func withOcpVersion(ocpVersion string) auditOption {
 func withCustomResources(customResources []map[string]interface{}) auditOption {
 	return func(options *options) error {
 		options.customResources = customResources
+		return nil
+	}
+}
+
+// withFilesystem adds a filesystem to be used for writing files
+func withFilesystem(fs afero.Fs) auditOption {
+	return func(options *options) error {
+		options.fs = fs
 		return nil
 	}
 }

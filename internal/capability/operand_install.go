@@ -90,7 +90,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 			options.operands = append(options.operands, *obj)
 		}
 
-		file, err := os.OpenFile("operand_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		file, err := options.fs.OpenFile("operand_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}
