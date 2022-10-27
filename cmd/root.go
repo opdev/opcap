@@ -31,7 +31,7 @@ func rootCmd() *cobra.Command {
 	cmd.AddCommand(uploadCmd())
 	cmd.AddCommand(versionCmd())
 	cmd.AddCommand(checkCmd())
-	cmd.AddCommand(packageCmd())
+	cmd.AddCommand(listCmd())
 
 	return &cmd
 }
