@@ -8,6 +8,7 @@ import (
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
+	"github.com/opdev/opcap/internal/report"
 )
 
 func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCleanupFn) {
@@ -25,7 +26,7 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 	}
 
 	return func(ctx context.Context) error {
-		logger.Debugw("installing package", "package", options.Subscription.Package, "channel", options.Subscription.Channel, "installmode", options.Subscription.InstallModeType)
+		logger.Debugw("installing package", "package", options.subscription.Package, "channel", options.subscription.Channel, "installmode", options.subscription.InstallModeType)
 
 		// create operator's own namespace
 		if _, err := options.client.CreateNamespace(ctx, options.namespace); err != nil {
@@ -43,7 +44,7 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 		options.client.CreateOperatorGroup(ctx, *options.operatorGroupData, options.namespace)
 
 		// create subscription for operator package/channel
-		if _, err := options.client.CreateSubscription(ctx, *options.Subscription, options.namespace); err != nil {
+		if _, err := options.client.CreateSubscription(ctx, *options.subscription, options.namespace); err != nil {
 			logger.Debugf("Error creating subscriptions: %w", err)
 			return err
 		}
@@ -53,12 +54,12 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 		if err != nil {
 			// If error is timeout than don't log phase but timeout
 			if errors.Is(err, operator.TimeoutError) {
-				options.CsvTimeout = true
+				options.csvTimeout = true
 			} else {
 				return err
 			}
 		}
-		options.Csv = resultCSV
+		options.csv = resultCSV
 
 		file, err := options.fs.OpenFile("operator_install_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
@@ -66,11 +67,23 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 		}
 		defer file.Close()
 
-		if err := operatorInstallJsonReport(file, options); err != nil {
+		err = report.OperatorInstallJsonReport(file, report.TemplateData{
+			OcpVersion:   options.ocpVersion,
+			Subscription: *options.subscription,
+			Csv:          options.csv,
+			CsvTimeout:   options.csvTimeout,
+		})
+		if err != nil {
 			return fmt.Errorf("could not generate operator install JSON report: %v", err)
 		}
 
-		if err := operatorInstallTextReport(os.Stdout, options); err != nil {
+		err = report.OperatorInstallTextReport(os.Stdout, report.TemplateData{
+			OcpVersion:   options.ocpVersion,
+			Subscription: *options.subscription,
+			Csv:          options.csv,
+			CsvTimeout:   options.csvTimeout,
+		})
+		if err != nil {
 			return fmt.Errorf("could not generate operator install text report: %v", err)
 		}
 

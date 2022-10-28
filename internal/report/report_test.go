@@ -1,4 +1,4 @@
-package capability
+package report
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("Report", func() {
 	Describe("Template process test", func() {
-		When("an invaild template is passed", func() {
+		When("an invalid template is passed", func() {
 			It("should return an error", func() {
 				Expect(processTemplate(&strings.Builder{}, "{{ .Invalid }", &struct{}{})).ToNot(Succeed())
 			})
@@ -26,21 +26,19 @@ var _ = Describe("Report", func() {
 	})
 	Describe("Report template tests", func() {
 		var w strings.Builder
-		var opts options
+		var data TemplateData
 
 		BeforeEach(func() {
 			DeferCleanup(w.Reset)
-			opts = options{
-				Subscription: &operator.SubscriptionData{
+			data = TemplateData{
+				OcpVersion: "",
+				Subscription: operator.SubscriptionData{
 					Name:            "testsub",
 					Channel:         "test",
-					InstallModeType: v1alpha1.InstallModeTypeAllNamespaces,
-					Package:         "testpackage",
 					CatalogSource:   "testcatalog",
+					Package:         "testpackage",
+					InstallModeType: "v1alpha1.InstallModeTypeAllNamespaces",
 				},
-				operatorGroupData: &operator.OperatorGroupData{},
-				namespace:         "testns",
-				CsvTimeout:        false,
 				Csv: &v1alpha1.ClusterServiceVersion{
 					Status: v1alpha1.ClusterServiceVersionStatus{
 						Phase:   v1alpha1.CSVPhaseSucceeded,
@@ -48,8 +46,8 @@ var _ = Describe("Report", func() {
 						Reason:  v1alpha1.CSVReasonInstallSuccessful,
 					},
 				},
-				OcpVersion: "4.11",
-				customResources: []map[string]interface{}{
+				CsvTimeout: false,
+				CustomResources: []map[string]interface{}{
 					{
 						"kind": "testkind",
 						"metadata": map[string]interface{}{
@@ -57,7 +55,7 @@ var _ = Describe("Report", func() {
 						},
 					},
 				},
-				operands: []unstructured.Unstructured{
+				Operands: []unstructured.Unstructured{
 					{
 						Object: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -67,22 +65,23 @@ var _ = Describe("Report", func() {
 						},
 					},
 				},
+				OperandCount: 1,
 			}
 		})
 		Context("Operator reports", func() {
 			When("generating a JSON report", func() {
 				When("given successful data", func() {
 					It("should create a valid JSON report", func() {
-						Expect(operatorInstallJsonReport(&w, opts)).To(Succeed())
+						Expect(OperatorInstallJsonReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(MatchJSON(`{"level":"info","message":"Succeeded","package":"testpackage","channel":"test","installmode":"AllNamespaces"}`))
 					})
 				})
 				When("given a timeout", func() {
 					BeforeEach(func() {
-						opts.CsvTimeout = true
+						data.CsvTimeout = true
 					})
 					It("should report a timeout", func() {
-						Expect(operatorInstallJsonReport(&w, opts)).To(Succeed())
+						Expect(OperatorInstallJsonReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(MatchJSON(`{"level":"info","message":"timeout","package":"testpackage","channel":"test","installmode":"AllNamespaces"}`))
 					})
 				})
@@ -90,7 +89,7 @@ var _ = Describe("Report", func() {
 			When("generating a text report", func() {
 				When("given successful data", func() {
 					It("should print a report", func() {
-						Expect(operatorInstallTextReport(&w, opts)).To(Succeed())
+						Expect(OperatorInstallTextReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(ContainSubstring("OpenShift Version: %s", "4.11"))
 						Expect(w.String()).To(ContainSubstring("Package Name: %s", "testpackage"))
 						Expect(w.String()).To(ContainSubstring("Channel: %s", "test"))
@@ -103,10 +102,10 @@ var _ = Describe("Report", func() {
 				})
 				When("given a timeout", func() {
 					BeforeEach(func() {
-						opts.CsvTimeout = true
+						data.CsvTimeout = true
 					})
 					It("should report a timeout", func() {
-						Expect(operatorInstallTextReport(&w, opts)).To(Succeed())
+						Expect(OperatorInstallTextReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(ContainSubstring("Result: %s", "timeout"))
 					})
 				})
@@ -116,16 +115,16 @@ var _ = Describe("Report", func() {
 			When("generating a JSON report", func() {
 				When("given successful data", func() {
 					It("should create a valid JSON report", func() {
-						Expect(operandInstallJsonReport(&w, opts)).To(Succeed())
+						Expect(OperandInstallJsonReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(MatchJSON(`{"package":"testpackage","Operand Kind":"testkind","Operand Name":"testname","message":"created"}`))
 					})
 				})
 				When("given no operands", func() {
 					BeforeEach(func() {
-						opts.operands = []unstructured.Unstructured{}
+						data.Operands = []unstructured.Unstructured{}
 					})
 					It("should report failed", func() {
-						Expect(operandInstallJsonReport(&w, opts)).To(Succeed())
+						Expect(OperandInstallJsonReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(MatchJSON(`{"package":"testpackage","Operand Kind":"testkind","Operand Name":"testname","message":"failed"}`))
 					})
 				})
@@ -133,7 +132,7 @@ var _ = Describe("Report", func() {
 			When("generating a text report", func() {
 				When("given successful data", func() {
 					It("should print a report", func() {
-						Expect(operandInstallTextReport(&w, opts)).To(Succeed())
+						Expect(OperandInstallTextReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(ContainSubstring("OpenShift Version: %s", "4.11"))
 						Expect(w.String()).To(ContainSubstring("Package Name: %s", "testpackage"))
 						Expect(w.String()).To(ContainSubstring("Operand Kind: %s", "testkind"))
@@ -143,10 +142,10 @@ var _ = Describe("Report", func() {
 				})
 				When("given no operands", func() {
 					BeforeEach(func() {
-						opts.operands = []unstructured.Unstructured{}
+						data.Operands = []unstructured.Unstructured{}
 					})
 					It("should report failed", func() {
-						Expect(operandInstallTextReport(&w, opts)).To(Succeed())
+						Expect(OperandInstallTextReport(&w, data)).To(Succeed())
 						Expect(w.String()).To(ContainSubstring("Operand Creation: %s", "Failed"))
 					})
 				})

@@ -1,4 +1,4 @@
-package capability
+package report
 
 import (
 	"io"
@@ -51,19 +51,14 @@ No custom resources
 {{ end }}{{ end }}`
 )
 
-type operatorTemplateData struct {
-	OcpVersion   string
-	Subscription operator.SubscriptionData
-	Csv          *operatorv1alpha1.ClusterServiceVersion
-	CsvTimeout   bool
-}
-
-type operandTemplateData struct {
-	CustomResources []map[string]interface{}
+type TemplateData struct {
 	OcpVersion      string
 	Subscription    operator.SubscriptionData
 	Csv             *operatorv1alpha1.ClusterServiceVersion
+	CsvTimeout      bool
+	CustomResources []map[string]interface{}
 	OperandCount    int
+	Operands        []unstructured.Unstructured
 }
 
 func processTemplate(w io.Writer, tmpl string, data interface{}) error {
@@ -83,44 +78,6 @@ func processTemplate(w io.Writer, tmpl string, data interface{}) error {
 	return nil
 }
 
-func operatorInstallJsonReport(w io.Writer, ca options) error {
-	return processTemplate(w, operatorJsonReportTemplate, operatorTemplateData{
-		OcpVersion:   ca.OcpVersion,
-		Subscription: *ca.Subscription,
-		Csv:          ca.Csv,
-		CsvTimeout:   ca.CsvTimeout,
-	})
-}
-
-func operatorInstallTextReport(w io.Writer, ca options) error {
-	return processTemplate(w, operatorTextReportTemplate, operatorTemplateData{
-		OcpVersion:   ca.OcpVersion,
-		Subscription: *ca.Subscription,
-		Csv:          ca.Csv,
-		CsvTimeout:   ca.CsvTimeout,
-	})
-}
-
-func operandInstallTextReport(w io.Writer, ca options) error {
-	return processTemplate(w, operandTextReportTemplate, operandTemplateData{
-		CustomResources: ca.customResources,
-		OcpVersion:      ca.OcpVersion,
-		Subscription:    *ca.Subscription,
-		Csv:             ca.Csv,
-		OperandCount:    len(ca.operands),
-	})
-}
-
-func operandInstallJsonReport(w io.Writer, ca options) error {
-	return processTemplate(w, operandJsonReportTemplate, operandTemplateData{
-		CustomResources: ca.customResources,
-		OcpVersion:      ca.OcpVersion,
-		Subscription:    *ca.Subscription,
-		Csv:             ca.Csv,
-		OperandCount:    len(ca.operands),
-	})
-}
-
 func unstructuredKind(cr map[string]interface{}) string {
 	operand := &unstructured.Unstructured{Object: cr}
 	return operand.GetKind()
@@ -129,4 +86,20 @@ func unstructuredKind(cr map[string]interface{}) string {
 func unstructuredName(cr map[string]interface{}) string {
 	operand := &unstructured.Unstructured{Object: cr}
 	return operand.GetName()
+}
+
+func OperatorInstallJsonReport(w io.Writer, data TemplateData) error {
+	return processTemplate(w, operatorJsonReportTemplate, data)
+}
+
+func OperatorInstallTextReport(w io.Writer, data TemplateData) error {
+	return processTemplate(w, operatorTextReportTemplate, data)
+}
+
+func OperandInstallTextReport(w io.Writer, data TemplateData) error {
+	return processTemplate(w, operandTextReportTemplate, data)
+}
+
+func OperandInstallJsonReport(w io.Writer, data TemplateData) error {
+	return processTemplate(w, operandJsonReportTemplate, data)
 }

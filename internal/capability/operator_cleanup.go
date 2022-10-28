@@ -20,7 +20,7 @@ func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 
 	return func(ctx context.Context) error {
 		// delete subscription
-		if err := options.client.DeleteSubscription(ctx, options.Subscription.Name, options.namespace); err != nil {
+		if err := options.client.DeleteSubscription(ctx, options.subscription.Name, options.namespace); err != nil {
 			logger.Debugf("Error while deleting Subscription: %w", err)
 			return err
 		}

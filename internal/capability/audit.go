@@ -126,7 +126,7 @@ func withSubscription(subscription *operator.SubscriptionData) auditOption {
 		if subscription == nil {
 			return fmt.Errorf("subscription data cannot be nil")
 		}
-		options.Subscription = subscription
+		options.subscription = subscription
 		return nil
 	}
 }
@@ -175,7 +175,7 @@ func withTimeout(csvWaitTime int) auditOption {
 // WithOcpVersion adds the OCP version to the audit
 func withOcpVersion(ocpVersion string) auditOption {
 	return func(options *options) error {
-		options.OcpVersion = ocpVersion
+		options.ocpVersion = ocpVersion
 		return nil
 	}
 }
