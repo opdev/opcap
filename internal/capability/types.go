@@ -3,6 +3,7 @@ package capability
 import (
 	"context"
 	"errors"
+	"io"
 	"time"
 
 	"github.com/opdev/opcap/internal/operator"
@@ -23,6 +24,7 @@ type options struct {
 	customResources   []map[string]interface{}
 	operands          []unstructured.Unstructured
 	fs                afero.Fs
+	reportWriter      io.Writer
 }
 
 type (

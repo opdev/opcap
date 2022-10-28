@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -192,7 +193,7 @@ func (ca *CapAuditor) cleanup(ctx context.Context, stack *Stack[auditCleanupFn])
 }
 
 // RunAudits executes all selected functions in order for a given audit at a time
-func (ca *CapAuditor) RunAudits(ctx context.Context, fs afero.Fs) error {
+func (ca *CapAuditor) RunAudits(ctx context.Context, fs afero.Fs, reportWriter io.Writer) error {
 	cleanups := Stack[auditCleanupFn]{}
 	defer ca.cleanup(ctx, &cleanups)
 
@@ -217,6 +218,7 @@ func (ca *CapAuditor) RunAudits(ctx context.Context, fs afero.Fs) error {
 				withTimeout(int(audit.csvWaitTime)),
 				withCustomResources(audit.customResources),
 				withFilesystem(fs),
+				withReportWriter(reportWriter),
 			)
 			if auditFn == nil {
 				logger.Errorf("invalid audit plan specified: %s", function)

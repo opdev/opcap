@@ -77,7 +77,7 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 			return fmt.Errorf("could not generate operator install JSON report: %v", err)
 		}
 
-		err = report.OperatorInstallTextReport(os.Stdout, report.TemplateData{
+		err = report.OperatorInstallTextReport(options.reportWriter, report.TemplateData{
 			OcpVersion:   options.ocpVersion,
 			Subscription: *options.subscription,
 			Csv:          options.csv,
