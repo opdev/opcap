@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2/dsl/core"
 	. "github.com/onsi/gomega"
+	"github.com/opdev/opcap/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,10 @@ func TestCMD(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "CLI Suite")
 }
+
+var _ = BeforeSuite(func() {
+	Expect(logger.InitLogger("debug")).To(Succeed())
+})
 
 // executeCommand is used for cobra command testing. It is effectively what's seen here:
 // https://github.com/spf13/cobra/blob/master/command_test.go#L34-L43. It should only

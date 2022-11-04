@@ -215,6 +215,8 @@ func newAudit(ctx context.Context, auditType string, opts ...auditOption) (audit
 		return operatorInstall(ctx, opts...)
 	case "operandinstall":
 		return operandInstall(ctx, opts...)
+	case "fakeplan":
+		return func(ctx context.Context) error { return nil }, func(ctx context.Context) error { return nil }
 	}
 	return nil, nil
 }

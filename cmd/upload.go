@@ -14,12 +14,13 @@ import (
 	"github.com/gobuffalo/envy"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
 var osversion string
 
-type UploadCommandFlags struct {
+type uploadCommandFlags struct {
 	Bucket          string `json:"bucket"`
 	Path            string `json:"path"`
 	Endpoint        string `json:"endpoint"`
@@ -52,7 +53,7 @@ const (
 	HHMMSS24h = "150405"
 )
 
-var uploadflags UploadCommandFlags
+var uploadflags uploadCommandFlags
 
 // uploadCmd is used to upload objects to an S3 compatible backend using the MinIO client
 func uploadCmd() *cobra.Command {
@@ -90,6 +91,7 @@ func uploadPreRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not get kubeconfig: %v", err)
 	}
+
 	opClient, err := operator.NewOpCapClient(kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to initialize OpenShift client: %v", err)
@@ -116,23 +118,55 @@ func uploadRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
 	if trace {
 		minioClient.TraceOn(os.Stdout)
 	}
 
-	ctx, cancel := context.WithCancel(cmd.Context())
+	fs := afero.NewOsFs()
+
+	return upload(cmd.Context(), uploadflags, minioClient, fs, osversion)
+}
+
+type minioClient interface {
+	BucketExists(ctx context.Context, bucket string) (bool, error)
+	MakeBucket(ctx context.Context, bucket string, opts minio.MakeBucketOptions) error
+	FPutObject(ctx context.Context, bucket, path, file string, opts minio.PutObjectOptions) (minio.UploadInfo, error)
+}
+
+func loadAudits(ctx context.Context, fs afero.Fs, filename string) ([]Audit, error) {
+	// Initialize audits array with a capacity of 10 and a length of 0
+	audits := make([]Audit, 0, 10)
+	f, err := fs.Open(filename)
+	if err != nil {
+		return audits, err
+	}
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		var audit Audit
+		if err := json.Unmarshal(s.Bytes(), &audit); err != nil {
+			return audits, err
+		}
+		if audit.Message == "Succeeded" || audit.Message == "failed" || audit.Message == "timeout" {
+			audits = append(audits, audit)
+		}
+	}
+
+	return audits, nil
+}
+
+func upload(ctx context.Context, uploadFlags uploadCommandFlags, minioClient minioClient, fs afero.Fs, osversion string) error {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// check for bucket, create if it does not exist
 	now := time.Now()
-	if uploadflags.Bucket == "" {
-		uploadflags.Bucket = now.Format(YYYYMMDD)
+	if uploadFlags.Bucket == "" {
+		uploadFlags.Bucket = now.Format(YYYYMMDD)
 	}
 	prefix := now.Format(HHMMSS24h)
 
-	if ok, _ := minioClient.BucketExists(ctx, uploadflags.Bucket); !ok {
-		minioClient.MakeBucket(ctx, uploadflags.Bucket, minio.MakeBucketOptions{})
+	if ok, _ := minioClient.BucketExists(ctx, uploadFlags.Bucket); !ok {
+		minioClient.MakeBucket(ctx, uploadFlags.Bucket, minio.MakeBucketOptions{})
 	}
 
 	var report Report
@@ -142,33 +176,25 @@ func uploadRunE(cmd *cobra.Command, args []string) error {
 	report.CatalogNamespace = checkflags.CatalogSourceNamespace
 
 	// for each line is stdout.json which is provided by opcap create an Audit object and add to the rawreport Audits field.
-	f, err := os.Open("operator_install_report.json")
+	audits, err := loadAudits(ctx, fs, "operator_install_report.json")
 	if err != nil {
 		return err
 	}
-	s := bufio.NewScanner(f)
-	for s.Scan() {
-		var audit Audit
-		if err := json.Unmarshal(s.Bytes(), &audit); err != nil {
-			return err
-		}
-		if audit.Message == "Succeeded" || audit.Message == "failed" || audit.Message == "timeout" {
-			report.Audits = append(report.Audits, audit)
-		}
-	}
+	report.Audits = audits
+
 	data, err := json.Marshal(report)
 	if err != nil {
 		return err
 	}
 
-	if err = os.WriteFile("report.json", data, 0o644); err != nil {
+	if err = afero.WriteFile(fs, "report.json", data, 0o644); err != nil {
 		return err
 	}
 
-	if uploadflags.Path == "" {
-		uploadflags.Path = osversion + "/" + prefix + "_report.json"
+	if uploadFlags.Path == "" {
+		uploadFlags.Path = osversion + "/" + prefix + "_report.json"
 	}
-	_, err = minioClient.FPutObject(ctx, uploadflags.Bucket, uploadflags.Path, "report.json", minio.PutObjectOptions{ContentType: "application/json"})
+	_, err = minioClient.FPutObject(ctx, uploadFlags.Bucket, uploadFlags.Path, "report.json", minio.PutObjectOptions{ContentType: "application/json"})
 	if err != nil {
 		return err
 	}
