@@ -26,7 +26,7 @@ Reason: {{ .Csv.Status.Reason }}
 {{ end }}
 -----------------------------------------
 `
-	operatorJsonReportTemplate = `{"level":"info","message":"{{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}","package":"{{ .Subscription.Package }}","channel":"{{ .Subscription.Channel }}","installmode":"{{ .Subscription.InstallModeType }}"}`
+	operatorJsonReportTemplate = `{"level":"info","message":"{{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}","package":"{{ .Subscription.Package }}","channel":"{{ .Subscription.Channel }}","installmode":"{{ .Subscription.InstallModeType }}"}{{"\n"}}`
 
 	operandTextReportTemplate = `{{ with $dot := . }}
 {{ range $index, $value := .CustomResources }}
