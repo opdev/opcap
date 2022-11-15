@@ -10,47 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-const (
-	operatorTextReportTemplate = `
-Operator Install Report
------------------------------------------
-Report Date: {{ now }}
-OpenShift Version: {{ .OcpVersion }}
-Package Name: {{ .Subscription.Package }}
-Channel: {{ .Subscription.Channel }}
-Catalog Source: {{ .Subscription.CatalogSource }}
-Install Mode: {{ .Subscription.InstallModeType }}
-Result: {{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}
-Message: {{ .Csv.Status.Message }}
-Reason: {{ .Csv.Status.Reason }}
-{{ end }}
------------------------------------------
-`
-	operatorJsonReportTemplate = `{"level":"info","message":"{{ if .CsvTimeout }}timeout{{ else }}{{ .Csv.Status.Phase }}{{ end }}","package":"{{ .Subscription.Package }}","channel":"{{ .Subscription.Channel }}","installmode":"{{ .Subscription.InstallModeType }}"}{{"\n"}}`
-
-	operandTextReportTemplate = `{{ with $dot := . }}
-{{ range $index, $value := .CustomResources }}
-
-Operand Install Report
------------------------------------------
-Report Date: {{ now }}
-OpenShift Version: {{ $dot.OcpVersion }}
-Package Name: {{ $dot.Subscription.Package }}
-Operand Kind: {{ kind $value }}
-Operand Name: {{ name $value }}
-Operand Creation: {{ if gt $dot.OperandCount 0 }}Succeeded{{ else }}Failed{{ end }}
------------------------------------------
-{{ else }}
-No custom resources
-{{ end }}
-{{ end }}
-`
-
-	operandJsonReportTemplate = `{{with $dot := .}}{{range $index, $value := .CustomResources }}
-{"package":"{{ $dot.Subscription.Package }}","Operand Kind":"{{ kind $value }}","Operand Name":"{{ name $value }}","message":"{{ if gt $dot.OperandCount 0 }}created{{ else }}failed{{ end }}"}
-{{ end }}{{ end }}`
-)
-
 type TemplateData struct {
 	OcpVersion      string
 	Subscription    operator.SubscriptionData
