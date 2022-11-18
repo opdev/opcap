@@ -118,12 +118,9 @@ func getTargetNamespaces(s operator.SubscriptionData, namespace string) []string
 	return []string{}
 }
 
-// auditOption is the function type for passing an option to an audit
-type auditOption func(options *options) error
-
 // WithSubscription adds a subscription object to the audit
 func withSubscription(subscription *operator.SubscriptionData) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		if subscription == nil {
 			return fmt.Errorf("subscription data cannot be nil")
 		}
@@ -134,7 +131,7 @@ func withSubscription(subscription *operator.SubscriptionData) auditOption {
 
 // WithOperatorGroupData adds an operatorgroupdata objec to the audit
 func withOperatorGroupData(operatorGroupData *operator.OperatorGroupData) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		if operatorGroupData == nil {
 			return fmt.Errorf("operatorgroupdata cannot be nil")
 		}
@@ -145,7 +142,7 @@ func withOperatorGroupData(operatorGroupData *operator.OperatorGroupData) auditO
 
 // WithNamespace adds a namespace for the audit
 func withNamespace(namespace string) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		if namespace == "" {
 			return fmt.Errorf("namespace cannot be empty")
 		}
@@ -156,7 +153,7 @@ func withNamespace(namespace string) auditOption {
 
 // WithClient adds a client to the audit
 func withClient(client operator.Client) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		if client == nil {
 			return fmt.Errorf("client cannot be nil")
 		}
@@ -166,16 +163,16 @@ func withClient(client operator.Client) auditOption {
 }
 
 // WithTimeout adds a timeout duration to the audit
-func withTimeout(csvWaitTime int) auditOption {
-	return func(options *options) error {
-		options.csvWaitTime = time.Duration(csvWaitTime)
+func withTimeout(csvWaitTime time.Duration) auditOption {
+	return func(options *auditOptions) error {
+		options.csvWaitTime = csvWaitTime
 		return nil
 	}
 }
 
 // WithOcpVersion adds the OCP version to the audit
 func withOcpVersion(ocpVersion string) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		options.ocpVersion = ocpVersion
 		return nil
 	}
@@ -183,7 +180,7 @@ func withOcpVersion(ocpVersion string) auditOption {
 
 // withCustomResources adds existing Custom Resources to the audit
 func withCustomResources(customResources []map[string]interface{}) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		options.customResources = customResources
 		return nil
 	}
@@ -191,7 +188,7 @@ func withCustomResources(customResources []map[string]interface{}) auditOption {
 
 // withFilesystem adds a filesystem to be used for writing files
 func withFilesystem(fs afero.Fs) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		options.fs = fs
 		return nil
 	}
@@ -199,7 +196,7 @@ func withFilesystem(fs afero.Fs) auditOption {
 
 // withReportWriter adds an io.Writer to be used for outputing the test reports
 func withReportWriter(w io.Writer) auditOption {
-	return func(options *options) error {
+	return func(options *auditOptions) error {
 		if w == nil {
 			return fmt.Errorf("report writer cannot be nil")
 		}

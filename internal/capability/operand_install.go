@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func extractAlmExamples(ctx context.Context, options *options) error {
+func extractAlmExamples(ctx context.Context, options *auditOptions) error {
 	// gets the list of CSVs present in a particular namespace
 	csvList, err := options.client.ListClusterServiceVersions(ctx, options.namespace)
 	if err != nil {
@@ -41,7 +41,7 @@ func extractAlmExamples(ctx context.Context, options *options) error {
 
 // OperandInstall installs the operand from the ALMExamples in the ca.namespace
 func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCleanupFn) {
-	var options options
+	var options auditOptions
 	for _, opt := range opts {
 		err := opt(&options)
 		if err != nil {

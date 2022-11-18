@@ -12,7 +12,7 @@ import (
 )
 
 func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCleanupFn) {
-	var options options
+	var options auditOptions
 	for _, opt := range opts {
 		err := opt(&options)
 		if err != nil {
