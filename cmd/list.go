@@ -14,6 +14,7 @@ func listCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(listPackagesCmd())
+	cmd.AddCommand(listBundlesCmd())
 
 	return &cmd
 }
