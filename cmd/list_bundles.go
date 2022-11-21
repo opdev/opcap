@@ -52,7 +52,7 @@ func listBundles(ctx context.Context, out io.Writer) error {
 		return nil
 	}
 
-	dir, err := os.MkdirTemp(".", "bundles")
+	dir, err := os.MkdirTemp("", "bundles-*")
 	if err != nil {
 		return err
 	}
