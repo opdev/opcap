@@ -9,7 +9,7 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	git "gopkg.in/src-d/go-git.v4"
+	git "github.com/go-git/go-git/v5"
 )
 
 func GitCloneOrPullBundles(URL string, outputDir string) error {
