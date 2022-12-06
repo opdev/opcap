@@ -75,7 +75,7 @@ func printBundles(bundles []bundle.Bundle, out io.Writer) {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, headings)
 	for _, bundle := range bundles {
-		packageInfo := []string{bundle.StartingCSV, bundle.PackageName, bundle.Channel, bundle.Version, bundle.OcpVersions}
+		packageInfo := []string{bundle.PackageName, bundle.StartingCSV, bundle.Channel, bundle.Version, bundle.OcpVersions}
 		fmt.Fprintln(w, strings.Join(packageInfo, "\t"))
 	}
 	w.Flush()
