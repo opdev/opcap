@@ -71,10 +71,9 @@ var _ = Describe("CSV", func() {
 		})
 		When("no CSV is updated", func() {
 			It("should timeout", func() {
-				resultCsv, err := client.GetCompletedCsvWithTimeout(context.Background(), "testns", time.Second*2)
+				_, err := client.GetCompletedCsvWithTimeout(context.Background(), "testns", time.Second*2)
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(TimeoutError))
-				Expect(resultCsv).To(BeNil())
 			})
 		})
 	})
