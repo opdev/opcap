@@ -6,6 +6,7 @@ import (
 	"time"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -73,4 +74,26 @@ func (c operatorClient) csvWatcher(ctx context.Context, namespace string) (watch
 	}
 
 	return watcher, nil
+}
+
+// Delete CSV and wait for it to be deleted
+func (c *operatorClient) DeleteCSV(ctx context.Context, name, namespace string) error {
+	// delete csv
+	err := c.Client.Delete(ctx, &operatorv1alpha1.ClusterServiceVersion{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("could not delete csv: %v", err)
+	}
+
+	// wait for csv to be deleted
+	err = c.Client.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, &operatorv1alpha1.ClusterServiceVersion{})
+	if err == nil {
+		return fmt.Errorf("csv was not deleted")
+	}
+
+	return nil
 }

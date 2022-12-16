@@ -25,6 +25,12 @@ func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 			return err
 		}
 
+		// delete cluster service version
+		if err := options.client.DeleteCSV(ctx, options.csv.ObjectMeta.Name, options.namespace); err != nil {
+			logger.Debugf("Error while deleting ClusterServiceVersion: %w", err)
+			return err
+		}
+
 		// delete operator group
 		if err := options.client.DeleteOperatorGroup(ctx, options.operatorGroupData.Name, options.namespace); err != nil {
 			logger.Debugf("Error while deleting OperatorGroup: %w", err)
