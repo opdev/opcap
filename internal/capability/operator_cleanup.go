@@ -25,8 +25,14 @@ func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 			return err
 		}
 
+		// get csv using csvWatcher
+		csv, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime)
+		if err != nil {
+			return err
+		}
+
 		// delete cluster service version
-		if err := options.client.DeleteCSV(ctx, options.csv.ObjectMeta.Name, options.namespace); err != nil {
+		if err := options.client.DeleteCSV(ctx, csv.ObjectMeta.Name, options.namespace); err != nil {
 			logger.Debugf("Error while deleting ClusterServiceVersion: %w", err)
 			return err
 		}

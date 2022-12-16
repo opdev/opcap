@@ -78,4 +78,16 @@ var _ = Describe("CSV", func() {
 			})
 		})
 	})
+	When("deleting a CSV", func() {
+		When("the CSV exists", func() {
+			It("should delete the CSV", func() {
+				Expect(client.DeleteCSV(context.Background(), csv.ObjectMeta.Name, csv.ObjectMeta.Namespace)).To(Succeed())
+			})
+		})
+		When("the CSV does not exist", func() {
+			It("should return an error", func() {
+				Expect(client.DeleteCSV(context.Background(), "notfound", csv.ObjectMeta.Namespace)).ToNot(Succeed())
+			})
+		})
+	})
 })
