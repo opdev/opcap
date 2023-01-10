@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CollectDebugData(ctx context.Context, options auditOptions) error {
+func CollectDebugData(ctx context.Context, options auditOptions, reportName string) error {
 	c, err := k8sClientset()
 	if err != nil {
 		return fmt.Errorf("couldn't get clientset for operator install debug report: %s", err.Error())
@@ -87,7 +87,7 @@ func CollectDebugData(ctx context.Context, options auditOptions) error {
 		}
 	}
 
-	debugFile, err := options.fs.OpenFile("operator_debug_json_report.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	debugFile, err := options.fs.OpenFile(reportName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}

@@ -205,6 +205,13 @@ func withReportWriter(w io.Writer) auditOption {
 	}
 }
 
+func withDetailedReports(detailedReports bool) auditOption {
+	return func(options *auditOptions) error {
+		options.detailedReports = detailedReports
+		return nil
+	}
+}
+
 // New returns a function corresponding to a passed in audit plan
 func newAudit(ctx context.Context, auditType string, opts ...auditOption) (auditFn, auditCleanupFn) {
 	switch strings.ToLower(auditType) {
