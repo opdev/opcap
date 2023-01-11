@@ -9,6 +9,7 @@ import (
 	"github.com/opdev/opcap/internal/operator"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/afero"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -25,6 +26,7 @@ type auditOptions struct {
 	operands          []unstructured.Unstructured
 	fs                afero.Fs
 	reportWriter      io.Writer
+	csvEvents         *corev1.EventList
 }
 
 type auditorOptions struct {

@@ -55,6 +55,13 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 
 		// if it takes more than delay return with error
 		case <-timeout:
+			csvList := &operatorv1alpha1.ClusterServiceVersionList{}
+			if err = c.Client.List(ctx, csvList, &client.ListOptions{Namespace: namespace}); err != nil {
+				return nil, err
+			}
+			if len(csvList.Items) > 0 {
+				return &csvList.Items[0], TimeoutError
+			}
 			return nil, TimeoutError
 
 		default:

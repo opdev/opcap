@@ -84,7 +84,7 @@ func newCapAudit(ctx context.Context, c operator.Client, subscription operator.S
 		namespace:         ns,
 		operatorGroupData: newOperatorGroupData(operatorGroupName, getTargetNamespaces(subscription, ns)),
 		subscription:      subscription,
-		csvWaitTime:       time.Minute,
+		csvWaitTime:       2 * time.Minute,
 		csvTimeout:        false,
 		auditPlan:         auditPlan,
 		customResources:   extraCustomResources,

@@ -55,6 +55,11 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 			// If error is timeout than don't log phase but timeout
 			if errors.Is(err, operator.TimeoutError) {
 				options.csvTimeout = true
+				options.csv = resultCSV
+				if err = CollectDebugData(ctx, options); err != nil {
+					return fmt.Errorf("couldn't collect debug data: %s", err)
+				}
+
 			} else {
 				return err
 			}
