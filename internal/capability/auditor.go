@@ -209,6 +209,7 @@ func RunAudits(ctx context.Context, opts ...auditorOption) error {
 				withCustomResources(audit.customResources),
 				withFilesystem(options.fs),
 				withReportWriter(options.reportWriter),
+				withDetailedReports(options.detailedReports),
 			)
 			if auditFn == nil {
 				logger.Errorf("invalid audit plan specified: %s", function)
@@ -311,6 +312,13 @@ func WithReportWriter(w io.Writer) auditorOption {
 			return fmt.Errorf("report writer cannot be nil")
 		}
 		options.reportWriter = w
+		return nil
+	}
+}
+
+func WithDetailedReports(detailedReports bool) auditorOption {
+	return func(options *auditorOptions) error {
+		options.detailedReports = detailedReports
 		return nil
 	}
 }

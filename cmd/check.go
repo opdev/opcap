@@ -21,6 +21,7 @@ type checkCommandFlags struct {
 	Packages               []string `json:"packages"`
 	AllInstallModes        bool     `json:"allInstallModes"`
 	ExtraCRDirectory       string   `json:"extraCRDirectory"`
+	DetailedReports        bool     `json:"detailedReports"`
 }
 
 var checkflags checkCommandFlags
@@ -51,6 +52,7 @@ and/or users.`,
 	flags.BoolVar(&checkflags.AllInstallModes, "all-installmodes", false, "when set, all install modes supported by an operator will be tested")
 	flags.StringVar(&checkflags.ExtraCRDirectory, "extra-cr-directory", "",
 		"directory containing the additional Custom Resources to be deployed by the OperandInstall audit. The manifest files should be located in subdirectories named after the packages they are corresponding to.")
+	flags.BoolVar(&checkflags.DetailedReports, "detailed-reports", false, "when set, a debug report will be created with events and logs for the tests being run")
 
 	return cmd
 }
@@ -84,6 +86,7 @@ func runAudits(ctx context.Context, kubeconfig *rest.Config, client operator.Cli
 		capability.WithFilesystem(fs),
 		capability.WithTimeout(time.Minute),
 		capability.WithReportWriter(reportWriter),
+		capability.WithDetailedReports(checkflags.DetailedReports),
 	); err != nil {
 		return err
 	}

@@ -31,3 +31,5 @@ openshift
 *report.json
 .DS_Store
 *report.txt
+*report*
+__debug_bin

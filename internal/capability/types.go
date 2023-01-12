@@ -27,6 +27,7 @@ type auditOptions struct {
 	fs                afero.Fs
 	reportWriter      io.Writer
 	csvEvents         *corev1.EventList
+	detailedReports   bool
 }
 
 type auditorOptions struct {
@@ -62,6 +63,9 @@ type auditorOptions struct {
 
 	//  ReportWriter is any io.Writer for the text reports
 	reportWriter io.Writer
+
+	// DetailedReports creates reports containing events and logs
+	detailedReports bool
 }
 
 type (

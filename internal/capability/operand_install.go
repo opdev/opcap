@@ -22,7 +22,7 @@ func extractAlmExamples(ctx context.Context, options *auditOptions) error {
 	}
 	almExamples := ""
 	for _, csvVal := range csvList.Items {
-		if strings.HasPrefix(csvVal.ObjectMeta.Name, options.operatorGroupData.Name) {
+		if strings.HasPrefix(csvVal.ObjectMeta.Name, options.subscription.Package) {
 			// map of string interface which consist of ALM examples from the CSVList
 			almExamples = csvVal.ObjectMeta.Annotations["alm-examples"]
 		}
@@ -61,7 +61,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 		}
 
 		if len(options.customResources) == 0 {
-			logger.Debugf("exiting OperandInstall since no ALM_Examples found in CSV")
+			logger.Infow("exiting OperandInstall since no ALM_Examples found in CSV")
 			return nil
 		}
 
@@ -117,6 +117,11 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 		})
 		if err != nil {
 			return fmt.Errorf("could not generate operand install text report: %v", err)
+		}
+		if options.detailedReports {
+			if err = CollectDebugData(ctx, options, "operand_detailed_report_all.json"); err != nil {
+				return fmt.Errorf("couldn't collect debug data: %s", err)
+			}
 		}
 
 		return nil
