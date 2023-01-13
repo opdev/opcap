@@ -45,6 +45,19 @@ func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 						logger.Debugf("failed operandCleanUp: package: %s error: %s\n", options.subscription.Package, err.Error())
 						return err
 					}
+					// Forcing cleanup of finalizers
+					err := options.client.GetUnstructured(ctx, options.namespace, name, obj)
+					if apierrors.IsNotFound(err) {
+						return nil
+					} else {
+						obj.SetFinalizers([]string{})
+					}
+					err = options.client.GetUnstructured(ctx, options.namespace, name, obj)
+					if apierrors.IsNotFound(err) {
+						return nil
+					} else {
+						return fmt.Errorf("error cleaning up operand after deleting finalizer: %s", err.Error())
+					}
 				}
 			}
 		}
