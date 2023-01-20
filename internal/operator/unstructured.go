@@ -16,6 +16,10 @@ func (c operatorClient) GetUnstructured(ctx context.Context, namespace, name str
 	return c.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, obj)
 }
 
+func (c operatorClient) UpdateUnstructured(ctx context.Context, obj *unstructured.Unstructured) error {
+	return c.Client.Update(ctx, obj)
+}
+
 func (c operatorClient) DeleteUnstructured(ctx context.Context, obj *unstructured.Unstructured) error {
 	return c.Client.Delete(ctx, obj, &client.DeleteOptions{})
 }
