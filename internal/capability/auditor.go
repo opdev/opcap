@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -159,7 +161,8 @@ func cleanup(ctx context.Context, stack *Stack[auditCleanupFn]) {
 			break
 		}
 		if err := cleaner(ctx); err != nil {
-			logger.Errorf("cleanup failed: %v", err)
+			cleanerName := runtime.FuncForPC(reflect.ValueOf(cleaner).Pointer()).Name()
+			logger.Errorf("CleanerName: %v ---- cleanup failed: %v", cleanerName, err)
 		}
 	}
 	return

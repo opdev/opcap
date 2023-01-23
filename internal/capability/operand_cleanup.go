@@ -3,6 +3,7 @@ package capability
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/opdev/opcap/internal/logger"
 
@@ -11,17 +12,7 @@ import (
 )
 
 // OperandCleanup removes the operand from the OCP cluster in the ca.namespace
-func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
-	var options auditOptions
-	for _, opt := range opts {
-		err := opt(&options)
-		if err != nil {
-			return func(_ context.Context) error {
-				return fmt.Errorf("option failed: %v", err)
-			}
-		}
-	}
-
+func operandCleanup(ctx context.Context, options auditOptions) auditCleanupFn {
 	return func(ctx context.Context) error {
 		logger.Debugw("cleaningUp operand for operator", "package", options.subscription.Package, "channel", options.subscription.Channel, "installmode",
 			options.subscription.InstallModeType)
@@ -35,37 +26,35 @@ func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 
 				// check if CR exists, only then cleanup the operand
 				err := options.client.GetUnstructured(ctx, options.namespace, name, obj)
-				if !apierrors.IsNotFound(err) {
+				if err != nil && !apierrors.IsNotFound(err) {
 					// Actual error. Return it
-					return fmt.Errorf("could not get operaand: %v", err)
+					return fmt.Errorf("could not get operand: %v", err)
 				}
 				if obj == nil || apierrors.IsNotFound(err) {
 					// Did not find it. Somehow already gone.
 					// Not an error condition, but no point in
 					// continuing.
-					return nil
+					continue
 				}
 
 				// delete the resource using the dynamic client
 				if err := options.client.DeleteUnstructured(ctx, obj); err != nil {
 					logger.Debugf("failed operandCleanUp: package: %s error: %s\n", options.subscription.Package, err.Error())
-					return err
+					continue
 				}
-
+				time.Sleep(3 * time.Second)
 				// Forcing cleanup of finalizers
 				err = options.client.GetUnstructured(ctx, options.namespace, name, obj)
 				if apierrors.IsNotFound(err) {
-					return nil
+					continue
 				}
+				if obj.GetFinalizers() != nil {
+					obj.SetFinalizers([]string{})
 
-				obj.SetFinalizers([]string{})
-
-				if err := options.client.UpdateUnstructured(ctx, obj); err != nil {
-					return err
-				}
-
-				if err := options.client.GetUnstructured(ctx, options.namespace, name, obj); err != nil && !apierrors.IsNotFound(err) {
-					return fmt.Errorf("error cleaning up operand after deleting finalizer: %v", err)
+					if err := options.client.UpdateUnstructured(ctx, obj); err != nil {
+						logger.Debugf("Couldn't update finalizer: %s", err.Error())
+						continue
+					}
 				}
 				return nil
 			}

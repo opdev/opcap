@@ -20,5 +20,5 @@ No custom resources
 {{ end }}
 `
 
-	operandJsonReportTemplate = `{{with $dot := .}}{{range $index, $value := .CustomResources }}{"package":"{{ $dot.Subscription.Package }}","Operand Kind":"{{ kind $value }}","Operand Name":"{{ name $value }}","message":"{{ if gt $dot.OperandCount 0 }}created{{ else }}failed{{ end }}"}{{ end }}{{ end }}`
+	operandJsonReportTemplate = `{{with $dot := .}}{{range $index, $value := .CustomResources }}{"package":"{{ $dot.Subscription.Package }}","Operand Kind":"{{ kind $value }}","Operand Name":"{{ name $value }}","message":"{{ if gt $dot.OperandCount 0 }}created{{ else }}failed{{ end }}"}{{ end }}{{ end }}{{"\n"}}`
 )
