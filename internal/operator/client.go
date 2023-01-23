@@ -36,6 +36,7 @@ type Client interface {
 	CreateUnstructured(ctx context.Context, obj *unstructured.Unstructured) error
 	GetUnstructured(ctx context.Context, namespace, name string, obj *unstructured.Unstructured) error
 	DeleteUnstructured(ctx context.Context, obj *unstructured.Unstructured) error
+	UpdateUnstructured(ctx context.Context, obj *unstructured.Unstructured) error
 	ListClusterServiceVersions(ctx context.Context, namespace string) (*operatorv1alpha1.ClusterServiceVersionList, error)
 }
 

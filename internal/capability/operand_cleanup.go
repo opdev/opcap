@@ -39,26 +39,35 @@ func operandCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 					// Actual error. Return it
 					return fmt.Errorf("could not get operaand: %v", err)
 				}
-				if !apierrors.IsNotFound(err) && obj != nil {
-					// delete the resource using the dynamic client
-					if err := options.client.DeleteUnstructured(ctx, obj); err != nil {
-						logger.Debugf("failed operandCleanUp: package: %s error: %s\n", options.subscription.Package, err.Error())
-						return err
-					}
-					// Forcing cleanup of finalizers
-					err := options.client.GetUnstructured(ctx, options.namespace, name, obj)
-					if apierrors.IsNotFound(err) {
-						return nil
-					} else {
-						obj.SetFinalizers([]string{})
-					}
-					err = options.client.GetUnstructured(ctx, options.namespace, name, obj)
-					if apierrors.IsNotFound(err) {
-						return nil
-					} else {
-						return fmt.Errorf("error cleaning up operand after deleting finalizer: %s", err.Error())
-					}
+				if obj == nil || apierrors.IsNotFound(err) {
+					// Did not find it. Somehow already gone.
+					// Not an error condition, but no point in
+					// continuing.
+					return nil
 				}
+
+				// delete the resource using the dynamic client
+				if err := options.client.DeleteUnstructured(ctx, obj); err != nil {
+					logger.Debugf("failed operandCleanUp: package: %s error: %s\n", options.subscription.Package, err.Error())
+					return err
+				}
+
+				// Forcing cleanup of finalizers
+				err = options.client.GetUnstructured(ctx, options.namespace, name, obj)
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+
+				obj.SetFinalizers([]string{})
+
+				if err := options.client.UpdateUnstructured(ctx, obj); err != nil {
+					return err
+				}
+
+				if err := options.client.GetUnstructured(ctx, options.namespace, name, obj); err != nil && !apierrors.IsNotFound(err) {
+					return fmt.Errorf("error cleaning up operand after deleting finalizer: %v", err)
+				}
+				return nil
 			}
 		}
 
