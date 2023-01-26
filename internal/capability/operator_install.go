@@ -56,9 +56,9 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 			if errors.Is(err, operator.TimeoutError) {
 				options.csvTimeout = true
 				options.csv = resultCSV
-				if err = CollectDebugData(ctx, options, "operator_detailed_report_timeout.json"); err != nil {
-					return fmt.Errorf("couldn't collect debug data: %s", err)
-				}
+				// if err = CollectDebugData(ctx, options, "operator_detailed_report_timeout.json"); err != nil {
+				// 	return fmt.Errorf("couldn't collect debug data: %s", err)
+				// }
 
 			} else {
 				return err
