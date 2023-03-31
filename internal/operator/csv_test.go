@@ -48,7 +48,7 @@ var _ = Describe("CSV", func() {
 				var err error
 				done := make(chan interface{})
 				go func() {
-					resultCsv, err = client.GetCompletedCsvWithTimeout(context.Background(), "testns", time.Second*30)
+					resultCsv, err = client.GetCompletedCsvWithTimeout(context.Background(), "testns", time.Second*30, csv.ObjectMeta.Name)
 					close(done)
 				}()
 
@@ -71,7 +71,7 @@ var _ = Describe("CSV", func() {
 		})
 		When("no CSV is updated", func() {
 			It("should timeout", func() {
-				_, err := client.GetCompletedCsvWithTimeout(context.Background(), "testns", time.Second*2)
+				_, err := client.GetCompletedCsvWithTimeout(context.Background(), "testns", time.Second*2, csv.ObjectMeta.Name)
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(TimeoutError))
 			})

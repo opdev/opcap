@@ -6,6 +6,7 @@ import (
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
@@ -21,12 +22,27 @@ func operatorCleanup(ctx context.Context, opts ...auditOption) auditCleanupFn {
 
 	return func(ctx context.Context) error {
 		// delete subscription
+		subscriptionList := &operatorv1alpha1.SubscriptionList{}
+
+		if err := options.client.ListSubscription(ctx, subscriptionList, options.namespace); err != nil {
+			logger.Debugf("Error listing subscriptions: %w", err)
+			return err
+		}
+
+		subs, err := options.client.GetSubscription(ctx, subscriptionList.Items[0].Name, options.namespace)
+		if err != nil {
+			logger.Debugf("Error getting subscriptions: %w", err)
+			return err
+		}
+
+		csvName := subs.Status.CurrentCSV
+
 		if err := options.client.DeleteSubscription(ctx, options.subscription.Name, options.namespace); err != nil {
 			logger.Debugf("Error while deleting Subscription: %w", err)
 		}
 
 		// get csv using csvWatcher
-		csv, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime)
+		csv, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime, csvName)
 		if err != operator.TimeoutError && err != nil {
 			logger.Debugf("Error while deleting CSV: %w", err)
 		}
