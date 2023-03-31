@@ -7,6 +7,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -14,13 +15,14 @@ import (
 var TimeoutError error = fmt.Errorf("operator install timeout")
 
 // Gets completed CSVs, Succeeded or Failed, with timeout on delay duration
-func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (*operatorv1alpha1.ClusterServiceVersion, error) {
+func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration, selector string) (*operatorv1alpha1.ClusterServiceVersion, error) {
 	// csv will catch CSVs from watch events
 	csv := &operatorv1alpha1.ClusterServiceVersion{}
 	var ok bool
 
+	selectedCSV := fields.SelectorFromSet(map[string]string{"metadata.name": selector})
 	// get watcher for csv
-	watcher, err := c.csvWatcher(ctx, namespace)
+	watcher, err := c.csvWatcher(ctx, namespace, selectedCSV)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,7 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 		// if it takes more than delay return with error
 		case <-timeout:
 			csvList := &operatorv1alpha1.ClusterServiceVersionList{}
-			if err = c.Client.List(ctx, csvList, &client.ListOptions{Namespace: namespace}); err != nil {
+			if err = c.Client.List(ctx, csvList, &client.ListOptions{Namespace: namespace, FieldSelector: selectedCSV}); err != nil {
 				return nil, err
 			}
 			if len(csvList.Items) > 0 {
@@ -74,13 +76,24 @@ func (c operatorClient) GetCompletedCsvWithTimeout(ctx context.Context, namespac
 }
 
 // waits for CSV on namespace and gets a watcher for CSV events
-func (c operatorClient) csvWatcher(ctx context.Context, namespace string) (watch.Interface, error) {
-	watcher, err := c.Client.Watch(ctx, &operatorv1alpha1.ClusterServiceVersionList{}, &client.ListOptions{Namespace: namespace})
+func (c operatorClient) csvWatcher(ctx context.Context, namespace string, selector fields.Selector) (watch.Interface, error) {
+	watcher, err := c.Client.Watch(ctx, &operatorv1alpha1.ClusterServiceVersionList{}, &client.ListOptions{Namespace: namespace, FieldSelector: selector})
 	if err != nil {
 		return nil, fmt.Errorf("could not create csv: %v", err)
 	}
 
 	return watcher, nil
+}
+
+// TODO: write function to GetCSV
+func (c operatorClient) GetCSV(ctx context.Context, name string, namespace string) (*operatorv1alpha1.ClusterServiceVersion, error) {
+	csv := &operatorv1alpha1.ClusterServiceVersion{}
+	err := c.Client.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, csv)
+	if err != nil {
+		return nil, fmt.Errorf("could not get csv: %v", err)
+	}
+
+	return csv, nil
 }
 
 // Delete CSV and wait for it to be deleted
