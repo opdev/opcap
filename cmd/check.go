@@ -84,7 +84,7 @@ func runAudits(ctx context.Context, kubeconfig *rest.Config, client operator.Cli
 		capability.WithClient(client),
 		capability.WithExtraCRDirectory(checkflags.ExtraCRDirectory),
 		capability.WithFilesystem(fs),
-		capability.WithTimeout(time.Minute),
+		capability.WithTimeout(2*time.Minute),
 		capability.WithReportWriter(reportWriter),
 		capability.WithDetailedReports(checkflags.DetailedReports),
 	); err != nil {
