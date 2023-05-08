@@ -53,12 +53,12 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 		}
 	}
 
+	if err := extractAlmExamples(ctx, &options); err != nil {
+		logger.Errorf("could not get ALM Examples: %v", err)
+	}
+
 	return func(ctx context.Context) error {
 		logger.Debugw("installing operand for operator", "package", options.subscription.Package, "channel", options.subscription.Channel, "installmode", options.subscription.InstallModeType)
-
-		if err := extractAlmExamples(ctx, &options); err != nil {
-			logger.Errorf("could not get ALM Examples: %v", err)
-		}
 
 		if len(options.customResources) == 0 {
 			logger.Infow("exiting OperandInstall since no ALM_Examples found in CSV")
@@ -125,5 +125,5 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 		}
 
 		return nil
-	}, operandCleanup(ctx, opts...)
+	}, operandCleanup(ctx, options)
 }
