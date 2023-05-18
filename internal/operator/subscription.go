@@ -9,6 +9,7 @@ import (
 	pkgserverv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SubscriptionData struct {
@@ -75,6 +76,16 @@ func (c operatorClient) CreateSubscription(ctx context.Context, data Subscriptio
 		},
 	}
 	err := c.Client.Create(ctx, subscription)
+	return subscription, err
+}
+
+func (c operatorClient) ListSubscription(ctx context.Context, subscriptionList *operatorv1alpha1.SubscriptionList, namespace string) error {
+	return c.Client.List(ctx, subscriptionList, &client.ListOptions{Namespace: namespace})
+}
+
+func (c operatorClient) GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error) {
+	subscription := &operatorv1alpha1.Subscription{}
+	err := c.Client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, subscription)
 	return subscription, err
 }
 

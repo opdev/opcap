@@ -27,8 +27,11 @@ type Client interface {
 	DeleteOperatorGroup(ctx context.Context, name string, namespace string) error
 	CreateSubscription(ctx context.Context, data SubscriptionData, namespace string) (*operatorv1alpha1.Subscription, error)
 	DeleteSubscription(ctx context.Context, name string, namespace string) error
+	GetSubscription(ctx context.Context, name string, namespace string) (*operatorv1alpha1.Subscription, error)
+	ListSubscription(ctx context.Context, subscriptionList *operatorv1alpha1.SubscriptionList, namespace string) error
 	DeleteCSV(ctx context.Context, name string, namespace string) error
-	GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration) (*operatorv1alpha1.ClusterServiceVersion, error)
+	GetCSV(ctx context.Context, name string, namespace string) (*operatorv1alpha1.ClusterServiceVersion, error)
+	GetCompletedCsvWithTimeout(ctx context.Context, namespace string, delay time.Duration, selector string) (*operatorv1alpha1.ClusterServiceVersion, error)
 	GetOpenShiftVersion(ctx context.Context) (string, error)
 	ListPackageManifests(ctx context.Context, list *pkgserverv1.PackageManifestList, catalogSource string, filter []string) error
 	GetSubscriptionData(ctx context.Context, source string, namespace string, filter []string) ([]SubscriptionData, error)

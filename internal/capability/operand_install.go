@@ -65,7 +65,7 @@ func operandInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCle
 			return nil
 		}
 
-		csv, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute)
+		csv, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, time.Minute, options.subscription.Package)
 		if err != nil {
 			return fmt.Errorf("could not get CSV: %v", err)
 		}

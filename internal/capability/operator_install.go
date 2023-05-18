@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/opdev/opcap/internal/logger"
 	"github.com/opdev/opcap/internal/operator"
 	"github.com/opdev/opcap/internal/report"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCleanupFn) {
@@ -49,8 +51,24 @@ func operatorInstall(ctx context.Context, opts ...auditOption) (auditFn, auditCl
 			return err
 		}
 
+		subscriptionList := &operatorv1alpha1.SubscriptionList{}
+
+		if err := options.client.ListSubscription(ctx, subscriptionList, options.namespace); err != nil {
+			logger.Debugf("Error listing subscriptions: %w", err)
+			return err
+		}
+
+		time.Sleep(30 * time.Second)
+		subs, err := options.client.GetSubscription(ctx, subscriptionList.Items[0].ObjectMeta.Name, options.namespace)
+		if err != nil {
+			logger.Debugf("Error getting subscriptions: %w", err)
+			return err
+		}
+
+		csvName := subs.Status.CurrentCSV
+
 		// Get a Succeeded or Failed CSV with one minute timeout
-		resultCSV, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime)
+		resultCSV, err := options.client.GetCompletedCsvWithTimeout(ctx, options.namespace, options.csvWaitTime, csvName)
 		if err != nil {
 			// If error is timeout than don't log phase but timeout
 			if errors.Is(err, operator.TimeoutError) {
